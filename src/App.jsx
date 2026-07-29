@@ -55,8 +55,8 @@ const MENU_COLORS = {
   'Coordenadores':          ROLE_COLORS['Coordenador'],
   'Comunidades':            { bg: '#7c3aed', color: '#ffffff', spanColor: '#f5f3ff' },
   'Agenda e Calendário':    { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
-  'Formação Cadastro':      { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
-  'Ata de Reunião':         { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
+  'Formação Cadastro':      { bg: '#0ea5e9', color: '#ffffff', spanColor: '#e0f2fe' },
+  'Ata de Reunião':         { bg: '#ca8a04', color: '#ffffff', spanColor: '#fef9c3' },
   'Formação e Estudos':     { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
 };
 
