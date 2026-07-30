@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null);
   const perfilRef = useRef(null);
   const userIdRef = useRef(null);
+  const loginEmCursoRef = useRef(false);
 
   useEffect(() => { perfilRef.current = perfil; }, [perfil]);
 
@@ -43,6 +44,15 @@ export function AuthProvider({ children }) {
         // usuário) ou se ainda não havia sido carregado.
         if (event !== 'SIGNED_IN' && perfilRef.current && userIdRef.current === session.user.id) {
           console.log('[AUTH] Mantendo perfil já carregado:', perfilRef.current.tipo);
+          return;
+        }
+
+        // Um login manual via login() já dispara e aguarda carregarPerfil() —
+        // o evento SIGNED_IN gerado pelo mesmo signInWithPassword não deve
+        // repetir a mesma rodada de consultas em paralelo.
+        if (event === 'SIGNED_IN' && loginEmCursoRef.current) {
+          console.log('[AUTH] Ignorando SIGNED_IN duplicado (login manual já em andamento)');
+          userIdRef.current = session.user.id;
           return;
         }
 
@@ -147,6 +157,7 @@ export function AuthProvider({ children }) {
   const login = async (email, senha) => {
     setError(null);
     console.log('[AUTH] Iniciando login com:', email);
+    loginEmCursoRef.current = true;
     try {
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
@@ -159,6 +170,7 @@ export function AuthProvider({ children }) {
 
       console.log('[AUTH] User:', data.user.id);
       setUser(data.user);
+      userIdRef.current = data.user.id;
       console.log('[AUTH] Carregando perfil...');
       await carregarPerfil(data.user.id);
       console.log('[AUTH] Login sucesso!');
@@ -170,6 +182,8 @@ export function AuthProvider({ children }) {
         : err.message;
       setError(mensagem);
       return { sucesso: false, erro: mensagem };
+    } finally {
+      loginEmCursoRef.current = false;
     }
   };
 
