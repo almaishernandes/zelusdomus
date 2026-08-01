@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase, supabaseAuthOnly } from './supabaseClient';
 import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Menu, Wallet } from 'lucide-react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { LoginPage } from './LoginPage';
@@ -1912,7 +1912,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
   const INV_KEY = { 'Coroinha': 'coroinha', 'Acólito': 'acolito' };
 
   const [form, setForm] = useState({
-    cadastro: '', nome: '', dob: '', phone: '',
+    cadastro: '', email: '', nome: '', dob: '', phone: '',
     guardian_mae: '', guardian_mae_phone: '',
     guardian_pai: '', guardian_pai_phone: '',
     guardian_outro: '', guardian_outro_phone: '',
@@ -1965,6 +1965,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
       catch { guardians.mae = { nome: editData.guardian_name || '', phone: editData.guardian_phone || '' }; }
       setForm({
         cadastro: editData.cadastro || '',
+        email: editData.email || '',
         nome: editData.full_name || '',
         dob: editData.dob || '',
         phone: editData.phone || '',
@@ -2084,10 +2085,17 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
 
   // Insert tolerante: se a coluna "participation" ainda não existir no banco, regrava sem ela.
   const insertServerRow = async (row) => {
-    let res = await supabase.from('servers').insert(row).select('id').single();
+    let current = row;
+    let res = await supabase.from('servers').insert(current).select('id').single();
     if (res.error && /participation/i.test(res.error.message)) {
-      const { participation: _omit, ...rest } = row;
-      res = await supabase.from('servers').insert(rest).select('id').single();
+      const { participation: _omit, ...rest } = current;
+      current = rest;
+      res = await supabase.from('servers').insert(current).select('id').single();
+    }
+    if (res.error && /email/i.test(res.error.message)) {
+      const { email: _omit, ...rest } = current;
+      current = rest;
+      res = await supabase.from('servers').insert(current).select('id').single();
     }
     return res;
   };
@@ -2124,6 +2132,44 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
     return () => clearTimeout(t);
   }, [communityAtua, participation, sacraments, investitures]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Cria o login (e-mail+senha) do servidor a partir do próprio cadastro, sem
+  // exigir o processo manual no painel do Supabase: se o cadastro ainda não
+  // tem um servidor_profiles vinculado, cria a conta com senha temporária
+  // (usando um client separado para não substituir a sessão do coordenador).
+  const provisionarAcessoServidor = async () => {
+    const email = form.email.trim();
+    const cadastro = form.cadastro.trim();
+    if (!email || !cadastro) return;
+    try {
+      const { data: existente, error: checkErr } = await supabase
+        .from('servidor_profiles').select('id').eq('numero_cadastro', cadastro).maybeSingle();
+      if (checkErr) throw checkErr;
+
+      if (existente) {
+        const { error: updErr } = await supabase.from('servidor_profiles').update({ email }).eq('id', existente.id);
+        if (updErr) console.error('Erro ao atualizar e-mail do perfil:', updErr);
+        return;
+      }
+
+      const senhaTemp = `Altar@${cadastro}`;
+      const { data: signUpData, error: signUpErr } = await supabaseAuthOnly.auth.signUp({ email, password: senhaTemp });
+      if (signUpErr) { alert('Não foi possível criar o login do servidor: ' + signUpErr.message); return; }
+
+      const novoId = signUpData?.user?.id;
+      if (!novoId) { alert('Conta criada, mas não foi possível concluir o vínculo do perfil.'); return; }
+
+      const { error: profErr } = await supabase.from('servidor_profiles').insert({
+        id: novoId, numero_cadastro: cadastro, full_name: form.nome.trim(), email, perfil: 'servidor'
+      });
+      if (profErr) { alert('Login criado, mas houve erro ao vincular o perfil: ' + profErr.message); return; }
+
+      alert(`Login criado para ${form.nome.trim()}!\n\nE-mail: ${email}\nSenha temporária: ${senhaTemp}\n\nRepasse esses dados ao servidor. Ele pode trocar a senha depois em "Esqueci minha senha".`);
+    } catch (err) {
+      console.error('Erro ao provisionar acesso:', err);
+      alert('Erro ao configurar o acesso do servidor: ' + err.message);
+    }
+  };
+
   const handleSalvar = async (tiposOverride) => {
     if (!form.nome.trim()) { alert('Informe o nome do servidor.'); return; }
     setSaving(true);
@@ -2145,6 +2191,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
         const commonData = {
           person_id: personId,
           cadastro: form.cadastro || null,
+          email: form.email.trim() || null,
           full_name: form.nome.trim(),
           dob: form.dob || null,
           phone: form.phone || null,
@@ -2165,6 +2212,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
           for (const r of results) {
             if (r.data?.id) await saveSacramentsAndInvestitures(r.data.id);
           }
+          await provisionarAcessoServidor();
           alert('Servidor atualizado com sucesso!'); if (onSaved) onSaved();
         }
       } else {
@@ -2173,6 +2221,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
         const commonData = {
           person_id: personId,
           cadastro: form.cadastro || null,
+          email: form.email.trim() || null,
           full_name: form.nome.trim(),
           dob: form.dob || null,
           phone: form.phone || null,
@@ -2193,6 +2242,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
           for (const r of results) {
             if (r.data?.id) await saveSacramentsAndInvestitures(r.data.id);
           }
+          await provisionarAcessoServidor();
           alert('Servidor cadastrado com sucesso!'); if (onSaved) onSaved();
         }
       }
@@ -2241,9 +2291,13 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
         {/* Row 1: Cadastro + Nome */}
         <div style={{ background: 'linear-gradient(to right, #eff6ff, #dbeafe)', padding: '0.5rem 1rem', border: '1px solid var(--border)', borderTop: 'none', marginBottom: '0' }}>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="form-group-inline" style={{ flex: '1.5' }}>
+              <label style={{ color: '#1e3a8a' }}>E-mail de acesso:</label>
+              <input type="email" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} placeholder="email@exemplo.com" value={form.email} onChange={e => setF('email', e.target.value)} />
+            </div>
             <div className="form-group-inline" style={{ flex: '0.8' }}>
-              <label style={{ color: '#1e3a8a' }}>Página:</label>
-              <input type="text" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} placeholder="Nº página" value={form.cadastro} onChange={e => setF('cadastro', e.target.value)} />
+              <label style={{ color: '#1e3a8a' }}>Cadastro:</label>
+              <input type="text" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} placeholder="Nº cadastro" value={form.cadastro} onChange={e => setF('cadastro', e.target.value)} />
             </div>
             <div className="form-group-inline" style={{ flex: '3' }}>
               <label style={{ color: '#1e3a8a' }}>Nome:</label>
