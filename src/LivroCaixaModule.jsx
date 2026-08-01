@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { useAuth } from './AuthContext';
-import { Plus, Trash2, Edit2, Save, Loader, AlertCircle, X, Settings } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, Loader, AlertCircle, X, Settings, FileBarChart } from 'lucide-react';
 
 const fmtMoeda = (v) => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmtData = (v) => v ? new Date(v + 'T00:00:00').toLocaleDateString('pt-BR') : '';
+const MESES_ABREV = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
 export function LivroCaixaModule({ setHeaderExtra }) {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export function LivroCaixaModule({ setHeaderExtra }) {
   const [novoCentro, setNovoCentro] = useState('');
   const [editandoCentroId, setEditandoCentroId] = useState(null);
   const [nomeCentroEdit, setNomeCentroEdit] = useState('');
+  const [relatorioAnual, setRelatorioAnual] = useState(false);
 
   useEffect(() => {
     carregarTudo();
@@ -32,10 +34,16 @@ export function LivroCaixaModule({ setHeaderExtra }) {
   useEffect(() => {
     if (!setHeaderExtra) return;
     setHeaderExtra(
-      <button type="button" onClick={() => setGerenciarCentros(true)}
-        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
-        <Settings size={14} /> Gerenciar Centro de Custos
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <button type="button" onClick={() => setGerenciarCentros(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
+          <Settings size={14} /> Gerenciar Centro de Custos
+        </button>
+        <button type="button" onClick={() => setRelatorioAnual(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
+          <FileBarChart size={14} /> Relatório Anual
+        </button>
+      </div>
     );
     return () => setHeaderExtra(null);
   }, [setHeaderExtra]);
@@ -59,7 +67,39 @@ export function LivroCaixaModule({ setHeaderExtra }) {
     }
   };
 
-  const nomeCentro = (id) => centros.find(c => c.id === id)?.nome || '-';
+  const nomeCentro = (id) => centros.find(c => c.id === id)?.nome || 'Sem centro de custo';
+
+  // Relatório anual: receitas e despesas por centro de custo, mês a mês, no ano em curso
+  const relatorio = React.useMemo(() => {
+    const anoAtual = new Date().getFullYear();
+    const doAno = lancamentos.filter(l => l.emissao && new Date(l.emissao + 'T00:00:00').getFullYear() === anoAtual);
+
+    const acumular = (campo) => {
+      const porCentro = {};
+      doAno.forEach(l => {
+        const valor = Number(l[campo]) || 0;
+        if (valor <= 0) return;
+        const mes = new Date(l.emissao + 'T00:00:00').getMonth();
+        const cid = l.centro_custo_id || '_sem';
+        if (!porCentro[cid]) porCentro[cid] = Array(12).fill(0);
+        porCentro[cid][mes] += valor;
+      });
+      const linhas = Object.entries(porCentro).map(([cid, meses]) => ({
+        nome: nomeCentro(cid === '_sem' ? null : cid),
+        meses,
+        total: meses.reduce((a, b) => a + b, 0)
+      })).sort((a, b) => a.nome.localeCompare(b.nome));
+      const totalMeses = Array(12).fill(0);
+      linhas.forEach(l => l.meses.forEach((v, i) => { totalMeses[i] += v; }));
+      return { linhas, totalMeses, totalGeral: totalMeses.reduce((a, b) => a + b, 0) };
+    };
+
+    const receitas = acumular('credito');
+    const despesas = acumular('debito');
+    const saldoMeses = MESES_ABREV.map((_, i) => receitas.totalMeses[i] - despesas.totalMeses[i]);
+    const saldoGeral = receitas.totalGeral - despesas.totalGeral;
+    return { anoAtual, receitas, despesas, saldoMeses, saldoGeral };
+  }, [lancamentos, centros]);
 
   // Saldo acumulado calculado no cliente, na ordem cronológica já retornada pela consulta
   const lancamentosComSaldo = (() => {
@@ -359,6 +399,68 @@ export function LivroCaixaModule({ setHeaderExtra }) {
           </div>
         </div>
       )}
+
+      {/* ---- Modal: Relatório Anual de Receitas e Despesas ---- */}
+      {relatorioAnual && (() => {
+        const celMes = { padding: '0.3rem 0.4rem', textAlign: 'right', whiteSpace: 'nowrap' };
+        const linhaSecao = (titulo) => (
+          <tr>
+            <td colSpan={14} style={{ padding: '0.4rem 0.5rem', background: '#1e293b', color: '#fff', fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase' }}>{titulo}</td>
+          </tr>
+        );
+        const linhaCentro = (l, i) => (
+          <tr key={i} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+            <td style={{ padding: '0.3rem 0.5rem', color: '#334155' }}>{l.nome}</td>
+            {l.meses.map((v, m) => <td key={m} style={celMes}>{v ? fmtMoeda(v) : ''}</td>)}
+            <td style={{ ...celMes, fontWeight: 700 }}>{fmtMoeda(l.total)}</td>
+          </tr>
+        );
+        const linhaTotal = (label, totalMeses, totalGeral, cor) => (
+          <tr style={{ background: '#e2e8f0', fontWeight: 800, color: cor }}>
+            <td style={{ padding: '0.35rem 0.5rem' }}>{label}</td>
+            {totalMeses.map((v, m) => <td key={m} style={celMes}>{fmtMoeda(v)}</td>)}
+            <td style={celMes}>{fmtMoeda(totalGeral)}</td>
+          </tr>
+        );
+        return (
+          <div onClick={() => setRelatorioAnual(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ background: '#fff', borderRadius: 8, width: '95%', maxWidth: '1200px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.9rem 1.2rem', background: '#1e293b' }}>
+                <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Relatório Anual de Receitas e Despesas — {relatorio.anoAtual}</span>
+                <button onClick={() => setRelatorioAnual(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
+              </div>
+              <div style={{ padding: '1rem 1.2rem', overflow: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ padding: '0.3rem 0.5rem', textAlign: 'left', borderBottom: '2px solid #1e293b' }}>Centro de Custo</th>
+                      {MESES_ABREV.map(m => <th key={m} style={{ ...celMes, borderBottom: '2px solid #1e293b' }}>{m}</th>)}
+                      <th style={{ ...celMes, borderBottom: '2px solid #1e293b' }}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {linhaSecao('Receitas')}
+                    {relatorio.receitas.linhas.length === 0 ? (
+                      <tr><td colSpan={14} style={{ padding: '0.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma receita no ano.</td></tr>
+                    ) : relatorio.receitas.linhas.map(linhaCentro)}
+                    {linhaTotal('Total Receitas', relatorio.receitas.totalMeses, relatorio.receitas.totalGeral, '#16a34a')}
+
+                    {linhaSecao('Despesas')}
+                    {relatorio.despesas.linhas.length === 0 ? (
+                      <tr><td colSpan={14} style={{ padding: '0.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma despesa no ano.</td></tr>
+                    ) : relatorio.despesas.linhas.map(linhaCentro)}
+                    {linhaTotal('Total Despesas', relatorio.despesas.totalMeses, relatorio.despesas.totalGeral, '#dc2626')}
+
+                    {linhaTotal('Saldo do Período', relatorio.saldoMeses, relatorio.saldoGeral, relatorio.saldoGeral < 0 ? '#dc2626' : '#1e293b')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
