@@ -6,7 +6,7 @@ import { Plus, Trash2, Edit2, Save, Loader, AlertCircle, X, Settings } from 'luc
 const fmtMoeda = (v) => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmtData = (v) => v ? new Date(v + 'T00:00:00').toLocaleDateString('pt-BR') : '';
 
-export function LivroCaixaModule() {
+export function LivroCaixaModule({ setHeaderExtra }) {
   const { user } = useAuth();
   const [lancamentos, setLancamentos] = useState([]);
   const [centros, setCentros] = useState([]);
@@ -24,6 +24,19 @@ export function LivroCaixaModule() {
   useEffect(() => {
     carregarTudo();
   }, []);
+
+  // Botão "Gerenciar Centros de Custo" injetado na 1ª linha do cabeçalho do
+  // app, ao lado de Sair — em vez de um botão dentro da própria tabela.
+  useEffect(() => {
+    if (!setHeaderExtra) return;
+    setHeaderExtra(
+      <button type="button" onClick={() => setGerenciarCentros(true)}
+        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
+        <Settings size={14} /> Gerenciar Centro de Custos
+      </button>
+    );
+    return () => setHeaderExtra(null);
+  }, [setHeaderExtra]);
 
   const carregarTudo = async () => {
     try {
@@ -187,12 +200,7 @@ export function LivroCaixaModule() {
             <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'right', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Débito</th>
             <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'right', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Crédito</th>
             <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'right', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Saldo</th>
-            <th style={{ background: '#1e293b', width: '90px', padding: 0 }}>
-              <button onClick={() => setGerenciarCentros(true)} title="Gerenciar Centros de Custo"
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', background: 'none', border: 'none', color: '#fff', padding: '0.6rem 0.5rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.75rem' }}>
-                <Settings size={13} />
-              </button>
-            </th>
+            <th style={{ background: '#1e293b', width: '90px', padding: '0.6rem 0.5rem' }}></th>
           </tr>
         </thead>
         <tbody>

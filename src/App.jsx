@@ -70,7 +70,7 @@ function AppContent() {
   // Ações extras que uma tela (ex: CadastroServidorForm) injeta na primeira
   // linha do cabeçalho, ao lado do usuário/Sair — evita uma segunda linha de botões.
   const [headerExtra, setHeaderExtra] = useState(null);
-  useEffect(() => { if (activeMenu !== 'CadastroServidor') setHeaderExtra(null); }, [activeMenu]);
+  useEffect(() => { if (!['CadastroServidor', 'Livro Caixa'].includes(activeMenu)) setHeaderExtra(null); }, [activeMenu]);
   const [dbServers, setDbServers] = useState([]);
   const [dbCommunities, setDbCommunities] = useState([]);
   const [prevMenu, setPrevMenu] = useState('Coroinhas');
@@ -218,7 +218,7 @@ function AppContent() {
       case 'Ata de Reunião':
         return <AtaReuniaoModule communities={dbCommunities} />;
       case 'Livro Caixa':
-        return <LivroCaixaModule />;
+        return <LivroCaixaModule setHeaderExtra={setHeaderExtra} />;
       case 'Formação e Estudos':
         return <FormacaoModule isMobile={isMobile} />;
       default:
