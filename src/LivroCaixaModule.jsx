@@ -20,6 +20,8 @@ export function LivroCaixaModule({ setHeaderExtra }) {
 
   const [gerenciarCentros, setGerenciarCentros] = useState(false);
   const [novoCentro, setNovoCentro] = useState('');
+  const [editandoCentroId, setEditandoCentroId] = useState(null);
+  const [nomeCentroEdit, setNomeCentroEdit] = useState('');
 
   useEffect(() => {
     carregarTudo();
@@ -151,6 +153,29 @@ export function LivroCaixaModule({ setHeaderExtra }) {
       const { error: err } = await supabase.from('livro_caixa_centros_custo').insert({ nome: novoCentro.trim(), created_by: user.id });
       if (err) throw err;
       setNovoCentro('');
+      await carregarTudo();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const abrirEdicaoCentro = (c) => {
+    setEditandoCentroId(c.id);
+    setNomeCentroEdit(c.nome);
+  };
+
+  const cancelarEdicaoCentro = () => {
+    setEditandoCentroId(null);
+    setNomeCentroEdit('');
+  };
+
+  const handleSalvarEdicaoCentro = async () => {
+    if (!nomeCentroEdit.trim()) return;
+    try {
+      const { error: err } = await supabase.from('livro_caixa_centros_custo')
+        .update({ nome: nomeCentroEdit.trim() }).eq('id', editandoCentroId);
+      if (err) throw err;
+      cancelarEdicaoCentro();
       await carregarTudo();
     } catch (err) {
       setError(err.message);
@@ -306,9 +331,25 @@ export function LivroCaixaModule({ setHeaderExtra }) {
                 </button>
               </div>
               {centros.map((c, i) => (
-                <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.4rem 0.6rem', background: i % 2 === 0 ? '#ffffff' : '#f1f5f9', borderRadius: 4 }}>
-                  <span style={{ fontSize: '0.85rem', color: '#334155' }}>{c.nome}</span>
-                  <button onClick={() => handleExcluirCentro(c.id)} style={btn('#dc2626')}><Trash2 size={13} /></button>
+                <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.4rem', padding: '0.4rem 0.6rem', background: i % 2 === 0 ? '#ffffff' : '#f1f5f9', borderRadius: 4 }}>
+                  {editandoCentroId === c.id ? (
+                    <>
+                      <input type="text" autoFocus value={nomeCentroEdit}
+                        onChange={e => setNomeCentroEdit(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleSalvarEdicaoCentro()}
+                        style={{ ...inputStyle, flex: 1 }} />
+                      <button onClick={handleSalvarEdicaoCentro} title="Salvar" style={btn('#16a34a')}><Save size={13} /></button>
+                      <button onClick={cancelarEdicaoCentro} title="Cancelar" style={btn('#94a3b8')}><X size={13} /></button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: '0.85rem', color: '#334155' }}>{c.nome}</span>
+                      <div style={{ display: 'flex', gap: '0.3rem' }}>
+                        <button onClick={() => abrirEdicaoCentro(c)} title="Editar" style={btn('#3b82f6')}><Edit2 size={13} /></button>
+                        <button onClick={() => handleExcluirCentro(c.id)} title="Excluir" style={btn('#dc2626')}><Trash2 size={13} /></button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
               {centros.length === 0 && (
