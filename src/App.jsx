@@ -2299,17 +2299,17 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
               <label style={{ color: '#1e3a8a' }}>Nome:</label>
               <input type="text" className="form-input" maxLength={50} style={{ background: 'rgba(255,255,255,0.8)', width: '50ch', flex: 'none' }} value={form.nome} onChange={e => setF('nome', e.target.value)} />
             </div>
-            <div className="form-group-inline" style={{ flex: '1' }}>
+            <div className="form-group-inline" style={{ flex: 'none' }}>
               <label style={{ color: '#1e3a8a' }}>Nascimento:</label>
-              <input type="date" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} value={form.dob} onChange={e => setF('dob', e.target.value)} />
+              <input type="date" className="form-input" style={{ background: 'rgba(255,255,255,0.8)', width: '15ch', flex: 'none' }} value={form.dob} onChange={e => setF('dob', e.target.value)} />
             </div>
             <div className="form-group-inline" style={{ flex: 'none' }}>
               <label style={{ color: '#1e3a8a' }}>WhatsApp:</label>
               <input type="text" className="form-input" maxLength={15} style={{ background: 'rgba(255,255,255,0.8)', width: '17ch', flex: 'none' }} placeholder="(11) 99999-9999" value={form.phone} onChange={e => { handlePhoneMask(e); setF('phone', e.target.value); }} />
             </div>
-            <div className="form-group-inline" style={{ flex: 'none' }}>
+            <div className="form-group-inline" style={{ flex: '1' }}>
               <label style={{ color: '#1e3a8a' }}>E-mail de acesso:</label>
-              <input type="email" className="form-input" maxLength={40} style={{ background: 'rgba(255,255,255,0.8)', width: '40ch', flex: 'none' }} placeholder="email@exemplo.com" value={form.email} onChange={e => setF('email', e.target.value)} />
+              <input type="email" className="form-input" maxLength={40} style={{ background: 'rgba(255,255,255,0.8)' }} placeholder="email@exemplo.com" value={form.email} onChange={e => setF('email', e.target.value)} />
             </div>
           </div>
         </div>
