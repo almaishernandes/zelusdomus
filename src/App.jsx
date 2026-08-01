@@ -63,10 +63,14 @@ const MENU_COLORS = {
 };
 
 function AppContent() {
-  const { eAutenticado, ehCoordenador, ehServidor, perfil, logout, loading: authLoading } = useAuth();
+  const { eAutenticado, ehCoordenador, ehServidor, perfil, user, logout, loading: authLoading } = useAuth();
 
   // TODOS os Hooks AQUI, ANTES de qualquer if/return
   const [activeMenu, setActiveMenu] = useState('Coroinhas');
+  // Ações extras que uma tela (ex: CadastroServidorForm) injeta na primeira
+  // linha do cabeçalho, ao lado do usuário/Sair — evita uma segunda linha de botões.
+  const [headerExtra, setHeaderExtra] = useState(null);
+  useEffect(() => { if (activeMenu !== 'CadastroServidor') setHeaderExtra(null); }, [activeMenu]);
   const [dbServers, setDbServers] = useState([]);
   const [dbCommunities, setDbCommunities] = useState([]);
   const [prevMenu, setPrevMenu] = useState('Coroinhas');
@@ -187,6 +191,7 @@ function AppContent() {
           editData={editingServer}
           communities={dbCommunities}
           initialType={prevMenu}
+          setHeaderExtra={setHeaderExtra}
         />;
       case 'CadastroComunidade':
         return <CadastroComunidadeForm
@@ -242,10 +247,12 @@ function AppContent() {
               {ehCoordenador
                 ? `👤 ${perfil.full_name} — Coordenador${isMobile ? ' (acesso completo apenas no desktop)' : ''}`
                 : `👤 ${perfil.full_name} — ${(perfil.funcoes && perfil.funcoes.length) ? perfil.funcoes.map(t => TYPE_LABELS[t] || t).join(', ') : 'Servidor do Altar'}`}
+              {user?.email ? ` — ${user.email}` : ''}
             </span>}
             <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#dc2626', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
               <LogOut size={16} /> Sair
             </button>
+            {headerExtra}
           </div>
           {novoBtn && (() => {
             const btnBg = novoBtnColor ? novoBtnColor.bg : '#b34946';
@@ -1902,7 +1909,7 @@ function CadastroForm({ setActiveMenu }) {
     </div>
   );
 }
-function CadastroServidorForm({ onBack, onSaved, editData, communities = [], initialType = 'Coroinhas' }) {
+function CadastroServidorForm({ onBack, onSaved, editData, communities = [], initialType = 'Coroinhas', setHeaderExtra }) {
   const isEdit = !!editData;
   const MENU_TO_TYPE = { 'Coroinhas': 'coroinha', 'Acolitos': 'acolito', 'Monitores': 'monitor', 'Cerimoniários': 'cerimoniario', 'Coordenadores': 'coordenador' };
   const TIPO_KEY = { 'Coroinha': 'coroinha', 'Acólito': 'acolito', 'Monitor': 'monitor', 'Cerimoniário': 'cerimoniario', 'Coordenador': 'coordenador' };
@@ -2249,44 +2256,51 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
     } finally { setSaving(false); }
   };
 
+  // Injeta os botões de ação do formulário na primeira linha do cabeçalho do
+  // app (ao lado de Usuário/Função/E-mail/Sair), em vez de uma segunda linha.
+  useEffect(() => {
+    if (!setHeaderExtra) return;
+    setHeaderExtra(
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+        <button type="button" onClick={onBack} className="btn-primary" style={{ backgroundColor: 'var(--text-muted)' }}>Cancelar / Voltar</button>
+        <button type="button" onClick={handleSalvar} disabled={saving} className="btn-primary">{saving ? 'Salvando...' : isEdit ? 'Atualizar Servidor' : 'Salvar Cadastro'}</button>
+        {isEdit && (
+          <div style={{ position: 'relative' }}>
+            <button type="button" onClick={() => setTransferOpen(o => !o)} disabled={saving}
+              className="btn-primary" style={{ backgroundColor: '#7c3aed' }}>
+              Transferência para outro cadastro ▾
+            </button>
+            {transferOpen && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 60, background: '#fff',
+                border: '1px solid #cbd5e1', borderRadius: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                minWidth: '220px', overflow: 'hidden', marginTop: '0.2rem' }}>
+                {[['coroinha', 'Coroinha'], ['acolito', 'Acólito'], ['monitor', 'Monitor']].map(([k, label]) => (
+                  <button key={k} type="button"
+                    onClick={async () => {
+                      setTransferOpen(false);
+                      if (!window.confirm(`Transferir ${form.nome || 'este servidor'} para ${label}?\nTodos os dados do cadastro serão mantidos na nova função.`)) return;
+                      setTipos({ coroinha: false, acolito: false, monitor: false, cerimoniario: false, coordenador: false, [k]: true });
+                      await handleSalvar([k]);
+                    }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.5rem 1rem',
+                      background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#334155' }}
+                    onMouseOver={e => e.currentTarget.style.background = '#ede9fe'}
+                    onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+    return () => setHeaderExtra(null);
+  }, [onBack, handleSalvar, saving, isEdit, transferOpen, form.nome]);
+
   return (
     <div className="grid-container" style={{ padding: '0 2rem 2rem 2rem', backgroundColor: 'var(--surface)' }}>
       <form className="cadastro-form" onSubmit={(e) => e.preventDefault()}>
-
-        {/* Cabeçalho do formulário: ações à esquerda */}
-        <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '1rem', padding: '0.6rem 0' }}>
-          <button type="button" onClick={onBack} className="btn-primary" style={{ backgroundColor: 'var(--text-muted)' }}>Cancelar / Voltar</button>
-          <button type="button" onClick={handleSalvar} disabled={saving} className="btn-primary">{saving ? 'Salvando...' : isEdit ? 'Atualizar Servidor' : 'Salvar Cadastro'}</button>
-          {isEdit && (
-            <div style={{ position: 'relative' }}>
-              <button type="button" onClick={() => setTransferOpen(o => !o)} disabled={saving}
-                className="btn-primary" style={{ backgroundColor: '#7c3aed' }}>
-                Transferência para outro cadastro ▾
-              </button>
-              {transferOpen && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, zIndex: 60, background: '#fff',
-                  border: '1px solid #cbd5e1', borderRadius: 6, boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-                  minWidth: '100%', overflow: 'hidden', marginTop: '0.2rem' }}>
-                  {[['coroinha', 'Coroinha'], ['acolito', 'Acólito'], ['monitor', 'Monitor']].map(([k, label]) => (
-                    <button key={k} type="button"
-                      onClick={async () => {
-                        setTransferOpen(false);
-                        if (!window.confirm(`Transferir ${form.nome || 'este servidor'} para ${label}?\nTodos os dados do cadastro serão mantidos na nova função.`)) return;
-                        setTipos({ coroinha: false, acolito: false, monitor: false, cerimoniario: false, coordenador: false, [k]: true });
-                        await handleSalvar([k]);
-                      }}
-                      style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.5rem 1rem',
-                        background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.88rem', fontWeight: 600, color: '#334155' }}
-                      onMouseOver={e => e.currentTarget.style.background = '#ede9fe'}
-                      onMouseOut={e => e.currentTarget.style.background = 'none'}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
 
         {/* Row 1: Cadastro + Nome */}
         <div style={{ background: 'linear-gradient(to right, #eff6ff, #dbeafe)', padding: '0.5rem 1rem', border: '1px solid var(--border)', borderTop: 'none', marginBottom: '0' }}>
