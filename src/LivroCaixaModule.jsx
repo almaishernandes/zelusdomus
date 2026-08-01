@@ -236,7 +236,7 @@ export function LivroCaixaModule() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr 1.4fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.7rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Emissão</label>
-              <input type="date" value={form.emissao} onChange={e => setForm({ ...form, emissao: e.target.value })} style={inputStyle} autoFocus />
+              <input type="date" value={form.emissao} onChange={e => setForm({ ...form, emissao: e.target.value, vencimento: e.target.value })} style={inputStyle} autoFocus />
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Vencimento</label>
