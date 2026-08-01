@@ -2291,7 +2291,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
         {/* Row 1: Cadastro + Nome */}
         <div style={{ background: 'linear-gradient(to right, #eff6ff, #dbeafe)', padding: '0.5rem 1rem', border: '1px solid var(--border)', borderTop: 'none', marginBottom: '0' }}>
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="form-group-inline" style={{ flex: '0.8' }}>
+            <div className="form-group-inline" style={{ flex: '0.4' }}>
               <label style={{ color: '#1e3a8a' }}>Cadastro:</label>
               <input type="text" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} placeholder="Nº cadastro" value={form.cadastro} onChange={e => setF('cadastro', e.target.value)} />
             </div>
@@ -2303,11 +2303,11 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
               <label style={{ color: '#1e3a8a' }}>Nascimento:</label>
               <input type="date" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} value={form.dob} onChange={e => setF('dob', e.target.value)} />
             </div>
-            <div className="form-group-inline" style={{ flex: '1.5' }}>
+            <div className="form-group-inline" style={{ flex: '2' }}>
               <label style={{ color: '#1e3a8a' }}>WhatsApp:</label>
               <input type="text" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} placeholder="(11) 99999-9999" value={form.phone} onChange={e => { handlePhoneMask(e); setF('phone', e.target.value); }} />
             </div>
-            <div className="form-group-inline" style={{ flex: '1.5' }}>
+            <div className="form-group-inline" style={{ flex: '2' }}>
               <label style={{ color: '#1e3a8a' }}>E-mail de acesso:</label>
               <input type="email" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} placeholder="email@exemplo.com" value={form.email} onChange={e => setF('email', e.target.value)} />
             </div>
