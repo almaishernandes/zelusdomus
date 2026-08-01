@@ -190,7 +190,7 @@ export function LivroCaixaModule({ setHeaderExtra }) {
             <th style={{ background: '#1e293b', padding: 0, textAlign: 'left', width: '160px' }}>
               <button onClick={abrirInserir}
                 style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: '#fff', padding: '0.6rem 0.9rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem' }}>
-                <Plus size={14} /> Inserir Lançamento
+                <Plus size={14} /> Incluir
               </button>
             </th>
             <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Emissão</th>
@@ -224,7 +224,7 @@ export function LivroCaixaModule({ setHeaderExtra }) {
           ))}
 
           {lancamentos.length === 0 && (
-            <tr><td colSpan={9} style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum lançamento cadastrado. Clique em "Inserir Lançamento" para começar.</td></tr>
+            <tr><td colSpan={9} style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum lançamento cadastrado. Clique em "Incluir" para começar.</td></tr>
           )}
         </tbody>
         {lancamentos.length > 0 && (
