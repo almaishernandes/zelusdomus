@@ -212,7 +212,8 @@ function AppContent() {
       case 'Comunidades':
         return <ComunidadesTable data={dbCommunities} onDelete={handleDeleteCommunity} onEdit={handleEditCommunity} onNew={() => { setPrevMenu('Comunidades'); setActiveMenu('CadastroComunidade'); }} />;
       case 'Agenda e Calendário':
-        return <AgendaModule servers={dbServers} communities={dbCommunities} isMobile={isMobile} />;
+        return <AgendaModule servers={dbServers} communities={dbCommunities} isMobile={isMobile}
+          restrictCadastro={!ehCoordenador ? perfil?.numero_cadastro : null} />;
       case 'Formação Cadastro':
         return <FormacaoAdminModule communities={dbCommunities} />;
       case 'Ata de Reunião':
@@ -897,11 +898,17 @@ function GruposParticipantes({ grupos, vazio = 'sem servidores designados' }) {
   );
 }
 
-function AgendaServidor({ servers, communities, isMobile }) {
+function AgendaServidor({ servers, communities, isMobile, restrictCadastro }) {
   const [id, setId] = useState('');
   const [gerandoPdf, setGerandoPdf] = useState(false);
   const [mostrarPreview, setMostrarPreview] = useState(false);
-  const serv = servers.find(s => String(s.id) === id);
+  // Servidor (não-coordenador) só pode ver a própria agenda — nada de escolher outro cadastro
+  const servers2 = restrictCadastro ? servers.filter(s => s.cadastro === restrictCadastro) : servers;
+  useEffect(() => {
+    if (restrictCadastro && servers2.length > 0) setId(String(servers2[0].id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restrictCadastro, servers2.length]);
+  const serv = servers2.find(s => String(s.id) === id);
   // Próximas participações: percorre os próximos meses e casa cada data com as
   // semanas/horários marcados na participação do servidor
   const proximas = React.useMemo(() => {
@@ -991,20 +998,26 @@ function AgendaServidor({ servers, communities, isMobile }) {
         .no-print { display: none !important; }
       }`}</style>
       <div className="no-print" style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.8rem' }}>
-        <select value={id} onChange={e => setId(e.target.value)} style={agSel}>
-          <option value="">-- Selecione o Servidor --</option>
-          {servers.map(s => <option key={s.id} value={s.id}>{(s.cadastro ? s.cadastro + ' — ' : '') + (s.full_name || '')}</option>)}
-        </select>
+        {restrictCadastro ? (
+          <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.9rem' }}>{serv?.full_name || 'Minha agenda'}</span>
+        ) : (
+          <select value={id} onChange={e => setId(e.target.value)} style={agSel}>
+            <option value="">-- Selecione o Servidor --</option>
+            {servers2.map(s => <option key={s.id} value={s.id}>{(s.cadastro ? s.cadastro + ' — ' : '') + (s.full_name || '')}</option>)}
+          </select>
+        )}
         {serv && (
           <>
             <button onClick={() => setMostrarPreview(true)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0.4rem 0.9rem', fontWeight: 600, fontSize: '0.85rem' }}>
               <Eye size={15} /> Visualizar
             </button>
-            <button onClick={() => setId('')} title="Limpar seleção e ver o próximo servidor"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0.4rem 0.9rem', fontWeight: 600, fontSize: '0.85rem' }}>
-              <ChevronLeft size={16} /> Voltar
-            </button>
+            {!restrictCadastro && (
+              <button onClick={() => setId('')} title="Limpar seleção e ver o próximo servidor"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0.4rem 0.9rem', fontWeight: 600, fontSize: '0.85rem' }}>
+                <ChevronLeft size={16} /> Voltar
+              </button>
+            )}
           </>
         )}
       </div>
@@ -1642,7 +1655,7 @@ function CalendarioAnual({ servers, communities, isMobile }) {
   );
 }
 
-function AgendaModule({ servers, communities, isMobile }) {
+function AgendaModule({ servers, communities, isMobile, restrictCadastro }) {
   const unicos = React.useMemo(() => {
     const seen = new Set(); const out = [];
     [...servers].sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '')).forEach(s => {
@@ -1660,7 +1673,7 @@ function AgendaModule({ servers, communities, isMobile }) {
     <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem', display: 'flex', flexDirection: 'column', maxHeight: 'none', overflow: 'visible' }}>
       <div style={secaoStyle}>
         <div style={tituloStyle}><Users size={15} /> Agenda do Servidor</div>
-        <div style={corpoStyle}><AgendaServidor servers={unicos} communities={communities} isMobile={true} /></div>
+        <div style={corpoStyle}><AgendaServidor servers={unicos} communities={communities} isMobile={true} restrictCadastro={restrictCadastro} /></div>
       </div>
 
       <div style={secaoStyle}>
