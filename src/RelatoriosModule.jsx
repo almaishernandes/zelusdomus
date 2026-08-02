@@ -64,6 +64,9 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
         <button type="button" onClick={() => setVisao('porFuncao')} style={btn(visao === 'porFuncao')}>
           <ClipboardList size={14} /> Relação por Função
         </button>
+        <button type="button" onClick={() => setVisao('comunidades')} style={btn(visao === 'comunidades')}>
+          <Church size={14} /> Comunidades
+        </button>
       </div>
     );
     return () => setHeaderExtra(null);
@@ -173,6 +176,35 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
     );
   }
 
+  if (visao === 'comunidades') {
+    return (
+      <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
+        <div style={secaoStyle}>
+          <div style={tituloStyle}><Church size={15} /> Comunidades ({communities.length})</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr>
+                <th style={th}>Nome</th>
+                <th style={th}>Endereço</th>
+              </tr>
+            </thead>
+            <tbody>
+              {communities.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((c, i) => (
+                <tr key={c.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                  <td style={{ ...td, color: '#1e293b', fontWeight: 600 }}>{c.name}</td>
+                  <td style={td}>{c.address || '-'}</td>
+                </tr>
+              ))}
+              {communities.length === 0 && (
+                <tr><td colSpan={2} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma comunidade cadastrada.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
       {TIPOS.map(({ key, label }) => {
@@ -208,29 +240,6 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
           </div>
         );
       })}
-
-      <div style={secaoStyle}>
-        <div style={tituloStyle}><Church size={15} /> Comunidades ({communities.length})</div>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-          <thead>
-            <tr>
-              <th style={th}>Nome</th>
-              <th style={th}>Endereço</th>
-            </tr>
-          </thead>
-          <tbody>
-            {communities.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((c, i) => (
-              <tr key={c.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                <td style={{ ...td, color: '#1e293b', fontWeight: 600 }}>{c.name}</td>
-                <td style={td}>{c.address || '-'}</td>
-              </tr>
-            ))}
-            {communities.length === 0 && (
-              <tr><td colSpan={2} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma comunidade cadastrada.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }
