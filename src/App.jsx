@@ -698,18 +698,16 @@ function FichaCadastro({ item, communities = [], onClose }) {
 
         <table style={tbl}><tbody>
           <tr>
-            <td style={lbl}>Nome</td>
-            <td style={cell} colSpan={3}>{item.full_name || item.nome || ' '}</td>
-          </tr>
-          <tr>
-            <td style={lbl}>E-mail de acesso</td>
-            <td style={cell} colSpan={3}>{item.email || ' '}</td>
-          </tr>
-          <tr>
             <td style={lbl}>Nascimento</td>
             <td style={cell}>{fmtDate(item.dob) || item.nascimento || ' '}</td>
+            <td style={lbl}>Nome</td>
+            <td style={cell}>{item.full_name || item.nome || ' '}</td>
+          </tr>
+          <tr>
             <td style={lbl}>WhatsApp</td>
             <td style={cell}>{item.phone || item.telefone || ' '}</td>
+            <td style={lbl}>E-mail de acesso</td>
+            <td style={cell}>{item.email || ' '}</td>
           </tr>
           <tr>
             <td style={lbl}>Residência</td>
