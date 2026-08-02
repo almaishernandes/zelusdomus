@@ -53,6 +53,7 @@ export function RelatoriosModule({ servers = [], communities = [] }) {
               <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>Nome</th>
               <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>Função</th>
               <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>WhatsApp</th>
+              <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>E-mail</th>
             </tr>
           </thead>
           <tbody>
@@ -62,10 +63,11 @@ export function RelatoriosModule({ servers = [], communities = [] }) {
                 <td style={{ padding: '0.35rem 0.9rem', color: '#1e293b', fontWeight: 600 }}>{s.full_name}</td>
                 <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{TYPE_LABEL[s.type] || s.type}</td>
                 <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{s.phone || '-'}</td>
+                <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{s.email || '-'}</td>
               </tr>
             ))}
             {aniversariantesDoMes.length === 0 && (
-              <tr><td colSpan={4} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum aniversariante em {MESES[mesAniversario]}.</td></tr>
+              <tr><td colSpan={5} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum aniversariante em {MESES[mesAniversario]}.</td></tr>
             )}
           </tbody>
         </table>
@@ -82,6 +84,7 @@ export function RelatoriosModule({ servers = [], communities = [] }) {
                   <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>Cadastro</th>
                   <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>Nome</th>
                   <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>WhatsApp</th>
+                  <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>E-mail</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,10 +93,11 @@ export function RelatoriosModule({ servers = [], communities = [] }) {
                     <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{s.cadastro || '-'}</td>
                     <td style={{ padding: '0.35rem 0.9rem', color: '#1e293b', fontWeight: 600 }}>{s.full_name}</td>
                     <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{s.phone || '-'}</td>
+                    <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{s.email || '-'}</td>
                   </tr>
                 ))}
                 {lista.length === 0 && (
-                  <tr><td colSpan={3} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum(a) {label.toLowerCase()} cadastrado(a).</td></tr>
+                  <tr><td colSpan={4} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum(a) {label.toLowerCase()} cadastrado(a).</td></tr>
                 )}
               </tbody>
             </table>
