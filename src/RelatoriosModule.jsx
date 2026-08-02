@@ -207,6 +207,11 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
     );
   }
 
+  // Larguras fixas e iguais em todas as seções, para as colunas alinharem
+  // na mesma posição de uma função para outra.
+  const colsPorFuncao = ['12%', '30%', '16%', '20%', '22%'];
+  const thFixo = (w) => ({ ...th, width: w });
+
   return (
     <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
       {TIPOS.map(({ key, label }) => {
@@ -214,24 +219,24 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
         return (
           <div key={key} style={secaoStyle}>
             <div style={tituloStyle}><Users size={15} /> {label} ({lista.length})</div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
-                  <th style={th}>Cadastro</th>
-                  <th style={th}>Nome</th>
-                  <th style={th}>WhatsApp</th>
-                  <th style={th}>E-mail</th>
-                  <th style={th}>Comunidade que Atua</th>
+                  <th style={thFixo(colsPorFuncao[0])}>Cadastro</th>
+                  <th style={thFixo(colsPorFuncao[1])}>Nome</th>
+                  <th style={thFixo(colsPorFuncao[2])}>WhatsApp</th>
+                  <th style={thFixo(colsPorFuncao[3])}>E-mail</th>
+                  <th style={thFixo(colsPorFuncao[4])}>Comunidade que Atua</th>
                 </tr>
               </thead>
               <tbody>
                 {lista.map((s, i) => (
                   <tr key={s.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                    <td style={td}>{s.cadastro || '-'}</td>
-                    <td style={{ ...td, color: '#1e293b', fontWeight: 600 }}>{s.full_name}</td>
-                    <td style={td}>{s.phone || '-'}</td>
-                    <td style={td}>{s.email || '-'}</td>
-                    <td style={td}>{comunidadesAtua(s).join(', ') || '-'}</td>
+                    <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.cadastro || '-'}</td>
+                    <td style={{ ...td, color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.full_name}</td>
+                    <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.phone || '-'}</td>
+                    <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email || '-'}</td>
+                    <td style={{ ...td, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{comunidadesAtua(s).join(', ') || '-'}</td>
                   </tr>
                 ))}
                 {lista.length === 0 && (
