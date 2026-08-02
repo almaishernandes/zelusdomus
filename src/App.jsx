@@ -106,13 +106,6 @@ function AppContent() {
 
   const MENUS_PERMITIDOS_MOBILE = ['Agenda e Calendário', 'Formação e Estudos'];
 
-  useEffect(() => {
-    if (isMobile && !MENUS_PERMITIDOS_MOBILE.includes(activeMenu)) {
-      setActiveMenu('Agenda e Calendário');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile]);
-
   // Coroinha/Acólito (nível restrito) começam direto na Agenda e Calendário —
   // o activeMenu inicial ('Coroinhas') é uma tela de coordenador e não deve
   // "vazar" para quem só tem acesso aos 2 menus liberados.
@@ -204,13 +197,11 @@ function AppContent() {
     { name: 'Formação e Estudos',     icon: BookOpen }
   ];
 
-  const menuOptions = isMobile
-    ? menuOptionsRestrito
-    : ehCoordenador
-      ? menuOptionsCompleto
-      : acessoAmplo
-        ? menuOptionsCompleto.filter(m => !['Formação Cadastro', 'Livro Caixa'].includes(m.name))
-        : menuOptionsRestrito;
+  const menuOptions = ehCoordenador
+    ? menuOptionsCompleto
+    : acessoAmplo
+      ? menuOptionsCompleto.filter(m => !['Formação Cadastro', 'Livro Caixa'].includes(m.name))
+      : menuOptionsRestrito;
 
 
   const renderContent = () => {
@@ -279,7 +270,7 @@ function AppContent() {
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             {perfil && <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
               {ehCoordenador
-                ? `👤 ${perfil.full_name} — Coordenador${isMobile ? ' (acesso completo apenas no desktop)' : ''}`
+                ? `👤 ${perfil.full_name} — Coordenador`
                 : `👤 ${perfil.full_name} — ${(perfil.funcoes && perfil.funcoes.length) ? perfil.funcoes.map(t => TYPE_LABELS[t] || t).join(', ') : 'Servidor do Altar'}`}
               {user?.email ? ` — ${user.email}` : ''}
             </span>}
