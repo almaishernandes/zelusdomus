@@ -89,55 +89,54 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
 
   const mesAtual = new Date().getMonth();
   const mesSeguinte = (mesAtual + 1) % 12;
-  const aniversariantesPeriodo = servidoresUnicos
-    .filter(s => s.dob && [mesAtual, mesSeguinte].includes(new Date(s.dob + 'T00:00:00').getMonth()))
-    .sort((a, b) => {
-      const da = new Date(a.dob + 'T00:00:00'), db = new Date(b.dob + 'T00:00:00');
-      const ma = da.getMonth() === mesAtual ? 0 : 1, mb = db.getMonth() === mesAtual ? 0 : 1;
-      return ma !== mb ? ma - mb : da.getDate() - db.getDate();
-    });
+  const aniversariantesDoMes = (mes) => servidoresUnicos
+    .filter(s => s.dob && new Date(s.dob + 'T00:00:00').getMonth() === mes)
+    .sort((a, b) => new Date(a.dob + 'T00:00:00').getDate() - new Date(b.dob + 'T00:00:00').getDate());
 
   const todosServidoresOrdenados = servers.slice().sort(porCadastro);
+
+  const tabelaAniversariantes = (mes, lista) => (
+    <div key={mes} style={secaoStyle}>
+      <div style={tituloStyle}><Cake size={15} /> {MESES[mes]} ({lista.length})</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+        <thead>
+          <tr>
+            <th style={th}>Cadastro</th>
+            <th style={th}>Nome</th>
+            <th style={th}>Função</th>
+            <th style={th}>Data de Aniversário</th>
+            <th style={th}>Idade</th>
+            <th style={th}>WhatsApp</th>
+            <th style={th}>E-mail</th>
+            <th style={th}>Comunidade que Atua</th>
+          </tr>
+        </thead>
+        <tbody>
+          {lista.map((s, i) => (
+            <tr key={s.person_id || s.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+              <td style={td}>{s.cadastro || '-'}</td>
+              <td style={{ ...td, color: '#1e293b', fontWeight: 600 }}>{s.full_name}</td>
+              <td style={td}>{TYPE_LABEL[s.type] || s.type}</td>
+              <td style={td}>{fmtDataCurta(s.dob)}</td>
+              <td style={td}>{calcIdade(s.dob)}</td>
+              <td style={td}>{s.phone || '-'}</td>
+              <td style={td}>{s.email || '-'}</td>
+              <td style={td}>{comunidadesAtua(s).join(', ') || '-'}</td>
+            </tr>
+          ))}
+          {lista.length === 0 && (
+            <tr><td colSpan={8} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum aniversariante em {MESES[mes]}.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 
   if (visao === 'aniversariantes') {
     return (
       <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
-        <div style={secaoStyle}>
-          <div style={tituloStyle}>
-            <Cake size={15} /> Aniversariantes — {MESES[mesAtual]} e {MESES[mesSeguinte]} ({aniversariantesPeriodo.length})
-          </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-            <thead>
-              <tr>
-                <th style={th}>Cadastro</th>
-                <th style={th}>Nome</th>
-                <th style={th}>Função</th>
-                <th style={th}>Data de Aniversário</th>
-                <th style={th}>Idade</th>
-                <th style={th}>WhatsApp</th>
-                <th style={th}>E-mail</th>
-                <th style={th}>Comunidade que Atua</th>
-              </tr>
-            </thead>
-            <tbody>
-              {aniversariantesPeriodo.map((s, i) => (
-                <tr key={s.person_id || s.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                  <td style={td}>{s.cadastro || '-'}</td>
-                  <td style={{ ...td, color: '#1e293b', fontWeight: 600 }}>{s.full_name}</td>
-                  <td style={td}>{TYPE_LABEL[s.type] || s.type}</td>
-                  <td style={td}>{fmtDataCurta(s.dob)}</td>
-                  <td style={td}>{calcIdade(s.dob)}</td>
-                  <td style={td}>{s.phone || '-'}</td>
-                  <td style={td}>{s.email || '-'}</td>
-                  <td style={td}>{comunidadesAtua(s).join(', ') || '-'}</td>
-                </tr>
-              ))}
-              {aniversariantesPeriodo.length === 0 && (
-                <tr><td colSpan={8} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum aniversariante em {MESES[mesAtual]} ou {MESES[mesSeguinte]}.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {tabelaAniversariantes(mesAtual, aniversariantesDoMes(mesAtual))}
+        {tabelaAniversariantes(mesSeguinte, aniversariantesDoMes(mesSeguinte))}
       </div>
     );
   }
