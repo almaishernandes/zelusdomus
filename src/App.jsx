@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { supabase, supabaseAuthOnly } from './supabaseClient';
-import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Menu, Wallet } from 'lucide-react';
+import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Menu, Wallet, ClipboardList } from 'lucide-react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { LoginPage } from './LoginPage';
 // Telas administrativas carregadas sob demanda: reduz o pacote inicial que o
@@ -9,6 +9,7 @@ const FormacaoModule = React.lazy(() => import('./FormacaoModule').then(m => ({ 
 const FormacaoAdminModule = React.lazy(() => import('./FormacaoAdminModule').then(m => ({ default: m.FormacaoAdminModule })));
 const AtaReuniaoModule = React.lazy(() => import('./AtaReuniaoModule').then(m => ({ default: m.AtaReuniaoModule })));
 const LivroCaixaModule = React.lazy(() => import('./LivroCaixaModule').then(m => ({ default: m.LivroCaixaModule })));
+const RelatoriosModule = React.lazy(() => import('./RelatoriosModule').then(m => ({ default: m.RelatoriosModule })));
 // html2pdf.js é pesado — carregado sob demanda apenas quando o usuário gera o PDF
 const loadHtml2pdf = () => import('html2pdf.js').then(m => m.default);
 import './index.css';
@@ -59,6 +60,7 @@ const MENU_COLORS = {
   'Formação Cadastro':      { bg: '#0ea5e9', color: '#ffffff', spanColor: '#e0f2fe' },
   'Ata de Reunião':         { bg: '#ca8a04', color: '#ffffff', spanColor: '#fef9c3' },
   'Livro Caixa':            { bg: '#16a34a', color: '#ffffff', spanColor: '#dcfce7' },
+  'Relatórios':             { bg: '#0f766e', color: '#ffffff', spanColor: '#ccfbf1' },
   'Formação e Estudos':     { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
 };
 
@@ -174,7 +176,8 @@ function AppContent() {
       { name: 'Formação Cadastro',      icon: BookOpen },
       { name: 'Formação e Estudos',     icon: BookOpen },
       { name: 'Ata de Reunião',         icon: FileText },
-      { name: 'Livro Caixa',            icon: Wallet }
+      { name: 'Livro Caixa',            icon: Wallet },
+      { name: 'Relatórios',             icon: ClipboardList }
     ]
     : [
       { name: 'Agenda e Calendário',    icon: CalendarDays },
@@ -220,6 +223,8 @@ function AppContent() {
         return <AtaReuniaoModule communities={dbCommunities} />;
       case 'Livro Caixa':
         return <LivroCaixaModule setHeaderExtra={setHeaderExtra} />;
+      case 'Relatórios':
+        return <RelatoriosModule servers={dbServers} communities={dbCommunities} />;
       case 'Formação e Estudos':
         return <FormacaoModule isMobile={isMobile} />;
       default:
