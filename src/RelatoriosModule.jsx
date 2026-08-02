@@ -15,20 +15,6 @@ const comunidadesAtua = (s) => {
   try { return JSON.parse(s.community_atua || '[]'); } catch { return []; }
 };
 
-// Participação salva como { comunidade: ['DOW|hora|nºsemana', ...] } — resume em texto legível
-const frequenciaTexto = (s) => {
-  let part;
-  try { part = JSON.parse(s.participation || '{}'); } catch { return '-'; }
-  const linhas = [];
-  Object.values(part || {}).forEach(keys => {
-    (keys || []).forEach(k => {
-      const [dow, hora, nth] = String(k).split('|');
-      if (dow) linhas.push(`${nth || ''}ª ${dow} ${hora || ''}`.trim());
-    });
-  });
-  return linhas.length ? linhas.join(', ') : '-';
-};
-
 export function RelatoriosModule({ servers = [], communities = [] }) {
   const [mesAniversario, setMesAniversario] = useState(new Date().getMonth());
   const secaoStyle = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden', marginBottom: '1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' };
@@ -73,7 +59,6 @@ export function RelatoriosModule({ servers = [], communities = [] }) {
               <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>WhatsApp</th>
               <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>E-mail</th>
               <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>Comunidade que Atua</th>
-              <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>Frequência</th>
             </tr>
           </thead>
           <tbody>
@@ -85,11 +70,10 @@ export function RelatoriosModule({ servers = [], communities = [] }) {
                 <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{s.phone || '-'}</td>
                 <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{s.email || '-'}</td>
                 <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{comunidadesAtua(s).join(', ') || '-'}</td>
-                <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{frequenciaTexto(s)}</td>
               </tr>
             ))}
             {aniversariantesDoMes.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum aniversariante em {MESES[mesAniversario]}.</td></tr>
+              <tr><td colSpan={6} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum aniversariante em {MESES[mesAniversario]}.</td></tr>
             )}
           </tbody>
         </table>
@@ -108,7 +92,6 @@ export function RelatoriosModule({ servers = [], communities = [] }) {
                   <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>WhatsApp</th>
                   <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>E-mail</th>
                   <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>Comunidade que Atua</th>
-                  <th style={{ textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' }}>Frequência</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,11 +102,10 @@ export function RelatoriosModule({ servers = [], communities = [] }) {
                     <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{s.phone || '-'}</td>
                     <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{s.email || '-'}</td>
                     <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{comunidadesAtua(s).join(', ') || '-'}</td>
-                    <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{frequenciaTexto(s)}</td>
                   </tr>
                 ))}
                 {lista.length === 0 && (
-                  <tr><td colSpan={6} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum(a) {label.toLowerCase()} cadastrado(a).</td></tr>
+                  <tr><td colSpan={5} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum(a) {label.toLowerCase()} cadastrado(a).</td></tr>
                 )}
               </tbody>
             </table>
