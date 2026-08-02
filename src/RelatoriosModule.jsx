@@ -92,7 +92,7 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
   const listaPorTipo = (tipo) => servers
     .filter(s => s.type === tipo)
     .slice()
-    .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+    .sort(porCadastro);
 
   // Uma pessoa pode ter uma linha por função (coroinha, acólito...) — deduplica
   // por pessoa antes de listar aniversariantes, para não repetir o mesmo nome.
