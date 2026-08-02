@@ -164,25 +164,37 @@ function AppContent() {
   };
 
 
-  const menuOptions = (ehCoordenador && !isMobile)
-    ? [
-      { name: 'Coroinhas',              icon: Users },
-      { name: 'Acolitos',               icon: Shield },
-      { name: 'Monitores',              icon: UserCheck },
-      { name: 'Cerimoniários',          icon: Users },
-      { name: 'Coordenadores',          icon: Shield },
-      { name: 'Comunidades',            icon: Church },
-      { name: 'Agenda e Calendário',    icon: CalendarDays },
-      { name: 'Formação Cadastro',      icon: BookOpen },
-      { name: 'Formação e Estudos',     icon: BookOpen },
-      { name: 'Ata de Reunião',         icon: FileText },
-      { name: 'Livro Caixa',            icon: Wallet },
-      { name: 'Relatórios',             icon: ClipboardList }
-    ]
-    : [
-      { name: 'Agenda e Calendário',    icon: CalendarDays },
-      { name: 'Formação e Estudos',     icon: BookOpen }
-    ];
+  // Monitor/Cerimoniário (e Coordenador) têm acesso amplo; Coroinha/Acólito
+  // continuam restritos só a Agenda e Formação e Estudos.
+  const NIVEL_AMPLO = ['monitor', 'cerimoniario', 'coordenador'];
+  const acessoAmplo = ehCoordenador || (perfil?.funcoes || []).some(f => NIVEL_AMPLO.includes(f));
+
+  const menuOptionsCompleto = [
+    { name: 'Coroinhas',              icon: Users },
+    { name: 'Acolitos',               icon: Shield },
+    { name: 'Monitores',              icon: UserCheck },
+    { name: 'Cerimoniários',          icon: Users },
+    { name: 'Coordenadores',          icon: Shield },
+    { name: 'Comunidades',            icon: Church },
+    { name: 'Agenda e Calendário',    icon: CalendarDays },
+    { name: 'Formação Cadastro',      icon: BookOpen },
+    { name: 'Formação e Estudos',     icon: BookOpen },
+    { name: 'Ata de Reunião',         icon: FileText },
+    { name: 'Livro Caixa',            icon: Wallet },
+    { name: 'Relatórios',             icon: ClipboardList }
+  ];
+  const menuOptionsRestrito = [
+    { name: 'Agenda e Calendário',    icon: CalendarDays },
+    { name: 'Formação e Estudos',     icon: BookOpen }
+  ];
+
+  const menuOptions = isMobile
+    ? menuOptionsRestrito
+    : ehCoordenador
+      ? menuOptionsCompleto
+      : acessoAmplo
+        ? menuOptionsCompleto.filter(m => !['Formação Cadastro', 'Livro Caixa'].includes(m.name))
+        : menuOptionsRestrito;
 
 
   const renderContent = () => {
@@ -216,7 +228,7 @@ function AppContent() {
         return <ComunidadesTable data={dbCommunities} onDelete={handleDeleteCommunity} onEdit={handleEditCommunity} onNew={() => { setPrevMenu('Comunidades'); setActiveMenu('CadastroComunidade'); }} />;
       case 'Agenda e Calendário':
         return <AgendaModule servers={dbServers} communities={dbCommunities} isMobile={isMobile}
-          restrictCadastro={!ehCoordenador ? perfil?.numero_cadastro : null} />;
+          restrictCadastro={(!ehCoordenador && !acessoAmplo) ? perfil?.numero_cadastro : null} />;
       case 'Formação Cadastro':
         return <FormacaoAdminModule communities={dbCommunities} />;
       case 'Ata de Reunião':
@@ -2159,33 +2171,44 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
 
   // Cria o login (e-mail+senha) do servidor a partir do próprio cadastro, sem
   // exigir o processo manual no painel do Supabase: se o cadastro ainda não
-  // tem um servidor_profiles vinculado, cria a conta com senha temporária
+  // tem um perfil vinculado, cria a conta com senha determinística por função
   // (usando um client separado para não substituir a sessão do coordenador).
-  const provisionarAcessoServidor = async () => {
+  // Coroinha/Acólito: Altar@cadastro. Monitor/Cerimoniário/Coordenador:
+  // PrimeiroNome@cadastro — e Coordenador grava em coordenador_profiles
+  // (acesso total) em vez de servidor_profiles.
+  const provisionarAcessoServidor = async (tiposSelecionados = []) => {
     const email = form.email.trim();
     const cadastro = form.cadastro.trim();
     if (!email || !cadastro) return;
     try {
+      const NIVEL_AMPLO = ['monitor', 'cerimoniario', 'coordenador'];
+      const ehCoordenadorNovo = tiposSelecionados.includes('coordenador');
+      const ehAmplo = tiposSelecionados.some(t => NIVEL_AMPLO.includes(t));
+      const primeiroNome = form.nome.trim().split(/\s+/)[0] || '';
+      const senhaTemp = ehAmplo ? `${primeiroNome}@${cadastro}` : `Altar@${cadastro}`;
+      const tabelaPerfil = ehCoordenadorNovo ? 'coordenador_profiles' : 'servidor_profiles';
+
       const { data: existente, error: checkErr } = await supabase
-        .from('servidor_profiles').select('id').eq('numero_cadastro', cadastro).maybeSingle();
+        .from(tabelaPerfil).select('id').eq('numero_cadastro', cadastro).maybeSingle();
       if (checkErr) throw checkErr;
 
       if (existente) {
-        const { error: updErr } = await supabase.from('servidor_profiles').update({ email }).eq('id', existente.id);
+        const { error: updErr } = await supabase.from(tabelaPerfil).update({ email }).eq('id', existente.id);
         if (updErr) console.error('Erro ao atualizar e-mail do perfil:', updErr);
         return;
       }
 
-      const senhaTemp = `Altar@${cadastro}`;
       const { data: signUpData, error: signUpErr } = await supabaseAuthOnly.auth.signUp({ email, password: senhaTemp });
-      if (signUpErr) { alert('Não foi possível criar o login do servidor: ' + signUpErr.message); return; }
+      if (signUpErr) { alert('Não foi possível criar o login: ' + signUpErr.message); return; }
 
       const novoId = signUpData?.user?.id;
       if (!novoId) { alert('Conta criada, mas não foi possível concluir o vínculo do perfil.'); return; }
 
-      const { error: profErr } = await supabase.from('servidor_profiles').insert({
-        id: novoId, numero_cadastro: cadastro, full_name: form.nome.trim(), email, perfil: 'servidor'
-      });
+      const payloadPerfil = ehCoordenadorNovo
+        ? { id: novoId, numero_cadastro: cadastro, full_name: form.nome.trim(), email, perfil: 'coordenador' }
+        : { id: novoId, numero_cadastro: cadastro, full_name: form.nome.trim(), email, perfil: 'servidor' };
+
+      const { error: profErr } = await supabase.from(tabelaPerfil).insert(payloadPerfil);
       if (profErr) { alert('Login criado, mas houve erro ao vincular o perfil: ' + profErr.message); return; }
 
       alert(`Login criado para ${form.nome.trim()}!\n\nE-mail: ${email}\nSenha temporária: ${senhaTemp}\n\nRepasse esses dados ao servidor. Ele pode trocar a senha depois em "Esqueci minha senha".`);
@@ -2237,7 +2260,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
           for (const r of results) {
             if (r.data?.id) await saveSacramentsAndInvestitures(r.data.id);
           }
-          await provisionarAcessoServidor();
+          await provisionarAcessoServidor(tiposSelecionados);
           alert('Servidor atualizado com sucesso!'); if (onSaved) onSaved();
         }
       } else {
@@ -2267,7 +2290,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
           for (const r of results) {
             if (r.data?.id) await saveSacramentsAndInvestitures(r.data.id);
           }
-          await provisionarAcessoServidor();
+          await provisionarAcessoServidor(tiposSelecionados);
           alert('Servidor cadastrado com sucesso!'); if (onSaved) onSaved();
         }
       }
