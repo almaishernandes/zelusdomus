@@ -59,6 +59,7 @@ const td = { padding: '0.35rem 0.9rem', color: '#64748b' };
 
 export function RelatoriosModule({ servers = [], communities = [], setHeaderExtra }) {
   const [visao, setVisao] = useState('porFuncao'); // 'porFuncao' | 'servidores' | 'aniversariantes'
+  const [ordemServidores, setOrdemServidores] = useState('cadastro'); // 'cadastro' | 'nome'
   const secaoStyle = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden', marginBottom: '1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' };
   const tituloStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#1e293b', color: '#fff', fontWeight: 800, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.65rem 1rem' };
 
@@ -111,7 +112,11 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
     .filter(s => s.dob && new Date(s.dob + 'T00:00:00').getMonth() === mes)
     .sort((a, b) => new Date(a.dob + 'T00:00:00').getDate() - new Date(b.dob + 'T00:00:00').getDate());
 
-  const todosServidoresOrdenados = servers.slice().sort(porCadastro);
+  const todosServidoresOrdenados = servers.slice().sort(
+    ordemServidores === 'nome'
+      ? (a, b) => (a.full_name || '').localeCompare(b.full_name || '')
+      : porCadastro
+  );
 
   const tabelaAniversariantes = (mes, lista) => (
     <div key={mes} style={secaoStyle}>
@@ -163,7 +168,19 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
     return (
       <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
         <div style={secaoStyle}>
-          <div style={tituloStyle}><Users size={15} /> Relação de Servidores ({todosServidoresOrdenados.length})</div>
+          <div style={{ ...tituloStyle, gap: '0.8rem' }}>
+            <div style={{ display: 'flex', gap: '0.3rem' }}>
+              <button type="button" onClick={() => setOrdemServidores('cadastro')}
+                style={{ background: ordemServidores === 'cadastro' ? '#fff' : 'rgba(255,255,255,0.5)', color: '#000', border: 'none', borderRadius: 4, padding: '0.25rem 0.6rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                Ordenar por Cadastro
+              </button>
+              <button type="button" onClick={() => setOrdemServidores('nome')}
+                style={{ background: ordemServidores === 'nome' ? '#fff' : 'rgba(255,255,255,0.5)', color: '#000', border: 'none', borderRadius: 4, padding: '0.25rem 0.6rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
+                Ordenar por Nome
+              </button>
+            </div>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={15} /> Relação de Servidores ({todosServidoresOrdenados.length})</span>
+          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
               <tr>
