@@ -41,7 +41,6 @@ const td = { padding: '0.35rem 0.9rem', color: '#64748b' };
 
 export function RelatoriosModule({ servers = [], communities = [], setHeaderExtra }) {
   const [visao, setVisao] = useState('porFuncao'); // 'porFuncao' | 'servidores' | 'aniversariantes'
-  const [mesAniversario, setMesAniversario] = useState(new Date().getMonth());
   const secaoStyle = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden', marginBottom: '1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' };
   const tituloStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#1e293b', color: '#fff', fontWeight: 800, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.65rem 1rem' };
 
@@ -88,9 +87,15 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
     return out;
   }, [servers]);
 
-  const aniversariantesDoMes = servidoresUnicos
-    .filter(s => s.dob && new Date(s.dob + 'T00:00:00').getMonth() === mesAniversario)
-    .sort((a, b) => new Date(a.dob + 'T00:00:00').getDate() - new Date(b.dob + 'T00:00:00').getDate());
+  const mesAtual = new Date().getMonth();
+  const mesSeguinte = (mesAtual + 1) % 12;
+  const aniversariantesPeriodo = servidoresUnicos
+    .filter(s => s.dob && [mesAtual, mesSeguinte].includes(new Date(s.dob + 'T00:00:00').getMonth()))
+    .sort((a, b) => {
+      const da = new Date(a.dob + 'T00:00:00'), db = new Date(b.dob + 'T00:00:00');
+      const ma = da.getMonth() === mesAtual ? 0 : 1, mb = db.getMonth() === mesAtual ? 0 : 1;
+      return ma !== mb ? ma - mb : da.getDate() - db.getDate();
+    });
 
   const todosServidoresOrdenados = servers.slice().sort(porCadastro);
 
@@ -98,16 +103,13 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
     return (
       <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
         <div style={secaoStyle}>
-          <div style={{ ...tituloStyle, justifyContent: 'space-between' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Cake size={15} /> Aniversariantes ({aniversariantesDoMes.length})</span>
-            <select value={mesAniversario} onChange={e => setMesAniversario(Number(e.target.value))}
-              style={{ padding: '0.25rem 0.5rem', borderRadius: 4, border: 'none', fontSize: '0.8rem', fontWeight: 600 }}>
-              {MESES.map((m, i) => <option key={m} value={i}>{m}</option>)}
-            </select>
+          <div style={tituloStyle}>
+            <Cake size={15} /> Aniversariantes — {MESES[mesAtual]} e {MESES[mesSeguinte]} ({aniversariantesPeriodo.length})
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
               <tr>
+                <th style={th}>Cadastro</th>
                 <th style={th}>Nome</th>
                 <th style={th}>Função</th>
                 <th style={th}>Data de Aniversário</th>
@@ -118,8 +120,9 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
               </tr>
             </thead>
             <tbody>
-              {aniversariantesDoMes.map((s, i) => (
+              {aniversariantesPeriodo.map((s, i) => (
                 <tr key={s.person_id || s.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                  <td style={td}>{s.cadastro || '-'}</td>
                   <td style={{ ...td, color: '#1e293b', fontWeight: 600 }}>{s.full_name}</td>
                   <td style={td}>{TYPE_LABEL[s.type] || s.type}</td>
                   <td style={td}>{fmtDataCurta(s.dob)}</td>
@@ -129,8 +132,8 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
                   <td style={td}>{comunidadesAtua(s).join(', ') || '-'}</td>
                 </tr>
               ))}
-              {aniversariantesDoMes.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum aniversariante em {MESES[mesAniversario]}.</td></tr>
+              {aniversariantesPeriodo.length === 0 && (
+                <tr><td colSpan={8} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum aniversariante em {MESES[mesAtual]} ou {MESES[mesSeguinte]}.</td></tr>
               )}
             </tbody>
           </table>
