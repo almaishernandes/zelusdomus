@@ -702,6 +702,10 @@ function FichaCadastro({ item, communities = [], onClose }) {
             <td style={cell} colSpan={3}>{item.full_name || item.nome || ' '}</td>
           </tr>
           <tr>
+            <td style={lbl}>E-mail de acesso</td>
+            <td style={cell} colSpan={3}>{item.email || ' '}</td>
+          </tr>
+          <tr>
             <td style={lbl}>Nascimento</td>
             <td style={cell}>{fmtDate(item.dob) || item.nascimento || ' '}</td>
             <td style={lbl}>WhatsApp</td>
