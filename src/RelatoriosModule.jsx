@@ -205,7 +205,6 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
             <thead>
               <tr>
                 <th style={th}>Nome</th>
-                <th style={th}>Endereço</th>
                 <th style={th}>Horário de Missa</th>
               </tr>
             </thead>
@@ -213,12 +212,11 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
               {communities.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((c, i) => (
                 <tr key={c.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
                   <td style={{ ...td, color: '#1e293b', fontWeight: 600 }}>{c.name}</td>
-                  <td style={td}>{c.address || '-'}</td>
                   <td style={td}>{horariosMissa(c.mass_schedules)}</td>
                 </tr>
               ))}
               {communities.length === 0 && (
-                <tr><td colSpan={3} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma comunidade cadastrada.</td></tr>
+                <tr><td colSpan={2} style={{ padding: '0.9rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma comunidade cadastrada.</td></tr>
               )}
             </tbody>
           </table>
