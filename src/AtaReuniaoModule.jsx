@@ -401,16 +401,16 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
         </div>
       )}
 
-      <table className="ata-list" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+      <table className="ata-list" style={{ width: 'auto', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
         <thead className="ata-list-header">
           <tr>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.7rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Reunião
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '140px', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.7rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Data
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '110px', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.7rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Horário
             </th>
           </tr>
@@ -429,9 +429,9 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
                 <tr key={item.id}
                   onClick={() => abrirEdicao(item)}
                   style={{ background: isSelected ? '#93c5fd' : corTema, cursor: 'pointer' }}>
-                  <td style={{ padding: '0.4rem 0.9rem', fontWeight: 700, color: '#1e293b' }}>{item.tema}</td>
-                  <td style={{ padding: '0.4rem 0.9rem', color: '#334155', textAlign: 'left' }}>{item.data_reuniao || '-'}</td>
-                  <td style={{ padding: '0.4rem 0.9rem', color: '#334155', textAlign: 'left' }}>{item.horario || '-'}</td>
+                  <td style={{ padding: '0.4rem 0.7rem', fontWeight: 700, color: '#1e293b' }}>{item.tema}</td>
+                  <td style={{ padding: '0.4rem 0.7rem', color: '#334155', textAlign: 'left' }}>{item.data_reuniao || '-'}</td>
+                  <td style={{ padding: '0.4rem 0.7rem', color: '#334155', textAlign: 'left' }}>{item.horario || '-'}</td>
                 </tr>
               );
             });
