@@ -401,18 +401,19 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
         </div>
       )}
 
-      <table className="ata-list" style={{ width: 'auto', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+      <table className="ata-list" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
         <thead className="ata-list-header">
           <tr>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.7rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.7rem', textAlign: 'left', width: '220px', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Reunião
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.7rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.7rem', textAlign: 'left', width: '110px', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Data
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.7rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.7rem', textAlign: 'left', width: '90px', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Horário
             </th>
+            <th style={{ background: '#1e293b', padding: 0 }}></th>
           </tr>
         </thead>
         <tbody>
@@ -425,20 +426,22 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
               temaAnterior = item.tema;
               const isSelected = editandoId === item.id;
               const corTema = coresTema[temaIndex % coresTema.length];
+              const bgLinha = isSelected ? '#93c5fd' : corTema;
               return (
                 <tr key={item.id}
                   onClick={() => abrirEdicao(item)}
-                  style={{ background: isSelected ? '#93c5fd' : corTema, cursor: 'pointer' }}>
+                  style={{ background: bgLinha, cursor: 'pointer' }}>
                   <td style={{ padding: '0.4rem 0.7rem', fontWeight: 700, color: '#1e293b' }}>{item.tema}</td>
                   <td style={{ padding: '0.4rem 0.7rem', color: '#334155', textAlign: 'left' }}>{item.data_reuniao || '-'}</td>
                   <td style={{ padding: '0.4rem 0.7rem', color: '#334155', textAlign: 'left' }}>{item.horario || '-'}</td>
+                  <td style={{ background: bgLinha, padding: 0 }}></td>
                 </tr>
               );
             });
           })()}
 
           {formacao.length === 0 && (
-            <tr><td colSpan={3} style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma reunião cadastrada. Clique no + ao lado de "Sair" para começar.</td></tr>
+            <tr><td colSpan={4} style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma reunião cadastrada. Clique no + ao lado de "Sair" para começar.</td></tr>
           )}
         </tbody>
       </table>
