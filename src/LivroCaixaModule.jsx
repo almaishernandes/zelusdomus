@@ -40,6 +40,8 @@ export function LivroCaixaModule({ setHeaderExtra }) {
   const [relatorioAnual, setRelatorioAnual] = useState(false);
   const [linhaExpandidaExtrato, setLinhaExpandidaExtrato] = useState(null);
   const [gerandoExtratoPdf, setGerandoExtratoPdf] = useState(false);
+  const [extratoDe, setExtratoDe] = useState('');
+  const [extratoAte, setExtratoAte] = useState('');
   const extratoPrintRef = useRef(null);
 
   useEffect(() => {
@@ -106,10 +108,23 @@ export function LivroCaixaModule({ setHeaderExtra }) {
     return { anoAtual, receitas, despesas, saldoMeses, saldoGeral };
   }, [lancamentos, centros]);
 
+  // Saldo inicial: soma de tudo que aconteceu antes do início do período do
+  // extrato (quando "De" está preenchido) — sem isso o saldo do extrato
+  // filtrado começaria do zero, ignorando o que já existia antes do período.
+  const saldoInicialPeriodo = extratoDe
+    ? lancamentos.filter(l => l.emissao && l.emissao < extratoDe)
+        .reduce((acc, l) => acc + (Number(l.credito) || 0) - (Number(l.debito) || 0), 0)
+    : 0;
+
+  const lancamentosDoPeriodo = lancamentos.filter(l =>
+    (!extratoDe || (l.emissao && l.emissao >= extratoDe)) &&
+    (!extratoAte || (l.emissao && l.emissao <= extratoAte))
+  );
+
   // Saldo acumulado calculado no cliente, na ordem cronológica já retornada pela consulta
   const lancamentosComSaldo = (() => {
-    let saldo = 0;
-    return lancamentos.map(l => {
+    let saldo = saldoInicialPeriodo;
+    return lancamentosDoPeriodo.map(l => {
       saldo += (Number(l.credito) || 0) - (Number(l.debito) || 0);
       return { ...l, saldoAcumulado: saldo };
     });
@@ -249,8 +264,8 @@ export function LivroCaixaModule({ setHeaderExtra }) {
         margin: [8, 8],
         filename: `Extrato-Livro-Caixa-${new Date().toISOString().slice(0, 10)}.pdf`,
         image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 900 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       }).from(extratoPrintRef.current).outputPdf('blob');
       const url = URL.createObjectURL(blob);
@@ -354,12 +369,28 @@ export function LivroCaixaModule({ setHeaderExtra }) {
       {/* ---- Extrato: exibido sempre que o formulário não está aberto ---- */}
       {!modo && (
         <div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', padding: '0.5rem 0.6rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, color: '#475569', marginBottom: '0.15rem' }}>De</label>
+              <input type="date" value={extratoDe} onChange={e => setExtratoDe(e.target.value)} style={{ ...inputStyle, fontSize: '0.78rem' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, color: '#475569', marginBottom: '0.15rem' }}>Até</label>
+              <input type="date" value={extratoAte} onChange={e => setExtratoAte(e.target.value)} style={{ ...inputStyle, fontSize: '0.78rem' }} />
+            </div>
+          </div>
           <div style={{ display: 'flex', padding: '0.4rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
             <span style={{ flex: 1, textAlign: 'left' }}>Data</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Débito</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Crédito</span>
             <span style={{ flex: 1, textAlign: 'right' }}>Saldo</span>
           </div>
+          {extratoDe && (
+            <div style={{ display: 'flex', padding: '0.4rem 0.6rem', background: '#e2e8f0', fontSize: '0.8rem', fontWeight: 700 }}>
+              <span style={{ flex: 3 }}>Saldo Inicial do Período</span>
+              <span style={{ flex: 1, textAlign: 'right', color: saldoInicialPeriodo < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(saldoInicialPeriodo)}</span>
+            </div>
+          )}
           {lancamentosComSaldo.map((item, i) => (
             <div key={item.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
               <div onClick={() => setLinhaExpandidaExtrato(prev => prev === item.id ? null : item.id)}
@@ -381,10 +412,10 @@ export function LivroCaixaModule({ setHeaderExtra }) {
               )}
             </div>
           ))}
-          {lancamentos.length === 0 && (
-            <div style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Nenhum lançamento cadastrado. Toque em "Incluir" para começar.</div>
+          {lancamentosComSaldo.length === 0 && (
+            <div style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Nenhum lançamento no período. Toque em "Incluir" para começar.</div>
           )}
-          {lancamentos.length > 0 && (
+          {lancamentosComSaldo.length > 0 && (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0.6rem', borderTop: '2px solid #1e293b', fontWeight: 700 }}>
               <span>Saldo Final</span>
               <span style={{ color: saldoFinal < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(saldoFinal)}</span>
@@ -506,15 +537,18 @@ export function LivroCaixaModule({ setHeaderExtra }) {
         );
       })()}
 
-      {/* ---- Tabela completa fora da tela, usada só para gerar o PDF do Extrato ---- */}
-      <div style={{ position: 'fixed', top: 0, left: '-10000px', width: '1000px', background: '#fff', padding: '1rem' }} ref={extratoPrintRef}>
+      {/* ---- Tabela completa, renderizada atrás do conteúdo (z-index negativo) só
+           para o html2canvas capturar — usada para gerar o PDF do Extrato ---- */}
+      <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -1, pointerEvents: 'none', width: '780px', background: '#fff', padding: '1.2rem' }} ref={extratoPrintRef}>
         <h2 style={{ margin: '0 0 0.2rem', fontSize: '1.1rem', color: '#1e293b' }}>Extrato — Livro Caixa</h2>
+        <p style={{ margin: '0 0 0.2rem', fontSize: '0.75rem', color: '#64748b' }}>
+          Período: {extratoDe ? fmtData(extratoDe) : 'início'} até {extratoAte ? fmtData(extratoAte) : 'hoje'}
+        </p>
         <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', color: '#64748b' }}>Gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem' }}>
           <thead>
             <tr>
               <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Emissão</th>
-              <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Vencimento</th>
               <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Descrição</th>
               <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Centro de Custo</th>
               <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'right', color: '#fff' }}>Débito</th>
@@ -523,10 +557,15 @@ export function LivroCaixaModule({ setHeaderExtra }) {
             </tr>
           </thead>
           <tbody>
+            {extratoDe && (
+              <tr style={{ background: '#e2e8f0' }}>
+                <td colSpan={5} style={{ padding: '0.35rem', fontWeight: 700, color: '#1e293b' }}>Saldo Inicial do Período</td>
+                <td style={{ padding: '0.35rem', textAlign: 'right', fontWeight: 700, color: saldoInicialPeriodo < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(saldoInicialPeriodo)}</td>
+              </tr>
+            )}
             {lancamentosComSaldo.map((item, i) => (
               <tr key={item.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f1f5f9' }}>
                 <td style={{ padding: '0.35rem', color: '#334155' }}>{fmtData(item.emissao)}</td>
-                <td style={{ padding: '0.35rem', color: '#334155' }}>{fmtData(item.vencimento)}</td>
                 <td style={{ padding: '0.35rem', color: '#334155' }}>{item.descricao}</td>
                 <td style={{ padding: '0.35rem', color: '#64748b' }}>{nomeCentro(item.centro_custo_id)}</td>
                 <td style={{ padding: '0.35rem', textAlign: 'right', color: '#dc2626' }}>{item.debito ? fmtMoeda(item.debito) : ''}</td>
@@ -534,14 +573,14 @@ export function LivroCaixaModule({ setHeaderExtra }) {
                 <td style={{ padding: '0.35rem', textAlign: 'right', fontWeight: 700, color: item.saldoAcumulado < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(item.saldoAcumulado)}</td>
               </tr>
             ))}
-            {lancamentos.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: '0.6rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum lançamento cadastrado.</td></tr>
+            {lancamentosComSaldo.length === 0 && (
+              <tr><td colSpan={6} style={{ padding: '0.6rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum lançamento no período.</td></tr>
             )}
           </tbody>
-          {lancamentos.length > 0 && (
+          {lancamentosComSaldo.length > 0 && (
             <tfoot>
               <tr>
-                <td colSpan={6} style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 700, color: '#1e293b', borderTop: '2px solid #1e293b' }}>Saldo Final</td>
+                <td colSpan={5} style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 700, color: '#1e293b', borderTop: '2px solid #1e293b' }}>Saldo Final</td>
                 <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 800, color: saldoFinal < 0 ? '#dc2626' : '#1e293b', borderTop: '2px solid #1e293b' }}>{fmtMoeda(saldoFinal)}</td>
               </tr>
             </tfoot>
