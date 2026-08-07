@@ -255,73 +255,8 @@ export function LivroCaixaModule({ setHeaderExtra }) {
         </div>
       )}
 
-      <style>{`
-        .lc-desktop-table { display: table; }
-        .lc-mobile-list { display: none; }
-        .lc-form-grid { grid-template-columns: 1fr 1fr 2fr 1.4fr 1fr 1fr; }
-        @media (max-width: 768px) {
-          .lc-desktop-table { display: none; }
-          .lc-mobile-list { display: block; }
-          .lc-form-grid { grid-template-columns: 1fr 1fr; }
-        }
-      `}</style>
-
-      <table className="lc-desktop-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-        <thead>
-          <tr>
-            <th style={{ background: '#1e293b', padding: 0, textAlign: 'left', width: '160px' }}>
-              <button onClick={abrirInserir}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: '#fff', padding: '0.6rem 0.9rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem' }}>
-                <Plus size={14} /> Incluir
-              </button>
-            </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Emissão</th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Vencimento</th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Descrição</th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Centro de Custo</th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'right', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Débito</th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'right', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Crédito</th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.5rem', textAlign: 'right', color: '#fff', fontWeight: 700, fontSize: '0.78rem' }}>Saldo</th>
-            <th style={{ background: '#1e293b', width: '90px', padding: '0.6rem 0.5rem' }}></th>
-          </tr>
-        </thead>
-        <tbody>
-          {lancamentosComSaldo.map((item, i) => (
-            <tr key={item.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f1f5f9' }}>
-              <td style={{ padding: '0.35rem 0.9rem', color: '#64748b' }}>{item.sequencia}</td>
-              <td style={{ padding: '0.35rem 0.5rem', color: '#334155' }}>{fmtData(item.emissao)}</td>
-              <td style={{ padding: '0.35rem 0.5rem', color: '#334155' }}>{fmtData(item.vencimento)}</td>
-              <td style={{ padding: '0.35rem 0.5rem', color: '#334155' }}>{item.descricao}</td>
-              <td style={{ padding: '0.35rem 0.5rem', color: '#64748b' }}>{nomeCentro(item.centro_custo_id)}</td>
-              <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', color: '#dc2626' }}>{item.debito ? fmtMoeda(item.debito) : ''}</td>
-              <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', color: '#16a34a' }}>{item.credito ? fmtMoeda(item.credito) : ''}</td>
-              <td style={{ padding: '0.35rem 0.5rem', textAlign: 'right', fontWeight: 700, color: item.saldoAcumulado < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(item.saldoAcumulado)}</td>
-              <td style={{ padding: '0.35rem 0.5rem', textAlign: 'center' }}>
-                <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
-                  <button onClick={() => abrirEdicao(item)} title="Editar" style={btn('#3b82f6')}><Edit2 size={13} /></button>
-                  <button onClick={() => handleExcluir(item.id)} title="Excluir" style={btn('#dc2626')}><Trash2 size={13} /></button>
-                </div>
-              </td>
-            </tr>
-          ))}
-
-          {lancamentos.length === 0 && (
-            <tr><td colSpan={9} style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum lançamento cadastrado. Clique em "Incluir" para começar.</td></tr>
-          )}
-        </tbody>
-        {lancamentos.length > 0 && (
-          <tfoot>
-            <tr>
-              <td colSpan={7} style={{ padding: '0.5rem 0.9rem', textAlign: 'right', fontWeight: 700, color: '#1e293b', borderTop: '2px solid #1e293b' }}>Saldo Final</td>
-              <td style={{ padding: '0.5rem 0.5rem', textAlign: 'right', fontWeight: 800, color: saldoFinal < 0 ? '#dc2626' : '#1e293b', borderTop: '2px solid #1e293b' }}>{fmtMoeda(saldoFinal)}</td>
-              <td style={{ borderTop: '2px solid #1e293b' }}></td>
-            </tr>
-          </tfoot>
-        )}
-      </table>
-
-      {/* ---- Lista mobile: 2 linhas por lançamento, sem colunas/espaçamento largo ---- */}
-      <div className="lc-mobile-list">
+      {/* ---- Lista de lançamentos: 2 linhas cada, mesma didática no desktop e no celular ---- */}
+      <div>
         <button onClick={abrirInserir}
           style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#1e293b', border: 'none', color: '#fff', padding: '0.6rem 0.9rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem' }}>
           <Plus size={14} /> Incluir
@@ -355,7 +290,7 @@ export function LivroCaixaModule({ setHeaderExtra }) {
       {/* ---- Segunda folha: formulário de inclusão/edição ---- */}
       {modo && (
         <div style={{ background: '#f1f5f9', borderTop: '3px solid #1e293b', padding: '0.9rem' }}>
-          <div className="lc-form-grid" style={{ display: 'grid', gap: '0.6rem', marginBottom: '0.7rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.7rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Emissão</label>
               <input type="date" value={form.emissao} onChange={e => setForm({ ...form, emissao: e.target.value, vencimento: e.target.value })} style={inputStyle} autoFocus />
