@@ -267,11 +267,11 @@ export function LivroCaixaModule({ setHeaderExtra }) {
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Vencimento</label>
               <input type="date" value={form.vencimento} onChange={e => setForm({ ...form, vencimento: e.target.value })} style={inputStyle} />
             </div>
-            <div>
+            <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Descrição</label>
               <input type="text" placeholder="Descrição do lançamento" value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })} style={inputStyle} />
             </div>
-            <div>
+            <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Centro de Custo</label>
               <select value={form.centro_custo_id} onChange={e => setForm({ ...form, centro_custo_id: e.target.value })} style={inputStyle}>
                 <option value="">Selecione...</option>
