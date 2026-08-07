@@ -97,7 +97,9 @@ export function LoginPage() {
     const resultado = await login(email, senha);
     if (resultado.sucesso) {
       salvarAcessoRecente(email);
-      window.location.href = '/'; // Redireciona para home
+      // Sem reload: login() já deixou usuário e perfil prontos em memória
+      // (AuthContext), então o React troca de tela sozinho. Um reload aqui
+      // jogava fora esse trabalho e refazia toda a checagem de sessão do zero.
     }
   };
 
