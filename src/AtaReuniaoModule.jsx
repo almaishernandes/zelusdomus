@@ -53,7 +53,7 @@ function ConteudoEditor({ value, onChange, autoFocus }) {
         contentEditable
         suppressContentEditableWarning
         onInput={() => onChange(ref.current?.innerHTML || '')}
-        style={{ width: '100%', minHeight: '280px', padding: '0.5rem 0.6rem', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: '0.9rem', lineHeight: 1.5, background: '#fff', overflowY: 'auto' }}
+        style={{ width: '100%', minHeight: '280px', height: '280px', padding: '0.5rem 0.6rem', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: '0.9rem', lineHeight: 1.5, background: '#fff', overflowY: 'auto', resize: 'vertical' }}
       />
     </div>
   );
