@@ -188,14 +188,20 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
 
       if (editandoId) {
         let payload = { ...camposComuns, updated_at: new Date() };
-        let { error: err } = await supabase.from('atas_reuniao').update(payload).eq('id', editandoId);
+        let { data: linhasAlteradas, error: err } = await supabase.from('atas_reuniao').update(payload).eq('id', editandoId).select('id');
         if (err && /anotacoes_decisoes/i.test(err.message)) {
           // Coluna ainda não criada no banco (falta rodar setup-atas-reuniao-anotacoes.sql) —
           // salva o resto normalmente em vez de bloquear a gravação.
           const { anotacoes_decisoes: _omit, ...resto } = payload;
-          ({ error: err } = await supabase.from('atas_reuniao').update(resto).eq('id', editandoId));
+          ({ data: linhasAlteradas, error: err } = await supabase.from('atas_reuniao').update(resto).eq('id', editandoId).select('id'));
         }
         if (err) throw err;
+        // O Supabase não retorna erro quando a política de segurança (RLS)
+        // bloqueia a alteração silenciosamente — sem isso, nada é salvo e
+        // nenhum aviso aparece. Detecta esse caso pela ausência de linhas.
+        if (!linhasAlteradas || linhasAlteradas.length === 0) {
+          throw new Error('Não foi possível salvar — você pode não ter permissão para editar esta reunião (foi criada por outro coordenador).');
+        }
       } else {
         const qtd = formacao.filter(i => i.tema === form.tema.trim()).length;
         let payload = { ...camposComuns, ordem: qtd, created_by: user.id };
