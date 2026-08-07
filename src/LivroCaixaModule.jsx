@@ -269,11 +269,17 @@ export function LivroCaixaModule({ setHeaderExtra }) {
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Débito</label>
-              <input type="number" step="0.01" min="0" placeholder="0,00" value={form.debito} onChange={e => setForm({ ...form, debito: e.target.value, credito: e.target.value ? '' : form.credito })} style={inputStyle} />
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
+                <span style={{ padding: '0 0 0 0.5rem', color: '#64748b', fontSize: '0.85rem' }}>R$</span>
+                <input type="number" step="0.01" min="0" placeholder="0,00" value={form.debito} onChange={e => setForm({ ...form, debito: e.target.value, credito: e.target.value ? '' : form.credito })} style={{ ...inputStyle, border: 'none' }} />
+              </div>
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Crédito</label>
-              <input type="number" step="0.01" min="0" placeholder="0,00" value={form.credito} onChange={e => setForm({ ...form, credito: e.target.value, debito: e.target.value ? '' : form.debito })} style={inputStyle} />
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
+                <span style={{ padding: '0 0 0 0.5rem', color: '#64748b', fontSize: '0.85rem' }}>R$</span>
+                <input type="number" step="0.01" min="0" placeholder="0,00" value={form.credito} onChange={e => setForm({ ...form, credito: e.target.value, debito: e.target.value ? '' : form.debito })} style={{ ...inputStyle, border: 'none' }} />
+              </div>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Descrição</label>
