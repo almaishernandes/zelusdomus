@@ -369,7 +369,6 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
 
   if (loading) return <div className="empty-state"><h3>Carregando...</h3></div>;
 
-  const btn = (bg) => ({ background: bg, color: '#fff', border: 'none', padding: '0.25rem 0.4rem', borderRadius: 3, cursor: 'pointer', display: 'inline-flex' });
   const inputStyle = { width: '100%', padding: '0.4rem 0.5rem', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: '0.85rem' };
   const lockedStyle = { padding: '0.4rem 0.5rem', background: '#e2e8f0', color: '#475569', borderRadius: 4, fontSize: '0.85rem', fontWeight: 600 };
 
@@ -413,23 +412,17 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
         </div>
       )}
 
-      <table className="ata-list" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+      <table className="ata-list" style={{ width: 'auto', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
         <thead className="ata-list-header">
           <tr>
             <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Reunião
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '18%', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Data
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '14%', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Horário
-            </th>
-            <th style={{ background: '#1e293b', width: '80px', padding: 0 }}>
-              <button onClick={visualizarAta}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: '#fff', padding: '0.6rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem' }} title="Imprimir Ata">
-                <FileText size={16} />
-              </button>
             </th>
           </tr>
         </thead>
@@ -450,16 +443,13 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
                   <td style={{ padding: '0.4rem 0.9rem', fontWeight: 700, color: '#1e293b' }}>{item.tema}</td>
                   <td style={{ padding: '0.4rem 0.9rem', color: '#334155' }}>{item.data_reuniao || '-'}</td>
                   <td style={{ padding: '0.4rem 0.9rem', color: '#334155' }}>{item.horario || '-'}</td>
-                  <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                    <button onClick={() => setItemVisualizando(item)} title="Visualizar" style={btn('#0ea5e9')}><Eye size={14} /></button>
-                  </td>
                 </tr>
               );
             });
           })()}
 
           {formacao.length === 0 && (
-            <tr><td colSpan={4} style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma reunião cadastrada. Clique no + ao lado de "Sair" para começar.</td></tr>
+            <tr><td colSpan={3} style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma reunião cadastrada. Clique no + ao lado de "Sair" para começar.</td></tr>
           )}
         </tbody>
       </table>
@@ -523,7 +513,17 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
             </button>
             <button onClick={cancelarForm}
               style={{ background: '#94a3b8', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-              Cancelar
+              Voltar
+            </button>
+            {editandoId && (
+              <button onClick={() => setItemVisualizando(formacao.find(i => i.id === editandoId))}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
+                <Eye size={14} /> Visualizar
+              </button>
+            )}
+            <button onClick={visualizarAta}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#ca8a04', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
+              <FileText size={14} /> Imprimir Ata
             </button>
             {editandoId && (
               <button onClick={() => handleExcluir(editandoId)}
