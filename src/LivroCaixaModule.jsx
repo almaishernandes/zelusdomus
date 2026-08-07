@@ -304,20 +304,20 @@ export function LivroCaixaModule({ setHeaderExtra }) {
       {/* ---- Extrato: exibido sempre que o formulário não está aberto ---- */}
       {!modo && (
         <div>
-          <div style={{ display: 'flex', gap: '0.35rem', padding: '0.4rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-            <span style={{ width: '72px' }}>Data</span>
-            <span style={{ width: '70px', textAlign: 'right' }}>Débito</span>
-            <span style={{ width: '70px', textAlign: 'right' }}>Crédito</span>
-            <span style={{ marginLeft: 'auto' }}>Saldo</span>
+          <div style={{ display: 'flex', padding: '0.4rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+            <span style={{ flex: 1, textAlign: 'left' }}>Data</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>Débito</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>Crédito</span>
+            <span style={{ flex: 1, textAlign: 'right' }}>Saldo</span>
           </div>
           {lancamentosComSaldo.map((item, i) => (
             <div key={item.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
               <div onClick={() => setLinhaExpandidaExtrato(prev => prev === item.id ? null : item.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 0.6rem', cursor: 'pointer', fontSize: '0.82rem' }}>
-                <span style={{ width: '72px', color: '#334155' }}>{fmtData(item.emissao)}</span>
-                <span style={{ width: '70px', textAlign: 'right', color: '#dc2626' }}>{item.debito ? fmtMoeda(item.debito) : ''}</span>
-                <span style={{ width: '70px', textAlign: 'right', color: '#16a34a' }}>{item.credito ? fmtMoeda(item.credito) : ''}</span>
-                <span style={{ marginLeft: 'auto', fontWeight: 700, color: item.saldoAcumulado < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(item.saldoAcumulado)}</span>
+                style={{ display: 'flex', alignItems: 'center', padding: '0.5rem 0.6rem', cursor: 'pointer', fontSize: '0.82rem' }}>
+                <span style={{ flex: 1, textAlign: 'left', color: '#334155' }}>{fmtData(item.emissao)}</span>
+                <span style={{ flex: 1, textAlign: 'right', color: '#dc2626' }}>{item.debito ? fmtMoeda(item.debito) : ''}</span>
+                <span style={{ flex: 1, textAlign: 'right', color: '#16a34a' }}>{item.credito ? fmtMoeda(item.credito) : ''}</span>
+                <span style={{ flex: 1, textAlign: 'right', fontWeight: 700, color: item.saldoAcumulado < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(item.saldoAcumulado)}</span>
               </div>
               {linhaExpandidaExtrato === item.id && (
                 <div style={{ padding: '0 0.6rem 0.5rem 0.6rem', fontSize: '0.78rem', color: '#64748b' }}>
