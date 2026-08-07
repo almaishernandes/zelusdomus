@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { useAuth } from './AuthContext';
-import { Plus, Trash2, Edit2, Save, Loader, AlertCircle, X, Settings, FileBarChart, Receipt } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, Loader, AlertCircle, X, Settings, FileBarChart } from 'lucide-react';
 
 const fmtMoeda = (v) => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const fmtData = (v) => v ? new Date(v + 'T00:00:00').toLocaleDateString('pt-BR') : '';
@@ -24,34 +24,17 @@ export function LivroCaixaModule({ setHeaderExtra }) {
   const [editandoCentroId, setEditandoCentroId] = useState(null);
   const [nomeCentroEdit, setNomeCentroEdit] = useState('');
   const [relatorioAnual, setRelatorioAnual] = useState(false);
-  const [extratoAberto, setExtratoAberto] = useState(false);
   const [linhaExpandidaExtrato, setLinhaExpandidaExtrato] = useState(null);
 
   useEffect(() => {
     carregarTudo();
   }, []);
 
-  // Botão "Gerenciar Centros de Custo" injetado na 1ª linha do cabeçalho do
-  // app, ao lado de Sair — em vez de um botão dentro da própria tabela.
+  // Sem botões no cabeçalho do app: Custos e Anual agora ficam no corpo do
+  // formulário, logo abaixo da linha "Incluir".
   useEffect(() => {
     if (!setHeaderExtra) return;
-    setHeaderExtra(
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <button type="button" onClick={() => setGerenciarCentros(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
-          <Settings size={14} /> Custos
-        </button>
-        <button type="button" onClick={() => setRelatorioAnual(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
-          <FileBarChart size={14} /> Anual
-        </button>
-        <button type="button" onClick={() => setExtratoAberto(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#7c3aed', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
-          <Receipt size={14} /> Extrato
-        </button>
-      </div>
-    );
-    return () => setHeaderExtra(null);
+    setHeaderExtra(null);
   }, [setHeaderExtra]);
 
   const carregarTudo = async () => {
@@ -256,39 +239,23 @@ export function LivroCaixaModule({ setHeaderExtra }) {
         </div>
       )}
 
-      {/* ---- Lista de lançamentos: 2 linhas cada, mesma didática no desktop e no celular ---- */}
-      <div>
-        <button onClick={abrirInserir}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#1e293b', border: 'none', color: '#fff', padding: '0.6rem 0.9rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem' }}>
-          <Plus size={14} /> Incluir
+      {/* ---- Incluir + Custos/Anual, logo abaixo ---- */}
+      <button onClick={abrirInserir}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#1e293b', border: 'none', color: '#fff', padding: '0.6rem 0.9rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem' }}>
+        <Plus size={14} /> Incluir
+      </button>
+      <div style={{ display: 'flex', gap: '0.4rem', padding: '0.5rem 0.6rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+        <button type="button" onClick={() => setGerenciarCentros(true)}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.4rem 0.6rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>
+          <Settings size={14} /> Custos
         </button>
-        {lancamentosComSaldo.map((item, i) => (
-          <div key={item.id} onClick={() => abrirEdicao(item)}
-            style={{ background: i % 2 === 0 ? '#ffffff' : '#f1f5f9', padding: '0.4rem 0.6rem', borderBottom: '1px solid #e2e8f0', cursor: 'pointer' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem' }}>
-              <span style={{ color: '#334155' }}>{fmtData(item.emissao)}</span>
-              <span style={{ fontWeight: 700, color: item.debito ? '#dc2626' : '#16a34a' }}>{fmtMoeda(item.debito || item.credito)}</span>
-              <span style={{ fontWeight: 800, fontSize: '0.68rem', color: '#fff', background: item.debito ? '#dc2626' : '#16a34a', borderRadius: 3, padding: '0 0.3rem' }}>{item.debito ? 'D' : 'C'}</span>
-              <button onClick={(e) => { e.stopPropagation(); handleExcluir(item.id); }} title="Excluir" style={{ ...btn('#dc2626'), marginLeft: 'auto', padding: '0.2rem 0.35rem' }}><Trash2 size={12} /></button>
-            </div>
-            <div style={{ display: 'flex', gap: '0.35rem', fontSize: '0.76rem', color: '#64748b' }}>
-              <span>{item.descricao}</span>
-              <span>· {nomeCentro(item.centro_custo_id)}</span>
-            </div>
-          </div>
-        ))}
-        {lancamentos.length === 0 && (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Nenhum lançamento cadastrado. Toque em "Incluir" para começar.</div>
-        )}
-        {lancamentos.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0.6rem', borderTop: '2px solid #1e293b', fontWeight: 700 }}>
-            <span>Saldo Final</span>
-            <span style={{ color: saldoFinal < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(saldoFinal)}</span>
-          </div>
-        )}
+        <button type="button" onClick={() => setRelatorioAnual(true)}
+          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.4rem 0.6rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>
+          <FileBarChart size={14} /> Anual
+        </button>
       </div>
 
-      {/* ---- Segunda folha: formulário de inclusão/edição ---- */}
+      {/* ---- Formulário de inclusão/edição: só aparece ao clicar em Incluir ---- */}
       {modo && (
         <div style={{ background: '#f1f5f9', borderTop: '3px solid #1e293b', padding: '0.9rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.7rem' }}>
@@ -331,6 +298,48 @@ export function LivroCaixaModule({ setHeaderExtra }) {
               Cancelar
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ---- Extrato: exibido sempre que o formulário não está aberto ---- */}
+      {!modo && (
+        <div>
+          <div style={{ display: 'flex', gap: '0.35rem', padding: '0.4rem 0.6rem', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+            <span style={{ width: '72px' }}>Data</span>
+            <span style={{ width: '70px', textAlign: 'right' }}>Débito</span>
+            <span style={{ width: '70px', textAlign: 'right' }}>Crédito</span>
+            <span style={{ marginLeft: 'auto' }}>Saldo</span>
+          </div>
+          {lancamentosComSaldo.map((item, i) => (
+            <div key={item.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
+              <div onClick={() => setLinhaExpandidaExtrato(prev => prev === item.id ? null : item.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 0.6rem', cursor: 'pointer', fontSize: '0.82rem' }}>
+                <span style={{ width: '72px', color: '#334155' }}>{fmtData(item.emissao)}</span>
+                <span style={{ width: '70px', textAlign: 'right', color: '#dc2626' }}>{item.debito ? fmtMoeda(item.debito) : ''}</span>
+                <span style={{ width: '70px', textAlign: 'right', color: '#16a34a' }}>{item.credito ? fmtMoeda(item.credito) : ''}</span>
+                <span style={{ marginLeft: 'auto', fontWeight: 700, color: item.saldoAcumulado < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(item.saldoAcumulado)}</span>
+              </div>
+              {linhaExpandidaExtrato === item.id && (
+                <div style={{ padding: '0 0.6rem 0.5rem 0.6rem', fontSize: '0.78rem', color: '#64748b' }}>
+                  <div>{item.descricao}</div>
+                  <div style={{ marginBottom: '0.4rem' }}>{nomeCentro(item.centro_custo_id)}</div>
+                  <div style={{ display: 'flex', gap: '0.3rem' }}>
+                    <button onClick={(e) => { e.stopPropagation(); abrirEdicao(item); }} title="Editar" style={btn('#3b82f6')}><Edit2 size={13} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleExcluir(item.id); }} title="Excluir" style={btn('#dc2626')}><Trash2 size={13} /></button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {lancamentos.length === 0 && (
+            <div style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Nenhum lançamento cadastrado. Toque em "Incluir" para começar.</div>
+          )}
+          {lancamentos.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0.6rem', borderTop: '2px solid #1e293b', fontWeight: 700 }}>
+              <span>Saldo Final</span>
+              <span style={{ color: saldoFinal < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(saldoFinal)}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -381,54 +390,6 @@ export function LivroCaixaModule({ setHeaderExtra }) {
                 <p style={{ fontSize: '0.85rem', color: '#94a3b8', textAlign: 'center' }}>Nenhum centro de custo cadastrado.</p>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ---- Modal: Extrato (Data/Débito/Crédito/Saldo, clique expande Descrição/Centro de Custo) ---- */}
-      {extratoAberto && (
-        <div onClick={() => { setExtratoAberto(false); setLinhaExpandidaExtrato(null); }}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div onClick={e => e.stopPropagation()}
-            style={{ background: '#fff', borderRadius: 8, width: '95%', maxWidth: '480px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.9rem 1.2rem', background: '#1e293b' }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Extrato</span>
-              <button onClick={() => { setExtratoAberto(false); setLinhaExpandidaExtrato(null); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
-            </div>
-            <div style={{ display: 'flex', gap: '0.35rem', padding: '0.4rem 0.7rem', fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
-              <span style={{ width: '72px' }}>Data</span>
-              <span style={{ width: '70px', textAlign: 'right' }}>Débito</span>
-              <span style={{ width: '70px', textAlign: 'right' }}>Crédito</span>
-              <span style={{ marginLeft: 'auto' }}>Saldo</span>
-            </div>
-            <div style={{ overflowY: 'auto' }}>
-              {lancamentosComSaldo.map((item, i) => (
-                <div key={item.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
-                  <div onClick={() => setLinhaExpandidaExtrato(prev => prev === item.id ? null : item.id)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.5rem 0.7rem', cursor: 'pointer', fontSize: '0.82rem' }}>
-                    <span style={{ width: '72px', color: '#334155' }}>{fmtData(item.emissao)}</span>
-                    <span style={{ width: '70px', textAlign: 'right', color: '#dc2626' }}>{item.debito ? fmtMoeda(item.debito) : ''}</span>
-                    <span style={{ width: '70px', textAlign: 'right', color: '#16a34a' }}>{item.credito ? fmtMoeda(item.credito) : ''}</span>
-                    <span style={{ marginLeft: 'auto', fontWeight: 700, color: item.saldoAcumulado < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(item.saldoAcumulado)}</span>
-                  </div>
-                  {linhaExpandidaExtrato === item.id && (
-                    <div style={{ padding: '0 0.7rem 0.5rem 0.7rem', fontSize: '0.78rem', color: '#64748b' }}>
-                      <div>{item.descricao}</div>
-                      <div>{nomeCentro(item.centro_custo_id)}</div>
-                    </div>
-                  )}
-                </div>
-              ))}
-              {lancamentos.length === 0 && (
-                <div style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Nenhum lançamento cadastrado.</div>
-              )}
-            </div>
-            {lancamentos.length > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0.7rem', borderTop: '2px solid #1e293b', fontWeight: 700 }}>
-                <span>Saldo Final</span>
-                <span style={{ color: saldoFinal < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(saldoFinal)}</span>
-              </div>
-            )}
           </div>
         </div>
       )}
