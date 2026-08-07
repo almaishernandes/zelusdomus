@@ -75,6 +75,9 @@ export function AtaReuniaoModule() {
   const itemPreviewRef = useRef(null);
   const ataPreviewRef = useRef(null);
 
+  const podeCompartilharArquivo = typeof navigator !== 'undefined' && !!navigator.canShare
+    && navigator.canShare({ files: [new File([new Blob()], 'f.pdf', { type: 'application/pdf' })] });
+
   // Ao abrir cada modal, garante que a visualização comece do topo do documento
   useEffect(() => {
     if (itemVisualizando && itemPreviewRef.current) itemPreviewRef.current.scrollTop = 0;
@@ -239,24 +242,53 @@ export function AtaReuniaoModule() {
     }
   };
 
-  const imprimirItem = async (item) => {
-    if (!itemPreviewRef.current) return;
-    setGerandoPdfId(item.id);
-    try {
-      await gerarPdfDeElemento(itemPreviewRef.current, `Formacao-${item.assunto.replace(/\s+/g, '-')}.pdf`);
-    } catch (e) {
-      console.error('Erro ao gerar PDF:', e);
-      alert('Não foi possível gerar o PDF.');
-    } finally {
-      setGerandoPdfId(null);
-    }
-  };
-
   const enviarWhatsapp = (item) => {
     const infoReuniao = [item.local, item.data_reuniao, item.horario].filter(Boolean).join(' — ');
     const convite = stripHtml(item.fonte || CONVITE_PADRAO);
-    const texto = `*${item.tema}*\n*${item.assunto}*${infoReuniao ? `\n${infoReuniao}` : ''}\n\n${stripHtml(item.conteudo)}\n\n${convite}`;
+    const texto = `${convite}\n\n*Reunião:* ${item.tema}\n*Assunto:* ${item.assunto}\n*Local/Data/Horário:* ${infoReuniao || '-'}\n\n*Ordem do dia:*\n${stripHtml(item.conteudo)}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+  };
+
+  // Gera o arquivo formatado igual à tela e já abre o compartilhamento nativo
+  // (WhatsApp, Instagram etc.) quando o navegador suporta; senão, baixa o PDF
+  // e abre o WhatsApp com o texto como alternativa.
+  const compartilharItem = async (item) => {
+    if (!itemPreviewRef.current) return;
+    setGerandoPdfId(item.id);
+    const elemento = itemPreviewRef.current;
+    const scrollAnterior = elemento.scrollTop;
+    elemento.scrollTop = 0;
+    try {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const html2pdf = await loadHtml2pdf();
+      const filename = `Convite-${item.assunto.replace(/\s+/g, '-')}.pdf`;
+      const worker = html2pdf().set({
+        margin: [8, 8],
+        filename,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, ignoreElements: (el) => !!el.classList && el.classList.contains('no-print') },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      }).from(elemento);
+
+      const blob = await worker.outputPdf('blob');
+      if (podeCompartilharArquivo) {
+        const file = new File([blob], filename, { type: 'application/pdf' });
+        await navigator.share({ files: [file], title: 'Convite de Participação', text: `${item.tema} — ${item.assunto}` });
+      } else {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        enviarWhatsapp(item);
+      }
+    } catch (e) {
+      if (e?.name !== 'AbortError') {
+        console.error('Erro ao gerar/enviar arquivo:', e);
+        alert('Não foi possível gerar o arquivo.');
+      }
+    } finally {
+      elemento.scrollTop = scrollAnterior;
+      setGerandoPdfId(null);
+    }
   };
 
   // ---- Ata de Reunião (gerada a partir do tema/reunião selecionado) ----
@@ -485,25 +517,32 @@ export function AtaReuniaoModule() {
               <button onClick={() => setItemVisualizando(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
             </div>
             <div ref={itemPreviewRef} style={{ padding: '1.4rem 1.6rem', overflowY: 'auto', background: '#fff', fontFamily: '"Times New Roman", Times, serif' }}>
-              <h1 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 0.3rem', color: '#1e293b' }}>{itemVisualizando.tema}</h1>
-              <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 0.3rem', color: '#1e293b' }}>{itemVisualizando.assunto}</h2>
-              {(itemVisualizando.local || itemVisualizando.data_reuniao || itemVisualizando.horario) && (
-                <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '0 0 0.7rem' }}>
-                  {[itemVisualizando.local, itemVisualizando.data_reuniao, itemVisualizando.horario].filter(Boolean).join(' — ')}
-                </p>
-              )}
+              <p style={{ fontSize: '0.98rem', lineHeight: 1.6, color: '#1e293b', margin: '0 0 1.1rem', fontStyle: 'italic', textAlign: 'justify' }}>
+                {itemVisualizando.fonte || CONVITE_PADRAO}
+              </p>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', marginBottom: '1rem' }}><tbody>
+                <tr>
+                  <td style={{ padding: '0.2rem 0.5rem 0.2rem 0', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>Reunião:</td>
+                  <td style={{ padding: '0.2rem 0', color: '#334155' }}>{itemVisualizando.tema}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '0.2rem 0.5rem 0.2rem 0', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>Assunto:</td>
+                  <td style={{ padding: '0.2rem 0', color: '#334155' }}>{itemVisualizando.assunto}</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '0.2rem 0.5rem 0.2rem 0', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>Local/Data/Horário:</td>
+                  <td style={{ padding: '0.2rem 0', color: '#334155' }}>
+                    {[itemVisualizando.local, itemVisualizando.data_reuniao, itemVisualizando.horario].filter(Boolean).join(' — ') || ' '}
+                  </td>
+                </tr>
+              </tbody></table>
+              <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.3rem' }}>Ordem do dia:</p>
               <div style={{ fontSize: '0.92rem', lineHeight: 1.5, color: '#334155', margin: 0, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(itemVisualizando.conteudo) }} />
-              <div style={{ marginTop: '0.9rem', paddingTop: '0.7rem', borderTop: '1px solid #e2e8f0' }}>
-                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.3rem' }}>Convite de Participação</p>
-                <p style={{ fontSize: '0.85rem', color: '#334155', whiteSpace: 'pre-wrap', textAlign: 'justify', margin: 0, fontStyle: 'italic' }}>
-                  {itemVisualizando.fonte || CONVITE_PADRAO}
-                </p>
-              </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', padding: '0.9rem 1.2rem', borderTop: '1px solid #e2e8f0' }}>
-              <button onClick={() => imprimirItem(itemVisualizando)} disabled={gerandoPdfId === itemVisualizando.id}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-                {gerandoPdfId === itemVisualizando.id ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Printer size={14} />} Imprimir
+              <button onClick={() => compartilharItem(itemVisualizando)} disabled={gerandoPdfId === itemVisualizando.id}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: gerandoPdfId === itemVisualizando.id ? 'wait' : 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
+                {gerandoPdfId === itemVisualizando.id ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Printer size={14} />} {gerandoPdfId === itemVisualizando.id ? 'Gerando…' : 'Imprimir'}
               </button>
               <button onClick={() => enviarWhatsapp(itemVisualizando)}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
