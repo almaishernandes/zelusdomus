@@ -259,7 +259,7 @@ export function AtaReuniaoModule() {
       // visual no WhatsApp/Instagram, em vez de um documento anexado.
       const canvas = await html2pdf().set({
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, ignoreElements: (el) => !!el.classList && el.classList.contains('no-print') }
-      }).from(elemento).toCanvas();
+      }).from(elemento).toCanvas().get('canvas');
 
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
 
