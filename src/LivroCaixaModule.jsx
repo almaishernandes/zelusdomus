@@ -7,6 +7,17 @@ const fmtMoeda = (v) => (Number(v) || 0).toLocaleString('pt-BR', { style: 'curre
 const fmtData = (v) => v ? new Date(v + 'T00:00:00').toLocaleDateString('pt-BR') : '';
 const MESES_ABREV = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
+// Máscara de valor: os dígitos digitados preenchem da direita pra esquerda,
+// os 2 últimos sempre viram centavos (ex: digitar "150" mostra "1,50").
+const paraNumero = (str) => {
+  const digits = (str || '').replace(/\D/g, '');
+  return digits ? parseInt(digits, 10) / 100 : 0;
+};
+const formatarValorDigitado = (raw) => {
+  const num = paraNumero(raw);
+  return num ? num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+};
+
 export function LivroCaixaModule({ setHeaderExtra }) {
   const { user } = useAuth();
   const [lancamentos, setLancamentos] = useState([]);
@@ -113,8 +124,8 @@ export function LivroCaixaModule({ setHeaderExtra }) {
       vencimento: item.vencimento || '',
       descricao: item.descricao || '',
       centro_custo_id: item.centro_custo_id || '',
-      debito: item.debito ? String(item.debito) : '',
-      credito: item.credito ? String(item.credito) : ''
+      debito: item.debito ? Number(item.debito).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '',
+      credito: item.credito ? Number(item.credito).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : ''
     });
   };
 
@@ -129,7 +140,7 @@ export function LivroCaixaModule({ setHeaderExtra }) {
       setError('Preencha ao menos Emissão e Descrição');
       return;
     }
-    if (Number(form.debito) > 0 && Number(form.credito) > 0) {
+    if (paraNumero(form.debito) > 0 && paraNumero(form.credito) > 0) {
       setError('Preencha apenas Débito ou apenas Crédito, não os dois');
       return;
     }
@@ -141,8 +152,8 @@ export function LivroCaixaModule({ setHeaderExtra }) {
         vencimento: form.vencimento || null,
         descricao: form.descricao.trim(),
         centro_custo_id: form.centro_custo_id || null,
-        debito: Number(form.debito) || 0,
-        credito: Number(form.credito) || 0
+        debito: paraNumero(form.debito),
+        credito: paraNumero(form.credito)
       };
 
       if (editandoId) {
@@ -229,7 +240,7 @@ export function LivroCaixaModule({ setHeaderExtra }) {
   const saldoFinal = lancamentosComSaldo.length > 0 ? lancamentosComSaldo[lancamentosComSaldo.length - 1].saldoAcumulado : 0;
 
   return (
-    <div className="grid-container" style={{ padding: 0, display: 'flex', justifyContent: 'center' }}>
+    <div className="grid-container" style={{ padding: 0, display: 'flex', justifyContent: 'flex-start' }}>
     <div style={{ width: '100%', maxWidth: '430px' }}>
       {error && (
         <div style={{ background: '#fee2e2', color: '#991b1b', padding: '0.6rem 0.9rem', display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
@@ -271,14 +282,14 @@ export function LivroCaixaModule({ setHeaderExtra }) {
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Débito</label>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
                 <span style={{ padding: '0 0 0 0.5rem', color: '#64748b', fontSize: '0.85rem' }}>R$</span>
-                <input type="number" step="0.01" min="0" placeholder="0,00" value={form.debito} onChange={e => setForm({ ...form, debito: e.target.value, credito: e.target.value ? '' : form.credito })} style={{ ...inputStyle, border: 'none' }} />
+                <input type="text" inputMode="numeric" placeholder="0,00" value={form.debito} onChange={e => { const v = formatarValorDigitado(e.target.value); setForm({ ...form, debito: v, credito: v ? '' : form.credito }); }} style={{ ...inputStyle, border: 'none' }} />
               </div>
             </div>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Crédito</label>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 4, background: '#fff' }}>
                 <span style={{ padding: '0 0 0 0.5rem', color: '#64748b', fontSize: '0.85rem' }}>R$</span>
-                <input type="number" step="0.01" min="0" placeholder="0,00" value={form.credito} onChange={e => setForm({ ...form, credito: e.target.value, debito: e.target.value ? '' : form.debito })} style={{ ...inputStyle, border: 'none' }} />
+                <input type="text" inputMode="numeric" placeholder="0,00" value={form.credito} onChange={e => { const v = formatarValorDigitado(e.target.value); setForm({ ...form, credito: v, debito: v ? '' : form.debito }); }} style={{ ...inputStyle, border: 'none' }} />
               </div>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
