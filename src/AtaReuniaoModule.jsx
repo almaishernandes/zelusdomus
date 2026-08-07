@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { useAuth } from './AuthContext';
-import { Plus, Trash2, Edit2, Save, X, AlertCircle, Loader, Eye, MessageCircle, Printer, FileText, Bold, Underline, Italic } from 'lucide-react';
+import { Plus, Trash2, Save, X, AlertCircle, Loader, Eye, MessageCircle, Printer, FileText, Bold, Underline, Italic } from 'lucide-react';
 
 const loadHtml2pdf = () => import('html2pdf.js').then(m => m.default);
 
@@ -59,7 +59,7 @@ function ConteudoEditor({ value, onChange, autoFocus }) {
   );
 }
 
-export function AtaReuniaoModule() {
+export function AtaReuniaoModule({ setHeaderExtra }) {
   const { user } = useAuth();
   const [formacao, setFormacao] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -131,18 +131,26 @@ export function AtaReuniaoModule() {
     }
   };
 
-  const primeirasPalavras = (texto, n = 10) => {
-    const palavras = stripHtml(texto).split(/\s+/).filter(Boolean);
-    if (palavras.length <= n) return palavras.join(' ');
-    return palavras.slice(0, n).join(' ') + '…';
-  };
-
   // ---- Abrir formulário (segunda folha, abaixo de todos os temas) ----
   const abrirInserirTema = () => {
     setModo('tema');
     setEditandoId(null);
     setForm({ tema: '', assunto: '', conteudo: '', fonte: CONVITE_PADRAO, local: '', data_reuniao: '', horario: '', anotacoes_decisoes: '' });
   };
+
+  // Botão "+" injetado na 1ª linha do cabeçalho do app, ao lado de Sair —
+  // é o único jeito de abrir "Inserir Reunião" agora (saiu da tabela).
+  useEffect(() => {
+    if (!setHeaderExtra) return;
+    setHeaderExtra(
+      <button type="button" onClick={abrirInserirTema} title="Inserir Reunião"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: '#ca8a04', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+        <Plus size={18} />
+      </button>
+    );
+    return () => setHeaderExtra(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setHeaderExtra]);
 
   const abrirEdicao = (item) => {
     setModo('editar');
@@ -204,10 +212,11 @@ export function AtaReuniaoModule() {
   };
 
   const handleExcluir = async (id) => {
-    if (!window.confirm('Tem certeza que quer excluir este item?')) return;
+    if (!window.confirm('Tem certeza que quer excluir esta reunião?')) return;
     try {
       const { error: err } = await supabase.from('atas_reuniao').delete().eq('id', id);
       if (err) throw err;
+      if (editandoId === id) cancelarForm();
       await carregarFormacao();
     } catch (err) {
       setError(err.message);
@@ -407,22 +416,19 @@ export function AtaReuniaoModule() {
       <table className="ata-list" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
         <thead className="ata-list-header">
           <tr>
-            <th style={{ background: '#1e293b', padding: 0, textAlign: 'left', width: '18%' }}>
-              <button onClick={abrirInserirTema}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', color: '#fff', padding: '0.6rem 0.9rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem' }}>
-                <Plus size={14} /> Inserir Reunião
-              </button>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+              Reunião
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '20%', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
-              Assunto
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '18%', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+              Data
             </th>
-            <th className="ata-col-conteudo" style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
-              Conteúdo
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '14%', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+              Horário
             </th>
-            <th style={{ background: '#1e293b', width: '160px', padding: 0 }}>
+            <th style={{ background: '#1e293b', width: '80px', padding: 0 }}>
               <button onClick={visualizarAta}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: 'none', border: 'none', color: '#fff', padding: '0.6rem 0.9rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem' }}>
-                <FileText size={14} /> Imprimir Ata
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: '#fff', padding: '0.6rem', fontWeight: 700, cursor: 'pointer', fontSize: '0.82rem' }} title="Imprimir Ata">
+                <FileText size={16} />
               </button>
             </th>
           </tr>
@@ -432,27 +438,20 @@ export function AtaReuniaoModule() {
             const coresTema = ['#dbeafe', '#bbf7d0', '#fef3c7', '#fee2e2', '#f3e8ff', '#ffedd5', '#e0f2fe', '#fce7f3'];
             let temaAnterior = null;
             let temaIndex = -1;
-            return formacao.map((item, i) => {
-              const primeiraOcorrencia = item.tema !== temaAnterior;
-              if (primeiraOcorrencia) temaIndex++;
+            return formacao.map((item) => {
+              if (item.tema !== temaAnterior) temaIndex++;
               temaAnterior = item.tema;
-              const isSelected = selecionado?.tema === item.tema && selecionado?.assunto === item.assunto;
+              const isSelected = editandoId === item.id;
               const corTema = coresTema[temaIndex % coresTema.length];
               return (
                 <tr key={item.id}
-                  onClick={() => setSelecionado({ tema: item.tema, assunto: item.assunto })}
+                  onClick={() => abrirEdicao(item)}
                   style={{ background: isSelected ? '#93c5fd' : corTema, cursor: 'pointer' }}>
-                  <td style={{ padding: '0.25rem 0.9rem', fontWeight: 700, color: '#1e293b' }}>
-                    {primeiraOcorrencia && item.tema}
-                  </td>
-                  <td style={{ padding: '0.25rem 0.9rem', color: '#334155' }}>{item.assunto}</td>
-                  <td className="ata-col-conteudo" style={{ padding: '0.25rem 0.9rem', color: '#64748b' }}>{primeirasPalavras(item.conteudo)}</td>
-                  <td style={{ padding: '0.25rem 0.9rem', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
-                    <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
-                      <button onClick={() => setItemVisualizando(item)} title="Visualizar" style={btn('#0ea5e9')}><Eye size={14} /></button>
-                      <button onClick={() => abrirEdicao(item)} title="Editar" style={btn('#3b82f6')}><Edit2 size={14} /></button>
-                      <button onClick={() => handleExcluir(item.id)} title="Excluir" style={btn('#dc2626')}><Trash2 size={14} /></button>
-                    </div>
+                  <td style={{ padding: '0.4rem 0.9rem', fontWeight: 700, color: '#1e293b' }}>{item.tema}</td>
+                  <td style={{ padding: '0.4rem 0.9rem', color: '#334155' }}>{item.data_reuniao || '-'}</td>
+                  <td style={{ padding: '0.4rem 0.9rem', color: '#334155' }}>{item.horario || '-'}</td>
+                  <td style={{ padding: '0.4rem 0.5rem', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                    <button onClick={() => setItemVisualizando(item)} title="Visualizar" style={btn('#0ea5e9')}><Eye size={14} /></button>
                   </td>
                 </tr>
               );
@@ -460,7 +459,7 @@ export function AtaReuniaoModule() {
           })()}
 
           {formacao.length === 0 && (
-            <tr><td colSpan={4} style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma reunião cadastrada. Clique em "Inserir Reunião" para começar.</td></tr>
+            <tr><td colSpan={4} style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8' }}>Nenhuma reunião cadastrada. Clique no + ao lado de "Sair" para começar.</td></tr>
           )}
         </tbody>
       </table>
@@ -491,11 +490,11 @@ export function AtaReuniaoModule() {
             </div>
             <div className="ata-field-data">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Data</label>
-              <input type="text" placeholder="dd/mm/aaaa" value={form.data_reuniao} onChange={e => setForm({ ...form, data_reuniao: e.target.value })} style={inputStyle} />
+              <input type="date" value={form.data_reuniao} onChange={e => setForm({ ...form, data_reuniao: e.target.value })} style={inputStyle} />
             </div>
             <div className="ata-field-horario">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Horário</label>
-              <input type="text" placeholder="00:00" value={form.horario} onChange={e => setForm({ ...form, horario: e.target.value })} style={inputStyle} />
+              <input type="time" value={form.horario} onChange={e => setForm({ ...form, horario: e.target.value })} style={inputStyle} />
             </div>
           </div>
 
@@ -526,6 +525,12 @@ export function AtaReuniaoModule() {
               style={{ background: '#94a3b8', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
               Cancelar
             </button>
+            {editandoId && (
+              <button onClick={() => handleExcluir(editandoId)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#dc2626', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
+                <Trash2 size={14} /> Excluir
+              </button>
+            )}
           </div>
         </div>
       )}
