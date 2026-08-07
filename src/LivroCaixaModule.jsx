@@ -40,6 +40,7 @@ export function LivroCaixaModule({ setHeaderExtra }) {
   const [relatorioAnual, setRelatorioAnual] = useState(false);
   const [linhaExpandidaExtrato, setLinhaExpandidaExtrato] = useState(null);
   const [gerandoExtratoPdf, setGerandoExtratoPdf] = useState(false);
+  const [extratoPdfAberto, setExtratoPdfAberto] = useState(false);
   const [extratoDe, setExtratoDe] = useState('');
   const [extratoAte, setExtratoAte] = useState('');
   const extratoPrintRef = useRef(null);
@@ -253,8 +254,10 @@ export function LivroCaixaModule({ setHeaderExtra }) {
     }
   };
 
-  // Gera o PDF do extrato completo (com Descrição e Centro de Custo de cada
-  // lançamento) a partir da tabela renderizada fora da tela em extratoPrintRef.
+  // Gera o PDF a partir do conteúdo já visível no modal (html2canvas precisa
+  // que o elemento esteja realmente renderizado na tela para capturar algo —
+  // um container escondido fora da tela ou atrás de outros elementos sai em
+  // branco). Por isso o botão "Extrato" abre o modal antes de gerar o PDF.
   const imprimirExtrato = async () => {
     if (!extratoPrintRef.current) return;
     setGerandoExtratoPdf(true);
@@ -264,7 +267,7 @@ export function LivroCaixaModule({ setHeaderExtra }) {
         margin: [8, 8],
         filename: `Extrato-Livro-Caixa-${new Date().toISOString().slice(0, 10)}.pdf`,
         image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 900 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       }).from(extratoPrintRef.current).outputPdf('blob');
@@ -304,9 +307,9 @@ export function LivroCaixaModule({ setHeaderExtra }) {
           style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.4rem 0.6rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>
           <Settings size={14} /> Custos
         </button>
-        <button type="button" onClick={imprimirExtrato} disabled={gerandoExtratoPdf}
+        <button type="button" onClick={() => setExtratoPdfAberto(true)}
           style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', background: '#7c3aed', color: '#fff', border: 'none', padding: '0.4rem 0.6rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>
-          {gerandoExtratoPdf ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <FileText size={14} />} Extrato
+          <FileText size={14} /> Extrato
         </button>
         <button type="button" onClick={() => setRelatorioAnual(true)}
           style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.4rem 0.6rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>
@@ -537,56 +540,75 @@ export function LivroCaixaModule({ setHeaderExtra }) {
         );
       })()}
 
-      {/* ---- Tabela completa, renderizada atrás do conteúdo (z-index negativo) só
-           para o html2canvas capturar — usada para gerar o PDF do Extrato ---- */}
-      <div style={{ position: 'fixed', top: 0, left: 0, zIndex: -1, pointerEvents: 'none', width: '780px', background: '#fff', padding: '1.2rem' }} ref={extratoPrintRef}>
-        <h2 style={{ margin: '0 0 0.2rem', fontSize: '1.1rem', color: '#1e293b' }}>Extrato — Livro Caixa</h2>
-        <p style={{ margin: '0 0 0.2rem', fontSize: '0.75rem', color: '#64748b' }}>
-          Período: {extratoDe ? fmtData(extratoDe) : 'início'} até {extratoAte ? fmtData(extratoAte) : 'hoje'}
-        </p>
-        <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', color: '#64748b' }}>Gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem' }}>
-          <thead>
-            <tr>
-              <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Emissão</th>
-              <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Descrição</th>
-              <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Centro de Custo</th>
-              <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'right', color: '#fff' }}>Débito</th>
-              <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'right', color: '#fff' }}>Crédito</th>
-              <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'right', color: '#fff' }}>Saldo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {extratoDe && (
-              <tr style={{ background: '#e2e8f0' }}>
-                <td colSpan={5} style={{ padding: '0.35rem', fontWeight: 700, color: '#1e293b' }}>Saldo Inicial do Período</td>
-                <td style={{ padding: '0.35rem', textAlign: 'right', fontWeight: 700, color: saldoInicialPeriodo < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(saldoInicialPeriodo)}</td>
-              </tr>
-            )}
-            {lancamentosComSaldo.map((item, i) => (
-              <tr key={item.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f1f5f9' }}>
-                <td style={{ padding: '0.35rem', color: '#334155' }}>{fmtData(item.emissao)}</td>
-                <td style={{ padding: '0.35rem', color: '#334155' }}>{item.descricao}</td>
-                <td style={{ padding: '0.35rem', color: '#64748b' }}>{nomeCentro(item.centro_custo_id)}</td>
-                <td style={{ padding: '0.35rem', textAlign: 'right', color: '#dc2626' }}>{item.debito ? fmtMoeda(item.debito) : ''}</td>
-                <td style={{ padding: '0.35rem', textAlign: 'right', color: '#16a34a' }}>{item.credito ? fmtMoeda(item.credito) : ''}</td>
-                <td style={{ padding: '0.35rem', textAlign: 'right', fontWeight: 700, color: item.saldoAcumulado < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(item.saldoAcumulado)}</td>
-              </tr>
-            ))}
-            {lancamentosComSaldo.length === 0 && (
-              <tr><td colSpan={6} style={{ padding: '0.6rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum lançamento no período.</td></tr>
-            )}
-          </tbody>
-          {lancamentosComSaldo.length > 0 && (
-            <tfoot>
-              <tr>
-                <td colSpan={5} style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 700, color: '#1e293b', borderTop: '2px solid #1e293b' }}>Saldo Final</td>
-                <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 800, color: saldoFinal < 0 ? '#dc2626' : '#1e293b', borderTop: '2px solid #1e293b' }}>{fmtMoeda(saldoFinal)}</td>
-              </tr>
-            </tfoot>
-          )}
-        </table>
-      </div>
+      {/* ---- Modal: prévia do Extrato completo, de onde o PDF é gerado ---- */}
+      {extratoPdfAberto && (
+        <div onClick={() => setExtratoPdfAberto(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 8, width: '95%', maxWidth: '820px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.9rem 1.2rem', background: '#1e293b' }}>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Extrato — Livro Caixa</span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={imprimirExtrato} disabled={gerandoExtratoPdf}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#7c3aed', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>
+                  {gerandoExtratoPdf ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <FileText size={14} />} Baixar PDF
+                </button>
+                <button onClick={() => setExtratoPdfAberto(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
+              </div>
+            </div>
+            <div style={{ padding: '1rem 1.2rem', overflow: 'auto' }}>
+              <div ref={extratoPrintRef} style={{ background: '#fff' }}>
+                <h2 style={{ margin: '0 0 0.2rem', fontSize: '1.1rem', color: '#1e293b' }}>Extrato — Livro Caixa</h2>
+                <p style={{ margin: '0 0 0.2rem', fontSize: '0.75rem', color: '#64748b' }}>
+                  Período: {extratoDe ? fmtData(extratoDe) : 'início'} até {extratoAte ? fmtData(extratoAte) : 'hoje'}
+                </p>
+                <p style={{ margin: '0 0 0.8rem', fontSize: '0.75rem', color: '#64748b' }}>Gerado em {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.72rem' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Emissão</th>
+                      <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Descrição</th>
+                      <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'left', color: '#fff' }}>Centro de Custo</th>
+                      <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'right', color: '#fff' }}>Débito</th>
+                      <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'right', color: '#fff' }}>Crédito</th>
+                      <th style={{ background: '#1e293b', padding: '0.4rem', textAlign: 'right', color: '#fff' }}>Saldo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {extratoDe && (
+                      <tr style={{ background: '#e2e8f0' }}>
+                        <td colSpan={5} style={{ padding: '0.35rem', fontWeight: 700, color: '#1e293b' }}>Saldo Inicial do Período</td>
+                        <td style={{ padding: '0.35rem', textAlign: 'right', fontWeight: 700, color: saldoInicialPeriodo < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(saldoInicialPeriodo)}</td>
+                      </tr>
+                    )}
+                    {lancamentosComSaldo.map((item, i) => (
+                      <tr key={item.id} style={{ background: i % 2 === 0 ? '#ffffff' : '#f1f5f9' }}>
+                        <td style={{ padding: '0.35rem', color: '#334155' }}>{fmtData(item.emissao)}</td>
+                        <td style={{ padding: '0.35rem', color: '#334155' }}>{item.descricao}</td>
+                        <td style={{ padding: '0.35rem', color: '#64748b' }}>{nomeCentro(item.centro_custo_id)}</td>
+                        <td style={{ padding: '0.35rem', textAlign: 'right', color: '#dc2626' }}>{item.debito ? fmtMoeda(item.debito) : ''}</td>
+                        <td style={{ padding: '0.35rem', textAlign: 'right', color: '#16a34a' }}>{item.credito ? fmtMoeda(item.credito) : ''}</td>
+                        <td style={{ padding: '0.35rem', textAlign: 'right', fontWeight: 700, color: item.saldoAcumulado < 0 ? '#dc2626' : '#1e293b' }}>{fmtMoeda(item.saldoAcumulado)}</td>
+                      </tr>
+                    ))}
+                    {lancamentosComSaldo.length === 0 && (
+                      <tr><td colSpan={6} style={{ padding: '0.6rem', textAlign: 'center', color: '#94a3b8' }}>Nenhum lançamento no período.</td></tr>
+                    )}
+                  </tbody>
+                  {lancamentosComSaldo.length > 0 && (
+                    <tfoot>
+                      <tr>
+                        <td colSpan={5} style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 700, color: '#1e293b', borderTop: '2px solid #1e293b' }}>Saldo Final</td>
+                        <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 800, color: saldoFinal < 0 ? '#dc2626' : '#1e293b', borderTop: '2px solid #1e293b' }}>{fmtMoeda(saldoFinal)}</td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </div>
   );
