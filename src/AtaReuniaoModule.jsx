@@ -7,6 +7,18 @@ const loadHtml2pdf = () => import('html2pdf.js').then(m => m.default);
 
 const stripHtml = (html) => String(html || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 
+// Formata dd/mmm/aaaa (ex: 01/Ago/2026) a partir de yyyy-mm-dd (seletor) ou dd/mm/aaaa (formato antigo)
+const MESES_ABREV = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const fmtDataAbrev = (v) => {
+  if (!v) return '';
+  let d;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) d = new Date(v + 'T00:00:00');
+  else if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) { const [dd, mm, yyyy] = v.split('/'); d = new Date(`${yyyy}-${mm}-${dd}T00:00:00`); }
+  else return v;
+  if (isNaN(d)) return v;
+  return `${String(d.getDate()).padStart(2, '0')}/${MESES_ABREV[d.getMonth()]}/${d.getFullYear()}`;
+};
+
 // Compatibilidade: conteúdo antigo salvo como texto simples (sem tags) mantém as quebras de linha
 const paraHtmlExibicao = (texto) => {
   const str = String(texto || '');
@@ -556,17 +568,19 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', marginBottom: '1rem' }}><tbody>
                 <tr>
                   <td style={{ padding: '0.2rem 0.5rem 0.2rem 0', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>Reunião:</td>
-                  <td style={{ padding: '0.2rem 0', color: '#334155' }}>{itemVisualizando.tema}</td>
+                  <td style={{ padding: '0.2rem 0', color: '#334155' }}>
+                    {itemVisualizando.tema}
+                    {itemVisualizando.data_reuniao ? ` - Data ${fmtDataAbrev(itemVisualizando.data_reuniao)}` : ''}
+                    {itemVisualizando.horario ? ` - Horário ${itemVisualizando.horario} horas` : ''}
+                  </td>
                 </tr>
                 <tr>
                   <td style={{ padding: '0.2rem 0.5rem 0.2rem 0', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>Assunto:</td>
                   <td style={{ padding: '0.2rem 0', color: '#334155' }}>{itemVisualizando.assunto}</td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '0.2rem 0.5rem 0.2rem 0', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>Local/Data/Horário:</td>
-                  <td style={{ padding: '0.2rem 0', color: '#334155' }}>
-                    {[itemVisualizando.local, itemVisualizando.data_reuniao, itemVisualizando.horario].filter(Boolean).join(' — ') || ' '}
-                  </td>
+                  <td style={{ padding: '0.2rem 0.5rem 0.2rem 0', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>Local:</td>
+                  <td style={{ padding: '0.2rem 0', color: '#334155' }}>{itemVisualizando.local || '-'}</td>
                 </tr>
               </tbody></table>
               <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.3rem' }}>Ordem do dia:</p>
