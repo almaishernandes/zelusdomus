@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { useAuth } from './AuthContext';
-import { Plus, Trash2, Save, X, AlertCircle, Loader, Eye, MessageCircle, Printer, FileText, Bold, Underline, Italic } from 'lucide-react';
+import { Plus, Trash2, Save, X, AlertCircle, Loader, Eye, MessageCircle, Printer, FileText, Bold, Underline, Italic, ChevronLeft } from 'lucide-react';
 
 const loadHtml2pdf = () => import('html2pdf.js').then(m => m.default);
 
@@ -389,17 +389,6 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
           .ata-form-body > .ata-form-actions { order: 2 !important; }
           .ata-form-body > :not(.ata-form-grid):not(.ata-form-actions) { order: 3 !important; }
 
-          .ata-form-grid {
-            grid-template-columns: 1fr 1fr !important;
-            grid-template-areas: "tema assunto" "local local" "data horario" !important;
-            gap: 0.5rem !important;
-          }
-          .ata-field-tema { grid-area: tema !important; }
-          .ata-field-assunto { grid-area: assunto !important; }
-          .ata-field-local { grid-area: local !important; }
-          .ata-field-data { grid-area: data !important; }
-          .ata-field-horario { grid-area: horario !important; }
-
           .ata-form-actions { flex-wrap: wrap !important; }
           .ata-form-actions button { flex: 1 1 auto !important; justify-content: center !important; }
         }
@@ -457,19 +446,19 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
       {/* ---- Segunda folha: formulário de inclusão/edição, sempre abaixo de todos os temas ---- */}
       {modo && (
         <div className="ata-form-body" style={{ background: '#f1f5f9', borderTop: '3px solid #1e293b', padding: '0.9rem' }}>
-          <div className="ata-form-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 0.8fr 0.7fr', gap: '0.6rem', marginBottom: '0.7rem' }}>
+          <div className="ata-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.6rem', marginBottom: '0.7rem' }}>
             <div className="ata-field-tema">
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Reunião / Tema</label>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Reunião Nº</label>
               {modo === 'tema' || modo === 'editar' ? (
-                <input type="text" placeholder="Reunião / Tema" value={form.tema} onChange={e => setForm({ ...form, tema: e.target.value })} style={inputStyle} autoFocus={modo === 'tema'} />
+                <input type="text" placeholder="Reunião Nº" value={form.tema} onChange={e => setForm({ ...form, tema: e.target.value })} style={inputStyle} autoFocus={modo === 'tema'} />
               ) : (
                 <div style={lockedStyle}>{form.tema}</div>
               )}
             </div>
             <div className="ata-field-assunto">
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Assunto</label>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Assunto/Tema</label>
               {modo === 'tema' || modo === 'assunto' || modo === 'editar' ? (
-                <input type="text" placeholder="Assunto" value={form.assunto} onChange={e => setForm({ ...form, assunto: e.target.value })} style={inputStyle} autoFocus={modo === 'assunto'} />
+                <input type="text" placeholder="Assunto/Tema" value={form.assunto} onChange={e => setForm({ ...form, assunto: e.target.value })} style={inputStyle} autoFocus={modo === 'assunto'} />
               ) : (
                 <div style={lockedStyle}>{form.assunto}</div>
               )}
@@ -511,9 +500,9 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
               style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
               {salvando ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={14} />} Salvar
             </button>
-            <button onClick={cancelarForm}
-              style={{ background: '#94a3b8', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-              Voltar
+            <button onClick={cancelarForm} title="Voltar"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#94a3b8', color: '#fff', border: 'none', padding: '0.5rem 0.7rem', borderRadius: 4, cursor: 'pointer' }}>
+              <ChevronLeft size={16} />
             </button>
             {editandoId && (
               <button onClick={() => setItemVisualizando(formacao.find(i => i.id === editandoId))}
