@@ -368,12 +368,30 @@ export function AtaReuniaoModule() {
     <div className="grid-container" style={{ padding: 0 }}>
       <style>{`
         @media (max-width: 680px) {
-          .ata-form-grid { grid-template-columns: 1fr !important; }
           .ata-col-conteudo { display: none !important; }
           .ata-list-header th { font-size: 0.76rem !important; padding: 0.5rem 0.6rem !important; }
           .ata-list-header th:first-child button,
           .ata-list-header th:last-child button { font-size: 0.74rem !important; padding: 0.5rem 0.5rem !important; white-space: normal !important; }
           .ata-list td { padding: 0.4rem 0.6rem !important; font-size: 0.82rem !important; }
+
+          /* Formulário: linha 1 = Reunião + Assunto, linha 2 = botões de ação
+             (Local/Data/Horário e o resto do formulário seguem abaixo) */
+          .ata-form-body { display: flex !important; flex-direction: column !important; }
+          .ata-form-body > .ata-form-grid { order: 1 !important; }
+          .ata-form-body > .ata-form-actions { order: 2 !important; }
+          .ata-form-body > :not(.ata-form-grid):not(.ata-form-actions) { order: 3 !important; }
+
+          .ata-form-grid {
+            grid-template-columns: 1fr 1fr !important;
+            grid-template-areas: "tema assunto" "local local" "data horario" !important;
+            gap: 0.5rem !important;
+          }
+          .ata-field-tema { grid-area: tema !important; }
+          .ata-field-assunto { grid-area: assunto !important; }
+          .ata-field-local { grid-area: local !important; }
+          .ata-field-data { grid-area: data !important; }
+          .ata-field-horario { grid-area: horario !important; }
+
           .ata-form-actions { flex-wrap: wrap !important; }
           .ata-form-actions button { flex: 1 1 auto !important; justify-content: center !important; }
         }
@@ -449,9 +467,9 @@ export function AtaReuniaoModule() {
 
       {/* ---- Segunda folha: formulário de inclusão/edição, sempre abaixo de todos os temas ---- */}
       {modo && (
-        <div style={{ background: '#f1f5f9', borderTop: '3px solid #1e293b', padding: '0.9rem' }}>
+        <div className="ata-form-body" style={{ background: '#f1f5f9', borderTop: '3px solid #1e293b', padding: '0.9rem' }}>
           <div className="ata-form-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 0.8fr 0.7fr', gap: '0.6rem', marginBottom: '0.7rem' }}>
-            <div>
+            <div className="ata-field-tema">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Reunião / Tema</label>
               {modo === 'tema' || modo === 'editar' ? (
                 <input type="text" placeholder="Reunião / Tema" value={form.tema} onChange={e => setForm({ ...form, tema: e.target.value })} style={inputStyle} autoFocus={modo === 'tema'} />
@@ -459,7 +477,7 @@ export function AtaReuniaoModule() {
                 <div style={lockedStyle}>{form.tema}</div>
               )}
             </div>
-            <div>
+            <div className="ata-field-assunto">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Assunto</label>
               {modo === 'tema' || modo === 'assunto' || modo === 'editar' ? (
                 <input type="text" placeholder="Assunto" value={form.assunto} onChange={e => setForm({ ...form, assunto: e.target.value })} style={inputStyle} autoFocus={modo === 'assunto'} />
@@ -467,15 +485,15 @@ export function AtaReuniaoModule() {
                 <div style={lockedStyle}>{form.assunto}</div>
               )}
             </div>
-            <div>
+            <div className="ata-field-local">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Local</label>
               <input type="text" placeholder="Local da reunião" value={form.local} onChange={e => setForm({ ...form, local: e.target.value })} style={inputStyle} />
             </div>
-            <div>
+            <div className="ata-field-data">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Data</label>
               <input type="text" placeholder="dd/mm/aaaa" value={form.data_reuniao} onChange={e => setForm({ ...form, data_reuniao: e.target.value })} style={inputStyle} />
             </div>
-            <div>
+            <div className="ata-field-horario">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Horário</label>
               <input type="text" placeholder="00:00" value={form.horario} onChange={e => setForm({ ...form, horario: e.target.value })} style={inputStyle} />
             </div>
