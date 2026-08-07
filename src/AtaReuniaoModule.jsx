@@ -138,20 +138,6 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
     setForm({ tema: '', assunto: '', conteudo: '', fonte: CONVITE_PADRAO, local: '', data_reuniao: '', horario: '', anotacoes_decisoes: '' });
   };
 
-  // Botão "+" injetado na 1ª linha do cabeçalho do app, ao lado de Sair —
-  // é o único jeito de abrir "Inserir Reunião" agora (saiu da tabela).
-  useEffect(() => {
-    if (!setHeaderExtra) return;
-    setHeaderExtra(
-      <button type="button" onClick={abrirInserirTema} title="Inserir Reunião"
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: '#ca8a04', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-        <Plus size={18} />
-      </button>
-    );
-    return () => setHeaderExtra(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setHeaderExtra]);
-
   const abrirEdicao = (item) => {
     setModo('editar');
     setEditandoId(item.id);
@@ -367,6 +353,49 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
   };
 
+  // Botões de ação injetados na 1ª linha do cabeçalho do app, ao lado de
+  // Sair — "Incluir" (+) sempre visível; Voltar/Salvar/Convite/Ata/Excluir
+  // só aparecem com o formulário aberto.
+  useEffect(() => {
+    if (!setHeaderExtra) return;
+    const itemAtual = formacao.find(i => i.id === editandoId);
+    const btnStyle = (bg) => ({ display: 'flex', alignItems: 'center', gap: '0.3rem', background: bg, color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' });
+    setHeaderExtra(
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+        <button type="button" onClick={abrirInserirTema} title="Inserir Reunião"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: '#ca8a04', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+          <Plus size={18} />
+        </button>
+        {modo && (
+          <>
+            <button type="button" onClick={cancelarForm} title="Voltar"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: '#94a3b8', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+              <ChevronLeft size={16} />
+            </button>
+            <button type="button" onClick={handleSalvar} disabled={salvando} style={btnStyle('#16a34a')}>
+              {salvando ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={14} />} Salvar
+            </button>
+            {editandoId && (
+              <button type="button" onClick={() => setItemVisualizando(itemAtual)} style={btnStyle('#0ea5e9')}>
+                <Eye size={14} /> Convite
+              </button>
+            )}
+            <button type="button" onClick={visualizarAta} style={btnStyle('#ca8a04')}>
+              <FileText size={14} /> Ata
+            </button>
+            {editandoId && (
+              <button type="button" onClick={() => handleExcluir(editandoId)} style={btnStyle('#dc2626')}>
+                <Trash2 size={14} /> Excluir
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    );
+    return () => setHeaderExtra(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setHeaderExtra, modo, salvando, editandoId, formacao]);
+
   if (loading) return <div className="empty-state"><h3>Carregando...</h3></div>;
 
   const inputStyle = { width: '100%', padding: '0.4rem 0.5rem', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: '0.85rem' };
@@ -382,15 +411,6 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
           .ata-list-header th:last-child button { font-size: 0.74rem !important; padding: 0.5rem 0.5rem !important; white-space: normal !important; }
           .ata-list td { padding: 0.4rem 0.6rem !important; font-size: 0.82rem !important; }
 
-          /* Formulário: linha 1 = Reunião + Assunto, linha 2 = botões de ação
-             (Local/Data/Horário e o resto do formulário seguem abaixo) */
-          .ata-form-body { display: flex !important; flex-direction: column !important; }
-          .ata-form-body > .ata-form-grid { order: 1 !important; }
-          .ata-form-body > .ata-form-actions { order: 2 !important; }
-          .ata-form-body > :not(.ata-form-grid):not(.ata-form-actions) { order: 3 !important; }
-
-          .ata-form-actions { flex-wrap: wrap !important; }
-          .ata-form-actions button { flex: 1 1 auto !important; justify-content: center !important; }
         }
       `}</style>
       {error && (
@@ -510,32 +530,6 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
             />
           </div>
 
-          <div className="ata-form-actions" style={{ display: 'flex', gap: '0.4rem' }}>
-            <button onClick={handleSalvar} disabled={salvando}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-              {salvando ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={14} />} Salvar
-            </button>
-            <button onClick={cancelarForm} title="Voltar"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#94a3b8', color: '#fff', border: 'none', padding: '0.5rem 0.7rem', borderRadius: 4, cursor: 'pointer' }}>
-              <ChevronLeft size={16} />
-            </button>
-            {editandoId && (
-              <button onClick={() => setItemVisualizando(formacao.find(i => i.id === editandoId))}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-                <Eye size={14} /> Convite
-              </button>
-            )}
-            <button onClick={visualizarAta}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#ca8a04', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-              <FileText size={14} /> Imprimir Ata
-            </button>
-            {editandoId && (
-              <button onClick={() => handleExcluir(editandoId)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#dc2626', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-                <Trash2 size={14} /> Excluir
-              </button>
-            )}
-          </div>
         </div>
       )}
 
