@@ -180,31 +180,30 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
 
     setSalvando(true);
     try {
+      const camposComuns = {
+        tema: form.tema.trim(), assunto: form.assunto.trim(), conteudo: form.conteudo.trim(), fonte: form.fonte.trim(),
+        local: form.local.trim(), data_reuniao: form.data_reuniao.trim(), horario: form.horario.trim(),
+        anotacoes_decisoes: JSON.stringify(form.anotacoes_decisoes.filter(l => l.tarefa || l.responsavel || l.prazo))
+      };
+
       if (editandoId) {
-        const { error: err } = await supabase
-          .from('atas_reuniao')
-          .update({
-            tema: form.tema.trim(), assunto: form.assunto.trim(), conteudo: form.conteudo.trim(), fonte: form.fonte.trim(),
-            local: form.local.trim(), data_reuniao: form.data_reuniao.trim(), horario: form.horario.trim(),
-            anotacoes_decisoes: JSON.stringify(form.anotacoes_decisoes.filter(l => l.tarefa || l.responsavel || l.prazo)),
-            updated_at: new Date()
-          })
-          .eq('id', editandoId);
+        let payload = { ...camposComuns, updated_at: new Date() };
+        let { error: err } = await supabase.from('atas_reuniao').update(payload).eq('id', editandoId);
+        if (err && /anotacoes_decisoes/i.test(err.message)) {
+          // Coluna ainda não criada no banco (falta rodar setup-atas-reuniao-anotacoes.sql) —
+          // salva o resto normalmente em vez de bloquear a gravação.
+          const { anotacoes_decisoes: _omit, ...resto } = payload;
+          ({ error: err } = await supabase.from('atas_reuniao').update(resto).eq('id', editandoId));
+        }
         if (err) throw err;
       } else {
         const qtd = formacao.filter(i => i.tema === form.tema.trim()).length;
-        const { error: err } = await supabase.from('atas_reuniao').insert({
-          tema: form.tema.trim(),
-          assunto: form.assunto.trim(),
-          conteudo: form.conteudo.trim(),
-          fonte: form.fonte.trim(),
-          local: form.local.trim(),
-          data_reuniao: form.data_reuniao.trim(),
-          horario: form.horario.trim(),
-          anotacoes_decisoes: JSON.stringify(form.anotacoes_decisoes.filter(l => l.tarefa || l.responsavel || l.prazo)),
-          ordem: qtd,
-          created_by: user.id
-        });
+        let payload = { ...camposComuns, ordem: qtd, created_by: user.id };
+        let { error: err } = await supabase.from('atas_reuniao').insert(payload);
+        if (err && /anotacoes_decisoes/i.test(err.message)) {
+          const { anotacoes_decisoes: _omit, ...resto } = payload;
+          ({ error: err } = await supabase.from('atas_reuniao').insert(resto));
+        }
         if (err) throw err;
       }
 
