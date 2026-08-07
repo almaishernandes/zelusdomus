@@ -111,11 +111,13 @@ function AppContent() {
   // "vazar" para quem só tem acesso aos 2 menus liberados.
   useEffect(() => {
     if (!eAutenticado || authLoading) return;
-    const NIVEL_AMPLO_CHECK = ['monitor', 'cerimoniario', 'coordenador'];
-    const amplo = ehCoordenador || (perfil?.funcoes || []).some(f => NIVEL_AMPLO_CHECK.includes(f));
-    const permitido = amplo
-      ? !['Formação Cadastro', 'Livro Caixa'].includes(activeMenu)
-      : MENUS_PERMITIDOS_MOBILE.includes(activeMenu);
+    const NIVEL_AMPLO_CHECK = ['monitor', 'cerimoniario'];
+    const amplo = (perfil?.funcoes || []).some(f => NIVEL_AMPLO_CHECK.includes(f));
+    const permitido = ehCoordenador
+      ? true
+      : amplo
+        ? !['Formação Cadastro', 'Livro Caixa'].includes(activeMenu)
+        : MENUS_PERMITIDOS_MOBILE.includes(activeMenu);
     if (!permitido && !['CadastroServidor', 'CadastroComunidade'].includes(activeMenu)) {
       setActiveMenu('Agenda e Calendário');
     }
