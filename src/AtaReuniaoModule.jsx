@@ -70,8 +70,7 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
 
   const [selecionado, setSelecionado] = useState(null); // { tema, assunto }
   const [itemVisualizando, setItemVisualizando] = useState(null);
-  const [ataVisualizando, setAtaVisualizando] = useState(null); // { tema, itens } selecionado
-  const [ataMeta, setAtaMeta] = useState(null);
+  const [ataVisualizando, setAtaVisualizando] = useState(null); // reunião (item) sendo visualizada
   const itemPreviewRef = useRef(null);
   const ataPreviewRef = useRef(null);
 
@@ -86,20 +85,6 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
   useEffect(() => {
     if (ataVisualizando && ataPreviewRef.current) ataPreviewRef.current.scrollTop = 0;
   }, [ataVisualizando]);
-
-  const ataMetaPadrao = () => ({
-    paroquia: 'Paróquia / Comunidade',
-    data: new Date().toLocaleDateString('pt-BR'),
-    horario: '',
-    local: '',
-    presentesCoordenacao: '',
-    presentesServidores: '',
-    avaliacoes: '',
-    planoAcao: [{ tarefa: '', responsavel: '', prazo: '' }],
-    nomeCoordenacao: '',
-    nomeAssessor: '',
-    nomeSecretario: ''
-  });
 
   // modo: null | 'tema' | 'assunto' | 'conteudo' | 'editar'
   const [modo, setModo] = useState(null);
@@ -251,7 +236,7 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, ignoreElements: (el) => !!el.classList && el.classList.contains('no-print') },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       }).from(elemento).outputPdf('blob');
 
       const url = URL.createObjectURL(blob);
@@ -304,42 +289,14 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
     }
   };
 
-  // ---- Ata de Reunião (gerada a partir do tema/reunião selecionado) ----
+  // ---- Ata de Reunião (a partir dos dados já preenchidos na reunião em edição) ----
   const visualizarAta = () => {
-    if (!selecionado) { setError('Selecione um tema/reunião na lista antes de gerar a ata'); return; }
-    const itens = formacao.filter(i => i.tema === selecionado.tema);
-    setAtaVisualizando({ tema: selecionado.tema, itens });
-    const base = itens[0] || {};
-    setAtaMeta({
-      ...ataMetaPadrao(),
-      local: base.local || '',
-      horario: base.horario || '',
-      data: base.data_reuniao || new Date().toLocaleDateString('pt-BR')
-    });
+    const item = formacao.find(i => i.id === editandoId);
+    if (!item) { setError('Abra uma reunião para gerar a ata'); return; }
+    setAtaVisualizando(item);
   };
 
-  const fecharAta = () => {
-    setAtaVisualizando(null);
-    setAtaMeta(null);
-  };
-
-  const setAtaCampo = (campo) => (e) => setAtaMeta(prev => ({ ...prev, [campo]: e.target.value }));
-
-  const atualizarPlanoAcao = (idx, campo, valor) => {
-    setAtaMeta(prev => {
-      const planoAcao = [...prev.planoAcao];
-      planoAcao[idx] = { ...planoAcao[idx], [campo]: valor };
-      return { ...prev, planoAcao };
-    });
-  };
-
-  const adicionarLinhaPlanoAcao = () => {
-    setAtaMeta(prev => ({ ...prev, planoAcao: [...prev.planoAcao, { tarefa: '', responsavel: '', prazo: '' }] }));
-  };
-
-  const removerLinhaPlanoAcao = (idx) => {
-    setAtaMeta(prev => ({ ...prev, planoAcao: prev.planoAcao.filter((_, i) => i !== idx) }));
-  };
+  const fecharAta = () => setAtaVisualizando(null);
 
   const imprimirAta = async () => {
     if (!ataPreviewRef.current) return;
@@ -357,22 +314,18 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
   };
 
   const enviarAtaWhatsapp = () => {
-    const linhasPauta = ataVisualizando.itens.length > 0
-      ? ataVisualizando.itens.map(item => `\n*${item.assunto}*\n${stripHtml(item.conteudo)}`).join('\n')
-      : 'Nenhum assunto cadastrado.';
-    const planoAcaoTexto = ataMeta.planoAcao
+    const item = ataVisualizando;
+    const infoReuniao = [item.local, item.data_reuniao, item.horario].filter(Boolean).join(' — ');
+    const anotacoesTexto = parseAnotacoes(item.anotacoes_decisoes)
       .filter(l => l.tarefa || l.responsavel || l.prazo)
       .map(l => `- ${l.tarefa || '(sem tarefa)'} | Responsável: ${l.responsavel || '-'} | Prazo: ${l.prazo || '-'}`)
-      .join('\n') || 'Nenhuma tarefa registrada.';
+      .join('\n') || 'Nenhuma decisão registrada.';
 
     const texto = `*Ata de Reunião de Servidores do Altar*\n` +
-      `${ataMeta.paroquia}\n` +
-      `Tema: *${ataVisualizando.tema}*\n` +
-      `Data: ${ataMeta.data}${ataMeta.horario ? ` — ${ataMeta.horario}` : ''}${ataMeta.local ? ` — ${ataMeta.local}` : ''}\n\n` +
-      `*Presença*\nCoordenação: ${ataMeta.presentesCoordenacao || '-'}\nServidores: ${ataMeta.presentesServidores || '-'}\n\n` +
-      `*Pauta & Formação*${linhasPauta}\n\n` +
-      `*Avaliações e Decisões*\n${ataMeta.avaliacoes || '-'}\n\n` +
-      `*Plano de Ação*\n${planoAcaoTexto}`;
+      `${stripHtml(item.fonte || CONVITE_PADRAO)}\n\n` +
+      `*Reunião:* ${item.tema}\n*Assunto:* ${item.assunto}\n*Local/Data/Horário:* ${infoReuniao || '-'}\n\n` +
+      `*Ordem do dia*\n${stripHtml(item.conteudo)}\n\n` +
+      `*Anotações das Decisões*\n${anotacoesTexto}`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
   };
@@ -656,8 +609,8 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
         </div>
       )}
 
-      {/* ---- Modal de visualização da Ata de Reunião (antes de imprimir) ---- */}
-      {ataVisualizando && ataMeta && (
+      {/* ---- Modal de visualização da Ata de Reunião (somente leitura, antes de imprimir) ---- */}
+      {ataVisualizando && (
         <div onClick={fecharAta}
           style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div onClick={e => e.stopPropagation()}
@@ -667,115 +620,77 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
               <button onClick={fecharAta} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
             </div>
 
-            <div ref={ataPreviewRef} style={{ padding: '0.9rem 1.2rem', overflowY: 'auto', background: '#fff', fontFamily: '"Times New Roman", Times, serif', lineHeight: 1.25 }}>
+            <div ref={ataPreviewRef} style={{ padding: '0.9rem 1.2rem', overflowY: 'auto', background: '#fff', fontFamily: '"Times New Roman", Times, serif', lineHeight: 1.3 }}>
               {(() => {
-                const editInput = { border: '1px dashed #cbd5e1', borderRadius: 3, padding: '0.15rem 0.4rem', fontSize: 'inherit', fontFamily: 'inherit', color: 'inherit', width: '100%', background: 'transparent' };
-                const editTextarea = { ...editInput, resize: 'vertical' };
-                const rotulo = { display: 'inline-block', fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', marginRight: '0.4rem' };
-                const secao = { marginBottom: '0.5rem' };
+                const secao = { marginBottom: '0.7rem', pageBreakInside: 'avoid' };
+                const anotacoes = parseAnotacoes(ataVisualizando.anotacoes_decisoes).filter(l => l.tarefa || l.responsavel || l.prazo);
                 return (
                   <>
                     {/* ---- CABEÇALHO ---- */}
-                    <div style={{ textAlign: 'center', marginBottom: '0.6rem', borderBottom: '2px solid #1e293b', paddingBottom: '0.4rem' }}>
-                      <input value={ataMeta.paroquia} onChange={setAtaCampo('paroquia')}
-                        style={{ ...editInput, textAlign: 'center', fontSize: '1.05rem', fontWeight: 800, color: '#1e293b', marginBottom: '0.15rem' }} />
-                      <h1 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.3rem' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '0.7rem', borderBottom: '2px solid #1e293b', paddingBottom: '0.4rem' }}>
+                      <h1 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.3rem' }}>
                         Ata de Reunião de Servidores do Altar
                       </h1>
                       <p style={{ fontSize: '0.85rem', color: '#334155', margin: 0 }}>
-                        Tema: <strong>{ataVisualizando.tema}</strong>
-                        <span style={{ margin: '0 0.4rem', color: '#cbd5e1' }}>|</span>
-                        <span style={rotulo}>Data</span><input value={ataMeta.data} onChange={setAtaCampo('data')} style={{ ...editInput, display: 'inline', width: '90px' }} />
-                        <span style={{ margin: '0 0.4rem', color: '#cbd5e1' }}>|</span>
-                        <span style={rotulo}>Horário</span><input value={ataMeta.horario} onChange={setAtaCampo('horario')} placeholder="00:00" style={{ ...editInput, display: 'inline', width: '60px' }} />
-                        <span style={{ margin: '0 0.4rem', color: '#cbd5e1' }}>|</span>
-                        <span style={rotulo}>Local</span><input value={ataMeta.local} onChange={setAtaCampo('local')} placeholder="Local" style={{ ...editInput, display: 'inline', width: '140px' }} />
+                        <strong>{ataVisualizando.tema}</strong> — {ataVisualizando.assunto}
+                        <br />
+                        {[ataVisualizando.local, ataVisualizando.data_reuniao, ataVisualizando.horario].filter(Boolean).join(' — ')}
                       </p>
                     </div>
 
-                    {/* ---- PRESENÇA ---- */}
+                    {/* ---- CONVITE ---- */}
                     <div style={secao}>
-                      <h2 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.15rem' }}>Presença</h2>
-                      <p style={{ fontSize: '0.8rem', margin: '0 0 0.15rem' }}>
-                        <strong>Coordenação:</strong> <input value={ataMeta.presentesCoordenacao} onChange={setAtaCampo('presentesCoordenacao')} placeholder="Nomes" style={{ ...editInput, display: 'inline', width: 'calc(100% - 95px)' }} />
-                      </p>
-                      <p style={{ fontSize: '0.8rem', margin: 0 }}>
-                        <strong>Servidores:</strong> <input value={ataMeta.presentesServidores} onChange={setAtaCampo('presentesServidores')} placeholder="Nomes" style={{ ...editInput, display: 'inline', width: 'calc(100% - 95px)' }} />
+                      <h2 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.2rem' }}>Convite de Participação</h2>
+                      <p style={{ fontSize: '0.82rem', color: '#334155', textAlign: 'justify', fontStyle: 'italic', margin: 0 }}>
+                        {stripHtml(ataVisualizando.fonte) || CONVITE_PADRAO}
                       </p>
                     </div>
 
-                    {/* ---- PAUTA & FORMAÇÃO ---- */}
+                    {/* ---- ORDEM DO DIA ---- */}
                     <div style={secao}>
-                      <h2 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.15rem' }}>Pauta &amp; Formação</h2>
-                      {ataVisualizando.itens.length > 0 ? ataVisualizando.itens.map(item => (
-                        <div key={item.id} style={{ marginBottom: '0.25rem' }}>
-                          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{item.assunto}: </span>
-                          <span style={{ fontSize: '0.82rem', color: '#334155', textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(item.conteudo) }} />
-                        </div>
-                      )) : (
-                        <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: 0 }}>Nenhum assunto cadastrado para esta reunião.</p>
+                      <h2 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.2rem' }}>Ordem do Dia</h2>
+                      <div style={{ fontSize: '0.82rem', color: '#334155', textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(ataVisualizando.conteudo) }} />
+                    </div>
+
+                    {/* ---- ANOTAÇÕES DAS DECISÕES ---- */}
+                    <div style={secao}>
+                      <h2 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.2rem' }}>Anotações das Decisões</h2>
+                      {anotacoes.length > 0 ? (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ textAlign: 'left', borderBottom: '1px solid #1e293b', padding: '0.15rem' }}>Tarefa</th>
+                              <th style={{ textAlign: 'left', borderBottom: '1px solid #1e293b', padding: '0.15rem', width: '30%' }}>Responsável</th>
+                              <th style={{ textAlign: 'left', borderBottom: '1px solid #1e293b', padding: '0.15rem', width: '20%' }}>Prazo</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {anotacoes.map((linha, idx) => (
+                              <tr key={idx}>
+                                <td style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0' }}>{linha.tarefa || '-'}</td>
+                                <td style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0' }}>{linha.responsavel || '-'}</td>
+                                <td style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0' }}>{linha.prazo || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: 0 }}>Nenhuma decisão registrada.</p>
                       )}
                     </div>
 
-                    {/* ---- AVALIAÇÕES E DECISÕES ---- */}
-                    <div style={secao}>
-                      <h2 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.15rem' }}>Avaliações e Decisões</h2>
-                      <textarea value={ataMeta.avaliacoes} onChange={setAtaCampo('avaliacoes')} rows={2}
-                        placeholder="Pontos de atenção sobre o serviço no altar, escalas, comportamento, pontualidade, etc."
-                        style={{ ...editTextarea, fontSize: '0.82rem', textAlign: 'justify' }} />
-                    </div>
-
-                    {/* ---- PLANO DE AÇÃO ---- */}
-                    <div style={secao}>
-                      <h2 style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', margin: '0 0 0.15rem' }}>Plano de Ação</h2>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
-                        <thead>
-                          <tr>
-                            <th style={{ textAlign: 'left', borderBottom: '1px solid #1e293b', padding: '0.15rem' }}>Tarefa</th>
-                            <th style={{ textAlign: 'left', borderBottom: '1px solid #1e293b', padding: '0.15rem', width: '30%' }}>Responsável</th>
-                            <th style={{ textAlign: 'left', borderBottom: '1px solid #1e293b', padding: '0.15rem', width: '20%' }}>Prazo</th>
-                            <th className="no-print" style={{ width: '30px', borderBottom: '1px solid #1e293b' }}></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {ataMeta.planoAcao.map((linha, idx) => (
-                            <tr key={idx}>
-                              <td style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0' }}>
-                                <input value={linha.tarefa} onChange={e => atualizarPlanoAcao(idx, 'tarefa', e.target.value)} style={editInput} />
-                              </td>
-                              <td style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0' }}>
-                                <input value={linha.responsavel} onChange={e => atualizarPlanoAcao(idx, 'responsavel', e.target.value)} style={editInput} />
-                              </td>
-                              <td style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0' }}>
-                                <input value={linha.prazo} onChange={e => atualizarPlanoAcao(idx, 'prazo', e.target.value)} style={editInput} />
-                              </td>
-                              <td className="no-print" style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>
-                                <button onClick={() => removerLinhaPlanoAcao(idx)} style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 3, padding: '0.2rem 0.35rem', cursor: 'pointer' }}>
-                                  <Trash2 size={12} />
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <button onClick={adicionarLinhaPlanoAcao} className="no-print"
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'none', border: '1px dashed #94a3b8', color: '#475569', padding: '0.3rem 0.6rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, marginTop: '0.4rem' }}>
-                        <Plus size={12} /> Adicionar linha
-                      </button>
-                    </div>
-
                     {/* ---- ASSINATURAS ---- */}
-                    <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem', textAlign: 'center' }}>
+                    <div style={{ marginTop: '1.4rem', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem', textAlign: 'center', pageBreakInside: 'avoid' }}>
                       <div>
-                        <input value={ataMeta.nomeCoordenacao} onChange={setAtaCampo('nomeCoordenacao')} placeholder=" " style={{ ...editInput, textAlign: 'center', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: '1px solid #1e293b', borderRadius: 0 }} />
+                        <div style={{ borderBottom: '1px solid #1e293b', height: '1.4rem' }} />
                         <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.15rem' }}>Coordenação</p>
                       </div>
                       <div>
-                        <input value={ataMeta.nomeAssessor} onChange={setAtaCampo('nomeAssessor')} placeholder=" " style={{ ...editInput, textAlign: 'center', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: '1px solid #1e293b', borderRadius: 0 }} />
+                        <div style={{ borderBottom: '1px solid #1e293b', height: '1.4rem' }} />
                         <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.15rem' }}>Assessor Pastoral / Padre</p>
                       </div>
                       <div>
-                        <input value={ataMeta.nomeSecretario} onChange={setAtaCampo('nomeSecretario')} placeholder=" " style={{ ...editInput, textAlign: 'center', borderTop: 'none', borderLeft: 'none', borderRight: 'none', borderBottom: '1px solid #1e293b', borderRadius: 0 }} />
+                        <div style={{ borderBottom: '1px solid #1e293b', height: '1.4rem' }} />
                         <p style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.15rem' }}>Secretário(a)</p>
                       </div>
                     </div>
