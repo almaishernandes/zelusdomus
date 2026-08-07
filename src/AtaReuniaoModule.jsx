@@ -401,16 +401,16 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
         </div>
       )}
 
-      <table className="ata-list" style={{ width: '560px', maxWidth: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+      <table className="ata-list" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
         <thead className="ata-list-header">
           <tr>
             <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Reunião
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '140px', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Data
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '110px', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Horário
             </th>
           </tr>
@@ -519,7 +519,7 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
             {editandoId && (
               <button onClick={() => setItemVisualizando(formacao.find(i => i.id === editandoId))}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-                <Eye size={14} /> Visualizar
+                <Eye size={14} /> Convite
               </button>
             )}
             <button onClick={visualizarAta}
@@ -543,7 +543,7 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
           <div onClick={e => e.stopPropagation()}
             style={{ background: '#fff', borderRadius: 8, width: '90%', maxWidth: '640px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.9rem 1.2rem', background: '#1e293b' }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Visualizar</span>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Convite</span>
               <button onClick={() => setItemVisualizando(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
             </div>
             <div ref={itemPreviewRef} style={{ padding: '1.4rem 1.6rem', overflowY: 'auto', background: '#fff', fontFamily: '"Times New Roman", Times, serif' }}>
