@@ -246,7 +246,8 @@ export function LivroCaixaModule({ setHeaderExtra }) {
   const saldoFinal = lancamentosComSaldo.length > 0 ? lancamentosComSaldo[lancamentosComSaldo.length - 1].saldoAcumulado : 0;
 
   return (
-    <div className="grid-container" style={{ padding: 0 }}>
+    <div className="grid-container" style={{ padding: 0, display: 'flex', justifyContent: 'center' }}>
+    <div style={{ width: '100%', maxWidth: '430px' }}>
       {error && (
         <div style={{ background: '#fee2e2', color: '#991b1b', padding: '0.6rem 0.9rem', display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
           <AlertCircle size={16} style={{ flex: 'none' }} />
@@ -493,6 +494,7 @@ export function LivroCaixaModule({ setHeaderExtra }) {
           </div>
         );
       })()}
+    </div>
     </div>
   );
 }
