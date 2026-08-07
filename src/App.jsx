@@ -292,10 +292,10 @@ function AppContent() {
                 : `👤 ${perfil.full_name} — ${(perfil.funcoes && perfil.funcoes.length) ? perfil.funcoes.map(t => TYPE_LABELS[t] || t).join(', ') : 'Servidor do Altar'}`}
               {user?.email ? ` — ${user.email}` : ''}
             </span>}
+            {headerExtra}
             <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#dc2626', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
               <LogOut size={16} /> Sair
             </button>
-            {headerExtra}
           </div>
           {novoBtn && (() => {
             const btnBg = novoBtnColor ? novoBtnColor.bg : '#b34946';

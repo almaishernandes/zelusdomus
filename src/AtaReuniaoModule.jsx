@@ -350,10 +350,6 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
     const btnStyle = (bg) => ({ display: 'flex', alignItems: 'center', gap: '0.3rem', background: bg, color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' });
     setHeaderExtra(
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-        <button type="button" onClick={abrirInserirTema} title="Inserir Reunião"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: '#ca8a04', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-          <Plus size={18} />
-        </button>
         {modo && (
           <>
             <button type="button" onClick={cancelarForm} title="Voltar"
@@ -378,6 +374,10 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
             )}
           </>
         )}
+        <button type="button" onClick={abrirInserirTema} title="Inserir Reunião"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: '#ca8a04', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+          <Plus size={18} />
+        </button>
       </div>
     );
     return () => setHeaderExtra(null);
