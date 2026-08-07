@@ -101,18 +101,9 @@ export function AtaReuniaoModule() {
   // modo: null | 'tema' | 'assunto' | 'conteudo' | 'editar'
   const [modo, setModo] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
-  const [form, setForm] = useState({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '' });
+  const [form, setForm] = useState({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', anotacoes_decisoes: '' });
 
-  const convitePadrao = (f) =>
-    `Com muito carinho e dedicação convidamos você que é Servidor de Altar do Senhor a participar da Reunião no ${f.local || '(local)'} no ${f.horario || '(horário)'} para deliberações sobre ${f.assunto || '(assunto)'}`;
-
-  // Mantém o texto do Convite sempre atualizado automaticamente com Local/Horário/Assunto,
-  // em qualquer formulário aberto (inserir ou editar)
-  useEffect(() => {
-    if (!modo) return;
-    setForm(f => ({ ...f, fonte: convitePadrao(f) }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modo, form.local, form.horario, form.assunto]);
+  const CONVITE_PADRAO = 'Com muito carinho e dedicação convidamos você que é Servidor de Altar do Senhor a participar';
 
   useEffect(() => {
     carregarFormacao();
@@ -147,20 +138,20 @@ export function AtaReuniaoModule() {
   const abrirInserirTema = () => {
     setModo('tema');
     setEditandoId(null);
-    setForm({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '' });
+    setForm({ tema: '', assunto: '', conteudo: '', fonte: CONVITE_PADRAO, local: '', data_reuniao: '', horario: '', anotacoes_decisoes: '' });
   };
 
   const abrirEdicao = (item) => {
     setModo('editar');
     setEditandoId(item.id);
-    setForm({ tema: item.tema, assunto: item.assunto, conteudo: item.conteudo, fonte: item.fonte || '', local: item.local || '', data_reuniao: item.data_reuniao || '', horario: item.horario || '' });
+    setForm({ tema: item.tema, assunto: item.assunto, conteudo: item.conteudo, fonte: item.fonte || CONVITE_PADRAO, local: item.local || '', data_reuniao: item.data_reuniao || '', horario: item.horario || '', anotacoes_decisoes: item.anotacoes_decisoes || '' });
     setSelecionado({ tema: item.tema, assunto: item.assunto });
   };
 
   const cancelarForm = () => {
     setModo(null);
     setEditandoId(null);
-    setForm({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '' });
+    setForm({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', anotacoes_decisoes: '' });
   };
 
   const handleSalvar = async () => {
@@ -177,6 +168,7 @@ export function AtaReuniaoModule() {
           .update({
             tema: form.tema.trim(), assunto: form.assunto.trim(), conteudo: form.conteudo.trim(), fonte: form.fonte.trim(),
             local: form.local.trim(), data_reuniao: form.data_reuniao.trim(), horario: form.horario.trim(),
+            anotacoes_decisoes: form.anotacoes_decisoes.trim(),
             updated_at: new Date()
           })
           .eq('id', editandoId);
@@ -191,6 +183,7 @@ export function AtaReuniaoModule() {
           local: form.local.trim(),
           data_reuniao: form.data_reuniao.trim(),
           horario: form.horario.trim(),
+          anotacoes_decisoes: form.anotacoes_decisoes.trim(),
           ordem: qtd,
           created_by: user.id
         });
@@ -261,7 +254,7 @@ export function AtaReuniaoModule() {
 
   const enviarWhatsapp = (item) => {
     const infoReuniao = [item.local, item.data_reuniao, item.horario].filter(Boolean).join(' — ');
-    const convite = stripHtml(item.fonte || convitePadrao(item));
+    const convite = stripHtml(item.fonte || CONVITE_PADRAO);
     const texto = `*${item.tema}*\n*${item.assunto}*${infoReuniao ? `\n${infoReuniao}` : ''}\n\n${stripHtml(item.conteudo)}\n\n${convite}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
   };
@@ -450,7 +443,11 @@ export function AtaReuniaoModule() {
             </div>
           </div>
 
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Conteúdo</label>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Convite de Participação</label>
+          <textarea placeholder="Convite para o Servidor do Altar participar da reunião" value={form.fonte} onChange={e => setForm({ ...form, fonte: e.target.value })} rows="3"
+            style={{ ...inputStyle, fontFamily: 'inherit', marginBottom: '0.7rem', minHeight: '70px' }} />
+
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Ordem do Dia</label>
           <div style={{ marginBottom: '0.5rem' }}>
             <ConteudoEditor
               key={editandoId || modo}
@@ -460,9 +457,9 @@ export function AtaReuniaoModule() {
             />
           </div>
 
-          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Convite</label>
-          <textarea placeholder="Convite para o Servidor do Altar participar da reunião" value={form.fonte} onChange={e => setForm({ ...form, fonte: e.target.value })} rows="6"
-            style={{ ...inputStyle, fontFamily: 'inherit', marginBottom: '0.7rem', minHeight: '120px' }} />
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Anotações das Decisões</label>
+          <textarea placeholder="Decisões tomadas na reunião" value={form.anotacoes_decisoes} onChange={e => setForm({ ...form, anotacoes_decisoes: e.target.value })} rows="4"
+            style={{ ...inputStyle, fontFamily: 'inherit', marginBottom: '0.7rem', minHeight: '90px' }} />
 
           <div style={{ display: 'flex', gap: '0.4rem' }}>
             <button onClick={handleSalvar} disabled={salvando}
@@ -497,9 +494,9 @@ export function AtaReuniaoModule() {
               )}
               <div style={{ fontSize: '0.92rem', lineHeight: 1.5, color: '#334155', margin: 0, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(itemVisualizando.conteudo) }} />
               <div style={{ marginTop: '0.9rem', paddingTop: '0.7rem', borderTop: '1px solid #e2e8f0' }}>
-                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.3rem' }}>Convite</p>
+                <p style={{ fontSize: '0.7rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '0 0 0.3rem' }}>Convite de Participação</p>
                 <p style={{ fontSize: '0.85rem', color: '#334155', whiteSpace: 'pre-wrap', textAlign: 'justify', margin: 0, fontStyle: 'italic' }}>
-                  {itemVisualizando.fonte || convitePadrao(itemVisualizando)}
+                  {itemVisualizando.fonte || CONVITE_PADRAO}
                 </p>
               </div>
             </div>
