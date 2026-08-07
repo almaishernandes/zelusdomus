@@ -53,7 +53,7 @@ function ConteudoEditor({ value, onChange, autoFocus }) {
         contentEditable
         suppressContentEditableWarning
         onInput={() => onChange(ref.current?.innerHTML || '')}
-        style={{ width: '100%', minHeight: '280px', height: '280px', padding: '0.5rem 0.6rem', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: '0.9rem', lineHeight: 1.5, background: '#fff', overflowY: 'auto', resize: 'vertical' }}
+        style={{ width: '100%', minHeight: '90px', height: 'auto', padding: '0.5rem 0.6rem', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: '0.9rem', lineHeight: 1.5, background: '#fff', overflowY: 'auto', resize: 'vertical' }}
       />
     </div>
   );
@@ -104,9 +104,17 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
   // modo: null | 'tema' | 'assunto' | 'conteudo' | 'editar'
   const [modo, setModo] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
-  const [form, setForm] = useState({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', anotacoes_decisoes: '' });
+  const [form, setForm] = useState({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
 
   const CONVITE_PADRAO = 'Com muito carinho e dedicação convidamos você que é Servidor de Altar do Senhor a participar';
+
+  const parseAnotacoes = (raw) => {
+    try {
+      const arr = JSON.parse(raw || '[]');
+      if (Array.isArray(arr) && arr.length) return arr;
+    } catch { /* formato antigo (texto simples) — descartado, começa do zero */ }
+    return [{ tarefa: '', responsavel: '', prazo: '' }];
+  };
 
   useEffect(() => {
     carregarFormacao();
@@ -135,20 +143,36 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
   const abrirInserirTema = () => {
     setModo('tema');
     setEditandoId(null);
-    setForm({ tema: '', assunto: '', conteudo: '', fonte: CONVITE_PADRAO, local: '', data_reuniao: '', horario: '', anotacoes_decisoes: '' });
+    setForm({ tema: '', assunto: '', conteudo: '', fonte: CONVITE_PADRAO, local: '', data_reuniao: '', horario: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
   };
 
   const abrirEdicao = (item) => {
     setModo('editar');
     setEditandoId(item.id);
-    setForm({ tema: item.tema, assunto: item.assunto, conteudo: item.conteudo, fonte: item.fonte || CONVITE_PADRAO, local: item.local || '', data_reuniao: item.data_reuniao || '', horario: item.horario || '', anotacoes_decisoes: item.anotacoes_decisoes || '' });
+    setForm({ tema: item.tema, assunto: item.assunto, conteudo: item.conteudo, fonte: item.fonte || CONVITE_PADRAO, local: item.local || '', data_reuniao: item.data_reuniao || '', horario: item.horario || '', anotacoes_decisoes: parseAnotacoes(item.anotacoes_decisoes) });
     setSelecionado({ tema: item.tema, assunto: item.assunto });
+  };
+
+  const atualizarAnotacaoLinha = (idx, campo, valor) => {
+    setForm(f => {
+      const anotacoes_decisoes = [...f.anotacoes_decisoes];
+      anotacoes_decisoes[idx] = { ...anotacoes_decisoes[idx], [campo]: valor };
+      return { ...f, anotacoes_decisoes };
+    });
+  };
+
+  const adicionarLinhaAnotacao = () => {
+    setForm(f => ({ ...f, anotacoes_decisoes: [...f.anotacoes_decisoes, { tarefa: '', responsavel: '', prazo: '' }] }));
+  };
+
+  const removerLinhaAnotacao = (idx) => {
+    setForm(f => ({ ...f, anotacoes_decisoes: f.anotacoes_decisoes.filter((_, i) => i !== idx) }));
   };
 
   const cancelarForm = () => {
     setModo(null);
     setEditandoId(null);
-    setForm({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', anotacoes_decisoes: '' });
+    setForm({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
   };
 
   const handleSalvar = async () => {
@@ -165,7 +189,7 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
           .update({
             tema: form.tema.trim(), assunto: form.assunto.trim(), conteudo: form.conteudo.trim(), fonte: form.fonte.trim(),
             local: form.local.trim(), data_reuniao: form.data_reuniao.trim(), horario: form.horario.trim(),
-            anotacoes_decisoes: form.anotacoes_decisoes.trim(),
+            anotacoes_decisoes: JSON.stringify(form.anotacoes_decisoes.filter(l => l.tarefa || l.responsavel || l.prazo)),
             updated_at: new Date()
           })
           .eq('id', editandoId);
@@ -180,7 +204,7 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
           local: form.local.trim(),
           data_reuniao: form.data_reuniao.trim(),
           horario: form.horario.trim(),
-          anotacoes_decisoes: form.anotacoes_decisoes.trim(),
+          anotacoes_decisoes: JSON.stringify(form.anotacoes_decisoes.filter(l => l.tarefa || l.responsavel || l.prazo)),
           ordem: qtd,
           created_by: user.id
         });
@@ -523,11 +547,41 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
 
           <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Anotações das Decisões</label>
           <div style={{ marginBottom: '0.5rem' }}>
-            <ConteudoEditor
-              key={`anotacoes-${editandoId || modo}`}
-              value={form.anotacoes_decisoes}
-              onChange={c => setForm(f => ({ ...f, anotacoes_decisoes: c }))}
-            />
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', marginBottom: '0.4rem' }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', borderBottom: '1px solid #cbd5e1', padding: '0.25rem' }}>Tarefa</th>
+                  <th style={{ textAlign: 'left', borderBottom: '1px solid #cbd5e1', padding: '0.25rem', width: '26%' }}>Responsável</th>
+                  <th style={{ textAlign: 'left', borderBottom: '1px solid #cbd5e1', padding: '0.25rem', width: '18%' }}>Prazo</th>
+                  <th style={{ width: '30px', borderBottom: '1px solid #cbd5e1' }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {form.anotacoes_decisoes.map((linha, idx) => (
+                  <tr key={idx}>
+                    <td style={{ padding: '0.25rem', borderBottom: '1px solid #e2e8f0' }}>
+                      <input value={linha.tarefa} onChange={e => atualizarAnotacaoLinha(idx, 'tarefa', e.target.value)} style={inputStyle} />
+                    </td>
+                    <td style={{ padding: '0.25rem', borderBottom: '1px solid #e2e8f0' }}>
+                      <input value={linha.responsavel} onChange={e => atualizarAnotacaoLinha(idx, 'responsavel', e.target.value)} style={inputStyle} />
+                    </td>
+                    <td style={{ padding: '0.25rem', borderBottom: '1px solid #e2e8f0' }}>
+                      <input value={linha.prazo} onChange={e => atualizarAnotacaoLinha(idx, 'prazo', e.target.value)} style={inputStyle} />
+                    </td>
+                    <td style={{ padding: '0.25rem', borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>
+                      <button type="button" onClick={() => removerLinhaAnotacao(idx)}
+                        style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 3, padding: '0.2rem 0.35rem', cursor: 'pointer' }}>
+                        <Trash2 size={12} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button type="button" onClick={adicionarLinhaAnotacao}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'none', border: '1px dashed #94a3b8', color: '#475569', padding: '0.3rem 0.6rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>
+              <Plus size={12} /> Adicionar linha
+            </button>
           </div>
 
         </div>
@@ -564,12 +618,29 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
               </tbody></table>
               <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.3rem' }}>Ordem do dia:</p>
               <div style={{ fontSize: '0.92rem', lineHeight: 1.5, color: '#334155', margin: '0 0 1rem', textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(itemVisualizando.conteudo) }} />
-              {stripHtml(itemVisualizando.anotacoes_decisoes) && (
-                <>
-                  <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.3rem' }}>Anotações das Decisões:</p>
-                  <div style={{ fontSize: '0.92rem', lineHeight: 1.5, color: '#334155', margin: 0, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(itemVisualizando.anotacoes_decisoes) }} />
-                </>
-              )}
+              {(() => {
+                const linhas = parseAnotacoes(itemVisualizando.anotacoes_decisoes).filter(l => l.tarefa || l.responsavel || l.prazo);
+                if (linhas.length === 0) return null;
+                return (
+                  <>
+                    <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.3rem' }}>Anotações das Decisões:</p>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}><tbody>
+                      <tr>
+                        <th style={{ textAlign: 'left', borderBottom: '1px solid #94a3b8', padding: '0.15rem' }}>Tarefa</th>
+                        <th style={{ textAlign: 'left', borderBottom: '1px solid #94a3b8', padding: '0.15rem', width: '28%' }}>Responsável</th>
+                        <th style={{ textAlign: 'left', borderBottom: '1px solid #94a3b8', padding: '0.15rem', width: '18%' }}>Prazo</th>
+                      </tr>
+                      {linhas.map((l, i) => (
+                        <tr key={i}>
+                          <td style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0' }}>{l.tarefa || '-'}</td>
+                          <td style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0' }}>{l.responsavel || '-'}</td>
+                          <td style={{ padding: '0.15rem', borderBottom: '1px solid #e2e8f0' }}>{l.prazo || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody></table>
+                  </>
+                );
+              })()}
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', padding: '0.9rem 1.2rem', borderTop: '1px solid #e2e8f0' }}>
               <button onClick={() => compartilharItem(itemVisualizando)} disabled={gerandoPdfId === itemVisualizando.id}
@@ -720,7 +791,7 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
               </button>
               <button onClick={enviarAtaWhatsapp}
                 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-                <MessageCircle size={14} /> Enviar por WhatsApp
+                <MessageCircle size={14} /> Enviar
               </button>
               <button onClick={fecharAta}
                 style={{ marginLeft: 'auto', background: '#94a3b8', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
