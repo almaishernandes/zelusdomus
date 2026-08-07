@@ -267,6 +267,14 @@ export function LivroCaixaModule({ setHeaderExtra }) {
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Vencimento</label>
               <input type="date" value={form.vencimento} onChange={e => setForm({ ...form, vencimento: e.target.value })} style={inputStyle} />
             </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Débito</label>
+              <input type="number" step="0.01" min="0" placeholder="0,00" value={form.debito} onChange={e => setForm({ ...form, debito: e.target.value, credito: e.target.value ? '' : form.credito })} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Crédito</label>
+              <input type="number" step="0.01" min="0" placeholder="0,00" value={form.credito} onChange={e => setForm({ ...form, credito: e.target.value, debito: e.target.value ? '' : form.debito })} style={inputStyle} />
+            </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Descrição</label>
               <input type="text" placeholder="Descrição do lançamento" value={form.descricao} onChange={e => setForm({ ...form, descricao: e.target.value })} style={inputStyle} />
@@ -277,14 +285,6 @@ export function LivroCaixaModule({ setHeaderExtra }) {
                 <option value="">Selecione...</option>
                 {centros.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
               </select>
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Débito</label>
-              <input type="number" step="0.01" min="0" placeholder="0,00" value={form.debito} onChange={e => setForm({ ...form, debito: e.target.value, credito: e.target.value ? '' : form.credito })} style={inputStyle} />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Crédito</label>
-              <input type="number" step="0.01" min="0" placeholder="0,00" value={form.credito} onChange={e => setForm({ ...form, credito: e.target.value, debito: e.target.value ? '' : form.debito })} style={inputStyle} />
             </div>
           </div>
 
