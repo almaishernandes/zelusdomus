@@ -76,7 +76,7 @@ export function AtaReuniaoModule() {
   const ataPreviewRef = useRef(null);
 
   const podeCompartilharArquivo = typeof navigator !== 'undefined' && !!navigator.canShare
-    && navigator.canShare({ files: [new File([new Blob()], 'f.pdf', { type: 'application/pdf' })] });
+    && navigator.canShare({ files: [new File([new Blob()], 'f.png', { type: 'image/png' })] });
 
   // Ao abrir cada modal, garante que a visualização comece do topo do documento
   useEffect(() => {
@@ -261,24 +261,25 @@ export function AtaReuniaoModule() {
     try {
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const html2pdf = await loadHtml2pdf();
-      const filename = `Convite-${item.assunto.replace(/\s+/g, '-')}.pdf`;
-      const worker = html2pdf().set({
-        margin: [8, 8],
-        filename,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, ignoreElements: (el) => !!el.classList && el.classList.contains('no-print') },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
-      }).from(elemento);
+      const filename = `Convite-${item.assunto.replace(/\s+/g, '-')}.png`;
+      // Gera uma imagem (não PDF) — é o formato que abre como "card" com prévia
+      // visual no WhatsApp/Instagram, em vez de um documento anexado.
+      const canvas = await html2pdf().set({
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, ignoreElements: (el) => !!el.classList && el.classList.contains('no-print') }
+      }).from(elemento).toCanvas();
 
-      const blob = await worker.outputPdf('blob');
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1));
+
       if (podeCompartilharArquivo) {
-        const file = new File([blob], filename, { type: 'application/pdf' });
+        const file = new File([blob], filename, { type: 'image/png' });
         await navigator.share({ files: [file], title: 'Convite de Participação', text: `${item.tema} — ${item.assunto}` });
       } else {
         const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        enviarWhatsapp(item);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        alert('Imagem do convite baixada. Anexe o arquivo na conversa do WhatsApp ou na rede social desejada.');
       }
     } catch (e) {
       if (e?.name !== 'AbortError') {
