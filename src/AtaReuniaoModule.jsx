@@ -430,8 +430,8 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
                   onClick={() => abrirEdicao(item)}
                   style={{ background: isSelected ? '#93c5fd' : corTema, cursor: 'pointer' }}>
                   <td style={{ padding: '0.4rem 0.9rem', fontWeight: 700, color: '#1e293b' }}>{item.tema}</td>
-                  <td style={{ padding: '0.4rem 0.9rem', color: '#334155' }}>{item.data_reuniao || '-'}</td>
-                  <td style={{ padding: '0.4rem 0.9rem', color: '#334155' }}>{item.horario || '-'}</td>
+                  <td style={{ padding: '0.4rem 0.9rem', color: '#334155', textAlign: 'left' }}>{item.data_reuniao || '-'}</td>
+                  <td style={{ padding: '0.4rem 0.9rem', color: '#334155', textAlign: 'left' }}>{item.horario || '-'}</td>
                 </tr>
               );
             });
