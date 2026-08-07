@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { useAuth } from './AuthContext';
-import { Plus, Trash2, Save, X, AlertCircle, Loader, Eye, MessageCircle, Printer, FileText, Bold, Underline, Italic, ChevronLeft } from 'lucide-react';
+import { Plus, Trash2, Save, X, AlertCircle, Loader, Eye, MessageCircle, Printer, FileText, Bold, Underline, Italic } from 'lucide-react';
 
 const loadHtml2pdf = () => import('html2pdf.js').then(m => m.default);
 
@@ -369,8 +369,8 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
         {modo && (
           <>
             <button type="button" onClick={cancelarForm} title="Voltar"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: '#94a3b8', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
-              <ChevronLeft size={16} />
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: '#94a3b8', border: 'none', borderRadius: 4, cursor: 'pointer', padding: 6 }}>
+              <img src="https://cdn-icons-png.flaticon.com/512/1280/1280152.png" alt="Voltar" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </button>
             <button type="button" onClick={handleSalvar} disabled={salvando} style={btnStyle('#16a34a')}>
               {salvando ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={14} />} Salvar
