@@ -242,13 +242,6 @@ export function AtaReuniaoModule() {
     }
   };
 
-  const enviarWhatsapp = (item) => {
-    const infoReuniao = [item.local, item.data_reuniao, item.horario].filter(Boolean).join(' — ');
-    const convite = stripHtml(item.fonte || CONVITE_PADRAO);
-    const texto = `${convite}\n\n*Reunião:* ${item.tema}\n*Assunto:* ${item.assunto}\n*Local/Data/Horário:* ${infoReuniao || '-'}\n\n*Ordem do dia:*\n${stripHtml(item.conteudo)}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
-  };
-
   // Gera o arquivo formatado igual à tela e já abre o compartilhamento nativo
   // (WhatsApp, Instagram etc.) quando o navegador suporta; senão, baixa o PDF
   // e abre o WhatsApp com o texto como alternativa.
@@ -542,12 +535,8 @@ export function AtaReuniaoModule() {
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', padding: '0.9rem 1.2rem', borderTop: '1px solid #e2e8f0' }}>
               <button onClick={() => compartilharItem(itemVisualizando)} disabled={gerandoPdfId === itemVisualizando.id}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: gerandoPdfId === itemVisualizando.id ? 'wait' : 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-                {gerandoPdfId === itemVisualizando.id ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Printer size={14} />} {gerandoPdfId === itemVisualizando.id ? 'Gerando…' : 'Imprimir'}
-              </button>
-              <button onClick={() => enviarWhatsapp(itemVisualizando)}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
-                <MessageCircle size={14} /> Enviar por WhatsApp
+                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: gerandoPdfId === itemVisualizando.id ? 'wait' : 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
+                {gerandoPdfId === itemVisualizando.id ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <MessageCircle size={14} />} {gerandoPdfId === itemVisualizando.id ? 'Gerando…' : 'Enviar'}
               </button>
               <button onClick={() => setItemVisualizando(null)}
                 style={{ marginLeft: 'auto', background: '#94a3b8', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
