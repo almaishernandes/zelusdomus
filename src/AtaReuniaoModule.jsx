@@ -387,7 +387,6 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
   if (loading) return <div className="empty-state"><h3>Carregando...</h3></div>;
 
   const inputStyle = { width: '100%', padding: '0.4rem 0.5rem', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: '0.85rem' };
-  const lockedStyle = { padding: '0.4rem 0.5rem', background: '#e2e8f0', color: '#475569', borderRadius: 4, fontSize: '0.85rem', fontWeight: 600 };
 
   return (
     <div className="grid-container" style={{ padding: 0 }}>
@@ -460,19 +459,11 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
           <div className="ata-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.6rem', marginBottom: '0.7rem', width: '560px', maxWidth: '100%' }}>
             <div className="ata-field-tema">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Reunião Nº</label>
-              {modo === 'tema' || modo === 'editar' ? (
-                <input type="text" placeholder="Reunião Nº" value={form.tema} onChange={e => setForm({ ...form, tema: e.target.value })} style={inputStyle} autoFocus={modo === 'tema'} />
-              ) : (
-                <div style={lockedStyle}>{form.tema}</div>
-              )}
+              <input type="text" placeholder="Reunião Nº" value={form.tema} onChange={e => setForm({ ...form, tema: e.target.value })} style={inputStyle} autoFocus={modo === 'tema'} />
             </div>
             <div className="ata-field-assunto">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Assunto/Tema</label>
-              {modo === 'tema' || modo === 'assunto' || modo === 'editar' ? (
-                <input type="text" placeholder="Assunto/Tema" value={form.assunto} onChange={e => setForm({ ...form, assunto: e.target.value })} style={inputStyle} autoFocus={modo === 'assunto'} />
-              ) : (
-                <div style={lockedStyle}>{form.assunto}</div>
-              )}
+              <input type="text" placeholder="Assunto/Tema" value={form.assunto} onChange={e => setForm({ ...form, assunto: e.target.value })} style={inputStyle} autoFocus={modo === 'assunto'} />
             </div>
             <div className="ata-field-local">
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Local</label>
