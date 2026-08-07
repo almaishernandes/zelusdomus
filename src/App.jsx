@@ -136,12 +136,15 @@ function AppContent() {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e293b', padding: '1.5rem' }}>
         <div style={{ maxWidth: 360, textAlign: 'center', color: '#f1f5f9' }}>
           <div style={{ width: 44, height: 44, margin: '0 auto 1.2rem', border: '3px solid rgba(241,245,249,0.25)', borderTopColor: '#f1f5f9', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
+          <p style={{ fontSize: '0.85rem', margin: '0 0 1rem', color: '#93c5fd' }}>Enquanto aguardamos, rezemos juntos:</p>
           <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93c5fd', margin: '0 0 0.8rem' }}>Ave Maria</p>
           <p style={{ fontSize: '0.95rem', lineHeight: 1.7, margin: 0, color: '#e2e8f0' }}>
             Cheia de graça,<br />
             o Senhor é convosco.<br />
             Bendita sois vós entre as mulheres<br />
-            e bendito é o fruto do vosso ventre, Jesus.
+            e bendito é o fruto do vosso ventre, Jesus.<br />
+            Santa Maria,<br />
+            Amém.
           </p>
         </div>
       </div>
