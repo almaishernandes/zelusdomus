@@ -480,13 +480,18 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
           </div>
 
           <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Convite de Participação</label>
-          <textarea placeholder="Convite para o Servidor do Altar participar da reunião" value={form.fonte} onChange={e => setForm({ ...form, fonte: e.target.value })} rows="3"
-            style={{ ...inputStyle, fontFamily: 'inherit', marginBottom: '0.7rem', minHeight: '70px' }} />
+          <div style={{ marginBottom: '0.5rem' }}>
+            <ConteudoEditor
+              key={`fonte-${editandoId || modo}`}
+              value={form.fonte}
+              onChange={c => setForm(f => ({ ...f, fonte: c }))}
+            />
+          </div>
 
           <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Ordem do Dia</label>
           <div style={{ marginBottom: '0.5rem' }}>
             <ConteudoEditor
-              key={editandoId || modo}
+              key={`conteudo-${editandoId || modo}`}
               value={form.conteudo}
               onChange={c => setForm(f => ({ ...f, conteudo: c }))}
               autoFocus={modo === 'conteudo' || modo === 'editar'}
@@ -494,8 +499,13 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
           </div>
 
           <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Anotações das Decisões</label>
-          <textarea placeholder="Decisões tomadas na reunião" value={form.anotacoes_decisoes} onChange={e => setForm({ ...form, anotacoes_decisoes: e.target.value })} rows="4"
-            style={{ ...inputStyle, fontFamily: 'inherit', marginBottom: '0.7rem', minHeight: '90px' }} />
+          <div style={{ marginBottom: '0.5rem' }}>
+            <ConteudoEditor
+              key={`anotacoes-${editandoId || modo}`}
+              value={form.anotacoes_decisoes}
+              onChange={c => setForm(f => ({ ...f, anotacoes_decisoes: c }))}
+            />
+          </div>
 
           <div className="ata-form-actions" style={{ display: 'flex', gap: '0.4rem' }}>
             <button onClick={handleSalvar} disabled={salvando}
@@ -537,9 +547,8 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
               <button onClick={() => setItemVisualizando(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
             </div>
             <div ref={itemPreviewRef} style={{ padding: '1.4rem 1.6rem', overflowY: 'auto', background: '#fff', fontFamily: '"Times New Roman", Times, serif' }}>
-              <p style={{ fontSize: '0.98rem', lineHeight: 1.6, color: '#1e293b', margin: '0 0 1.1rem', fontStyle: 'italic', textAlign: 'justify' }}>
-                {itemVisualizando.fonte || CONVITE_PADRAO}
-              </p>
+              <div style={{ fontSize: '0.98rem', lineHeight: 1.6, color: '#1e293b', margin: '0 0 1.1rem', fontStyle: 'italic', textAlign: 'justify' }}
+                dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(itemVisualizando.fonte || CONVITE_PADRAO) }} />
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem', marginBottom: '1rem' }}><tbody>
                 <tr>
                   <td style={{ padding: '0.2rem 0.5rem 0.2rem 0', fontWeight: 700, color: '#1e293b', whiteSpace: 'nowrap' }}>Reunião:</td>
@@ -557,7 +566,13 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
                 </tr>
               </tbody></table>
               <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.3rem' }}>Ordem do dia:</p>
-              <div style={{ fontSize: '0.92rem', lineHeight: 1.5, color: '#334155', margin: 0, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(itemVisualizando.conteudo) }} />
+              <div style={{ fontSize: '0.92rem', lineHeight: 1.5, color: '#334155', margin: '0 0 1rem', textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(itemVisualizando.conteudo) }} />
+              {stripHtml(itemVisualizando.anotacoes_decisoes) && (
+                <>
+                  <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', margin: '0 0 0.3rem' }}>Anotações das Decisões:</p>
+                  <div style={{ fontSize: '0.92rem', lineHeight: 1.5, color: '#334155', margin: 0, textAlign: 'justify' }} dangerouslySetInnerHTML={{ __html: paraHtmlExibicao(itemVisualizando.anotacoes_decisoes) }} />
+                </>
+              )}
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', padding: '0.9rem 1.2rem', borderTop: '1px solid #e2e8f0' }}>
               <button onClick={() => compartilharItem(itemVisualizando)} disabled={gerandoPdfId === itemVisualizando.id}
