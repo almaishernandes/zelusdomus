@@ -1,8 +1,9 @@
 ﻿import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { supabase, supabaseAuthOnly } from './supabaseClient';
-import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Menu, Wallet, ClipboardList } from 'lucide-react';
+import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Menu, Wallet, ClipboardList, Mail, Send } from 'lucide-react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { LoginPage } from './LoginPage';
+import { AvisoMensagensNaoLidas, CaixaMensagensModule, EnviarMensagemModal } from './MensagensModule';
 // Telas administrativas carregadas sob demanda: reduz o pacote inicial que o
 // celular precisa baixar antes de mostrar a tela de login.
 const FormacaoModule = React.lazy(() => import('./FormacaoModule').then(m => ({ default: m.FormacaoModule })));
@@ -104,7 +105,7 @@ function AppContent() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const MENUS_PERMITIDOS_MOBILE = ['Agenda e Calendário', 'Formação e Estudos'];
+  const MENUS_PERMITIDOS_MOBILE = ['Agenda e Calendário', 'Formação e Estudos', 'Caixa de Mensagens'];
 
   // Coroinha/Acólito (nível restrito) começam direto na Agenda e Calendário —
   // o activeMenu inicial ('Coroinhas') é uma tela de coordenador e não deve
@@ -207,16 +208,21 @@ function AppContent() {
     { name: 'Formação Cadastro',      icon: BookOpen },
     { name: 'Formação e Estudos',     icon: BookOpen },
     { name: 'Ata de Reunião',         icon: FileText },
+    { name: 'Caixa de Mensagens',     icon: Mail },
     { name: 'Livro Caixa',            icon: Wallet },
     { name: 'Relatórios',             icon: ClipboardList }
   ];
   const menuOptionsRestrito = [
     { name: 'Agenda e Calendário',    icon: CalendarDays },
-    { name: 'Formação e Estudos',     icon: BookOpen }
+    { name: 'Formação e Estudos',     icon: BookOpen },
+    { name: 'Caixa de Mensagens',     icon: Mail }
   ];
 
+  // Caixa de Mensagens é a caixa de entrada de um servidor (busca por
+  // numero_cadastro); coordenador não tem numero_cadastro próprio, então não
+  // participa como destinatário — só envia, pelas telas de Cadastro.
   const menuOptions = ehCoordenador
-    ? menuOptionsCompleto
+    ? menuOptionsCompleto.filter(m => m.name !== 'Caixa de Mensagens')
     : acessoAmplo
       ? menuOptionsCompleto.filter(m => !['Formação Cadastro', 'Livro Caixa'].includes(m.name))
       : menuOptionsRestrito;
@@ -264,6 +270,8 @@ function AppContent() {
         return <RelatoriosModule servers={dbServers} communities={dbCommunities} setHeaderExtra={setHeaderExtra} />;
       case 'Formação e Estudos':
         return <FormacaoModule isMobile={isMobile} />;
+      case 'Caixa de Mensagens':
+        return <CaixaMensagensModule numeroCadastro={perfil?.numero_cadastro} />;
       default:
         return null;
     }
@@ -274,6 +282,9 @@ function AppContent() {
 
   return (
     <div className="app-container">
+      {!ehCoordenador && perfil?.numero_cadastro && (
+        <AvisoMensagensNaoLidas numeroCadastro={perfil.numero_cadastro} onAbrirCaixa={() => setActiveMenu('Caixa de Mensagens')} />
+      )}
       <header className="header">
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <button className="menu-toggle" onClick={() => setMenuAberto(m => !m)}
@@ -1735,16 +1746,54 @@ function AgendaModule({ servers, communities, isMobile, restrictCadastro }) {
 
 function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [] }) {
   const isCoroinha = title === 'Coroinhas';
-  const colCount = 7;
+  const colCount = 8;
   const roleColor = ROLE_COLORS[title.slice(0,-1)] || ROLE_COLORS['Coroinha'];
   const [fichaItem, setFichaItem] = useState(null);
+  const [selecionados, setSelecionados] = useState(new Set());
+  const [enviarMensagemAberto, setEnviarMensagemAberto] = useState(false);
+  const [avisoEnviado, setAvisoEnviado] = useState(false);
+
+  const cadastrosValidos = data.filter(item => item.cadastro).map(item => item.cadastro);
+  const todosSelecionados = cadastrosValidos.length > 0 && cadastrosValidos.every(c => selecionados.has(c));
+
+  const alternarSelecao = (cadastro) => {
+    if (!cadastro) return;
+    setSelecionados(prev => {
+      const novo = new Set(prev);
+      novo.has(cadastro) ? novo.delete(cadastro) : novo.add(cadastro);
+      return novo;
+    });
+  };
+
+  const alternarSelecionarTodos = () => {
+    setSelecionados(todosSelecionados ? new Set() : new Set(cadastrosValidos));
+  };
 
   return (
     <div className="grid-container" style={{ overflowX: 'auto' }}>
       {fichaItem && <FichaCadastro item={fichaItem} communities={communities} onClose={() => setFichaItem(null)} />}
+      {enviarMensagemAberto && (
+        <EnviarMensagemModal cadastros={[...selecionados]} onClose={() => setEnviarMensagemAberto(false)}
+          onEnviado={() => { setEnviarMensagemAberto(false); setSelecionados(new Set()); setAvisoEnviado(true); setTimeout(() => setAvisoEnviado(false), 3000); }} />
+      )}
+      {selecionados.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', background: '#eff6ff', padding: '0.5rem 0.9rem', borderBottom: '1px solid #bfdbfe' }}>
+          <span style={{ fontSize: '0.85rem', color: '#1e3a8a', fontWeight: 600 }}>{selecionados.size} selecionado(s)</span>
+          <button onClick={() => setEnviarMensagemAberto(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#2563eb', color: '#fff', border: 'none', padding: '0.35rem 0.7rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700 }}>
+            <Mail size={14} /> Enviar Mensagem
+          </button>
+        </div>
+      )}
+      {avisoEnviado && (
+        <div style={{ background: '#dcfce7', color: '#166534', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}>Mensagem enviada com sucesso.</div>
+      )}
       <table className="data-table">
         <thead>
           <tr>
+            <th style={{ width: '36px', textAlign: 'center' }}>
+              <input type="checkbox" checked={todosSelecionados} onChange={alternarSelecionarTodos} title="Selecionar todos" />
+            </th>
             <th style={{ width: '100px', textAlign: 'center' }}>Ações</th>
             <th style={{ width: '80px', textAlign: 'center' }}>Cadastro</th>
             <th>Nome</th>
@@ -1757,6 +1806,9 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
         <tbody>
           {[...data].sort((a, b) => (parseInt(a.cadastro) || 0) - (parseInt(b.cadastro) || 0)).map((item) => (
             <tr key={item.id}>
+              <td style={{ textAlign: 'center' }}>
+                <input type="checkbox" disabled={!item.cadastro} checked={item.cadastro ? selecionados.has(item.cadastro) : false} onChange={() => alternarSelecao(item.cadastro)} />
+              </td>
               <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
                 <button title="Visualizar ficha completa" onClick={() => setFichaItem(item)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.2rem 0.3rem', borderRadius: '4px' }}
