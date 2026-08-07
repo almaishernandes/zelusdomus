@@ -1,3 +1,7 @@
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 :root {
   --primary: #14b8a6; /* Verde Água */
   --primary-hover: #0d9488;
