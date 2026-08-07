@@ -366,6 +366,18 @@ export function AtaReuniaoModule() {
 
   return (
     <div className="grid-container" style={{ padding: 0 }}>
+      <style>{`
+        @media (max-width: 680px) {
+          .ata-form-grid { grid-template-columns: 1fr !important; }
+          .ata-col-conteudo { display: none !important; }
+          .ata-list-header th { font-size: 0.76rem !important; padding: 0.5rem 0.6rem !important; }
+          .ata-list-header th:first-child button,
+          .ata-list-header th:last-child button { font-size: 0.74rem !important; padding: 0.5rem 0.5rem !important; white-space: normal !important; }
+          .ata-list td { padding: 0.4rem 0.6rem !important; font-size: 0.82rem !important; }
+          .ata-form-actions { flex-wrap: wrap !important; }
+          .ata-form-actions button { flex: 1 1 auto !important; justify-content: center !important; }
+        }
+      `}</style>
       {error && (
         <div style={{ background: '#fee2e2', color: '#991b1b', padding: '0.6rem 0.9rem', display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
           <AlertCircle size={16} style={{ flex: 'none' }} />
@@ -374,8 +386,8 @@ export function AtaReuniaoModule() {
         </div>
       )}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
-        <thead>
+      <table className="ata-list" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+        <thead className="ata-list-header">
           <tr>
             <th style={{ background: '#1e293b', padding: 0, textAlign: 'left', width: '18%' }}>
               <button onClick={abrirInserirTema}
@@ -386,7 +398,7 @@ export function AtaReuniaoModule() {
             <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', width: '20%', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Assunto
             </th>
-            <th style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
+            <th className="ata-col-conteudo" style={{ background: '#1e293b', padding: '0.6rem 0.9rem', textAlign: 'left', color: '#fff', fontWeight: 700, fontSize: '0.82rem' }}>
               Conteúdo
             </th>
             <th style={{ background: '#1e293b', width: '160px', padding: 0 }}>
@@ -416,7 +428,7 @@ export function AtaReuniaoModule() {
                     {primeiraOcorrencia && item.tema}
                   </td>
                   <td style={{ padding: '0.25rem 0.9rem', color: '#334155' }}>{item.assunto}</td>
-                  <td style={{ padding: '0.25rem 0.9rem', color: '#64748b' }}>{primeirasPalavras(item.conteudo)}</td>
+                  <td className="ata-col-conteudo" style={{ padding: '0.25rem 0.9rem', color: '#64748b' }}>{primeirasPalavras(item.conteudo)}</td>
                   <td style={{ padding: '0.25rem 0.9rem', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                     <div style={{ display: 'flex', gap: '0.3rem', justifyContent: 'center' }}>
                       <button onClick={() => setItemVisualizando(item)} title="Visualizar" style={btn('#0ea5e9')}><Eye size={14} /></button>
@@ -438,7 +450,7 @@ export function AtaReuniaoModule() {
       {/* ---- Segunda folha: formulário de inclusão/edição, sempre abaixo de todos os temas ---- */}
       {modo && (
         <div style={{ background: '#f1f5f9', borderTop: '3px solid #1e293b', padding: '0.9rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 0.8fr 0.7fr', gap: '0.6rem', marginBottom: '0.7rem' }}>
+          <div className="ata-form-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 0.8fr 0.7fr', gap: '0.6rem', marginBottom: '0.7rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Reunião / Tema</label>
               {modo === 'tema' || modo === 'editar' ? (
@@ -487,7 +499,7 @@ export function AtaReuniaoModule() {
           <textarea placeholder="Decisões tomadas na reunião" value={form.anotacoes_decisoes} onChange={e => setForm({ ...form, anotacoes_decisoes: e.target.value })} rows="4"
             style={{ ...inputStyle, fontFamily: 'inherit', marginBottom: '0.7rem', minHeight: '90px' }} />
 
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
+          <div className="ata-form-actions" style={{ display: 'flex', gap: '0.4rem' }}>
             <button onClick={handleSalvar} disabled={salvando}
               style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
               {salvando ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={14} />} Salvar
