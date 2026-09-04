@@ -3,6 +3,7 @@ import { supabase, supabaseAuthOnly } from './supabaseClient';
 import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Menu, Wallet, ClipboardList, Mail, Send } from 'lucide-react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { LoginPage } from './LoginPage';
+import { SelecionarParoquiaScreen } from './SelecionarParoquiaScreen';
 import { AvisoMensagensNaoLidas, CaixaMensagensModule, EnviarMensagemModal } from './MensagensModule';
 // Telas administrativas carregadas sob demanda: reduz o pacote inicial que o
 // celular precisa baixar antes de mostrar a tela de login.
@@ -66,7 +67,7 @@ const MENU_COLORS = {
 };
 
 function AppContent() {
-  const { eAutenticado, ehCoordenador, ehServidor, perfil, user, logout, loading: authLoading } = useAuth();
+  const { eAutenticado, ehCoordenador, ehServidor, ehSuporte, precisaEscolherParoquia, trocarParoquia, perfil, user, logout, loading: authLoading } = useAuth();
 
   // TODOS os Hooks AQUI, ANTES de qualquer if/return
   const [activeMenu, setActiveMenu] = useState('Coroinhas');
@@ -81,6 +82,14 @@ function AppContent() {
   const [editingCommunity, setEditingCommunity] = useState(null);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const [menuAberto, setMenuAberto] = useState(false);
+  const [nomeParoquiaAtiva, setNomeParoquiaAtiva] = useState('');
+
+  // Suporte: mostra no cabeçalho em qual paróquia ele está trabalhando agora.
+  useEffect(() => {
+    if (!ehSuporte || !perfil?.paroquia_ativa_id) { setNomeParoquiaAtiva(''); return; }
+    supabase.from('paroquias').select('nome').eq('id', perfil.paroquia_ativa_id).single()
+      .then(({ data }) => setNomeParoquiaAtiva(data?.nome || ''));
+  }, [ehSuporte, perfil?.paroquia_ativa_id]);
 
   const fetchAll = React.useCallback(async () => {
     const [{ data: servers }, { data: communities }] = await Promise.all([
@@ -150,6 +159,10 @@ function AppContent() {
         </div>
       </div>
     );
+  }
+
+  if (precisaEscolherParoquia) {
+    return <SelecionarParoquiaScreen />;
   }
 
   const MENU_NOVO = {
@@ -303,6 +316,12 @@ function AppContent() {
                 : `👤 ${perfil.full_name} — ${(perfil.funcoes && perfil.funcoes.length) ? perfil.funcoes.map(t => TYPE_LABELS[t] || t).join(', ') : 'Servidor do Altar'}`}
               {user?.email ? ` — ${user.email}` : ''}
             </span>}
+            {ehSuporte && (
+              <button onClick={trocarParoquia} title="Trocar de paróquia"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#7e14ff', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>
+                <Church size={14} /> {nomeParoquiaAtiva || 'Trocar paróquia'}
+              </button>
+            )}
             {headerExtra}
             <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#dc2626', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
               <LogOut size={16} /> Sair

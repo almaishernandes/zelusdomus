@@ -226,6 +226,25 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Suporte: um único login, com acesso a todas as paróquias — escolhe qual
+  // paróquia fica "ativa" (paroquia_ativa_id) ao entrar, e pode trocar depois.
+  const ehSuporte = perfil?.tipo === 'coordenador' && perfil?.perfil === 'suporte';
+  const paroquiaId = ehSuporte ? perfil?.paroquia_ativa_id : perfil?.paroquia_id;
+  const precisaEscolherParoquia = ehSuporte && !paroquiaId;
+
+  const escolherParoquia = async (paroquiaEscolhidaId) => {
+    const { error: rpcError } = await supabase.rpc('set_paroquia_ativa', { nova_paroquia_id: paroquiaEscolhidaId });
+    if (rpcError) return { sucesso: false, erro: rpcError.message };
+    if (user) await carregarPerfil(user.id);
+    return { sucesso: true };
+  };
+
+  // Volta pra tela de escolha de paróquia (não desloga).
+  const trocarParoquia = async () => {
+    await supabase.from('coordenador_profiles').update({ paroquia_ativa_id: null }).eq('id', user.id);
+    await carregarPerfil(user.id);
+  };
+
   const value = {
     user,
     perfil,
@@ -237,7 +256,12 @@ export function AuthProvider({ children }) {
     atualizarSenha,
     eAutenticado: !!user,
     ehCoordenador: perfil?.tipo === 'coordenador',
-    ehServidor: perfil?.tipo === 'servidor'
+    ehServidor: perfil?.tipo === 'servidor',
+    ehSuporte,
+    paroquiaId,
+    precisaEscolherParoquia,
+    escolherParoquia,
+    trocarParoquia
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
