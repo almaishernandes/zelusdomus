@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "admin": "node --env-file=admin/.env.local admin/server.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

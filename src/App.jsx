@@ -66,7 +66,12 @@ const MENU_COLORS = {
 };
 
 function AppContent() {
-  const { eAutenticado, ehCoordenador, ehServidor, perfil, user, logout, loading: authLoading } = useAuth();
+  const { eAutenticado, ehCoordenador, ehServidor, perfil, paroquiaNome, ehSuporte, trocarParoquia, user, logout, loading: authLoading } = useAuth();
+  const [paroquiasSuporte, setParoquiasSuporte] = useState([]);
+  useEffect(() => {
+    if (!ehSuporte) return;
+    supabase.from('paroquias').select('id,nome').order('nome').then(({ data }) => setParoquiasSuporte(data || []));
+  }, [ehSuporte]);
 
   // TODOS os Hooks AQUI, ANTES de qualquer if/return
   const [activeMenu, setActiveMenu] = useState('Coroinhas');
@@ -140,11 +145,12 @@ function AppContent() {
           <p style={{ fontSize: '0.85rem', margin: '0 0 1rem', color: '#93c5fd' }}>Enquanto aguardamos, rezemos juntos:</p>
           <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93c5fd', margin: '0 0 0.8rem' }}>Ave Maria</p>
           <p style={{ fontSize: '0.95rem', lineHeight: 1.7, margin: 0, color: '#e2e8f0' }}>
-            Cheia de graça,<br />
-            o Senhor é convosco.<br />
+            Cheia de graça, o Senhor é convosco.<br />
             Bendita sois vós entre as mulheres<br />
-            e bendito é o fruto do vosso ventre, Jesus.<br />
-            Santa Maria,<br />
+            e bendito é o fruto do vosso ventre, Jesus.<br /><br />
+            Santa Maria, Mãe de Deus,<br />
+            rogai por nós, pecadores,<br />
+            agora e na hora da nossa morte.<br />
             Amém.
           </p>
         </div>
@@ -297,6 +303,17 @@ function AppContent() {
             ZelusDomus
           </h1>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            {ehSuporte ? (
+              <select
+                value={perfil?.paroquia_ativa_id || ''}
+                onChange={(e) => trocarParoquia(e.target.value)}
+                style={{ fontSize: '0.85rem', fontWeight: 700, padding: '0.3rem 0.5rem', borderRadius: 4, border: '1px solid #cbd5e1' }}
+              >
+                {paroquiasSuporte.map(p => <option key={p.id} value={p.id}>⛪ {p.nome}</option>)}
+              </select>
+            ) : paroquiaNome && (
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>⛪ {paroquiaNome}</span>
+            )}
             {perfil && <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
               {ehCoordenador
                 ? `👤 ${perfil.full_name} — Coordenador`

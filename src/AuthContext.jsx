@@ -8,11 +8,21 @@ export function AuthProvider({ children }) {
   const [perfil, setPerfil] = useState(null); // 'servidor' | 'coordenador'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [paroquiaNome, setParoquiaNome] = useState(null);
   const perfilRef = useRef(null);
   const userIdRef = useRef(null);
   const loginEmCursoRef = useRef(false);
 
   useEffect(() => { perfilRef.current = perfil; }, [perfil]);
+
+  // Nome da paróquia (não bloqueia o login; se a tabela ainda não existir, ignora)
+  useEffect(() => {
+    const pid = perfil?.paroquia_id;
+    if (!pid) { setParoquiaNome(null); return; }
+    supabase.from('paroquias').select('nome').eq('id', pid).maybeSingle()
+      .then(({ data }) => setParoquiaNome(data?.nome || null))
+      .catch(() => setParoquiaNome(null));
+  }, [perfil?.paroquia_id]);
 
   // Verificar sessão ao montar (apenas um listener, sem race condition)
   useEffect(() => {
@@ -235,6 +245,14 @@ export function AuthProvider({ children }) {
     logout,
     solicitarReset,
     atualizarSenha,
+    paroquiaNome,
+    ehSuporte: perfil?.is_suporte === true,
+    trocarParoquia: async (paroquiaId) => {
+      if (!user) return;
+      const { error } = await supabase.from('coordenador_profiles')
+        .update({ paroquia_ativa_id: paroquiaId }).eq('id', user.id);
+      if (!error) window.location.reload();
+    },
     eAutenticado: !!user,
     ehCoordenador: perfil?.tipo === 'coordenador',
     ehServidor: perfil?.tipo === 'servidor'

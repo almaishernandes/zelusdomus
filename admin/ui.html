@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ZelusDomus · Administração</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 system-ui, sans-serif; background: #f1f5f9; color: #1e293b; }
+  header { background: #1e293b; color: #fff; padding: 1rem 1.5rem; }
+  header h1 { margin: 0; font-size: 1.1rem; }
+  header p { margin: .2rem 0 0; font-size: .8rem; color: #94a3b8; }
+  main { max-width: 1000px; margin: 1.5rem auto; padding: 0 1rem; display: grid; gap: 1.5rem; }
+  section { background: #fff; border-radius: 8px; padding: 1.2rem 1.4rem; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  section h2 { margin: 0 0 1rem; font-size: 1rem; }
+  label { display: block; font-size: .78rem; font-weight: 700; margin: .6rem 0 .2rem; color: #475569; }
+  input, select { width: 100%; padding: .5rem .6rem; border: 1px solid #cbd5e1; border-radius: 5px; font: inherit; }
+  button { background: #2563eb; color: #fff; border: 0; padding: .55rem 1rem; border-radius: 5px; font: inherit; font-weight: 700; cursor: pointer; margin-top: .8rem; }
+  button.sec { background: #e2e8f0; color: #1e293b; }
+  table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+  th, td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid #e2e8f0; }
+  th { background: #f8fafc; font-size: .75rem; text-transform: uppercase; color: #64748b; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+  .msg { margin-top: .8rem; padding: .6rem .8rem; border-radius: 5px; font-size: .85rem; white-space: pre-wrap; }
+  .ok { background: #dcfce7; color: #166534; }
+  .err { background: #fee2e2; color: #991b1b; }
+  .pill { display: inline-block; background: #f1f5f9; border-radius: 999px; padding: .1rem .5rem; font-size: .75rem; margin: .1rem; }
+  .muted { color: #64748b; font-size: .8rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ZelusDomus · Administração</h1>
+  <p>Painel local — não publicar. A chave service_role ignora o RLS.</p>
+</header>
+
+<main>
+  <section>
+    <h2>Paróquias</h2>
+    <table id="tblParoquias"><thead><tr><th>Nome</th><th>Cidade</th><th>Servidores</th><th>Comunidades</th><th>Ativa</th><th></th></tr></thead><tbody></tbody></table>
+  </section>
+
+  <section>
+    <h2>Nova paróquia</h2>
+    <div class="row">
+      <div><label>Nome *</label><input id="np_nome" /></div>
+      <div><label>Cidade</label><input id="np_cidade" /></div>
+    </div>
+    <label>Diocese</label><input id="np_diocese" />
+    <button onclick="criarParoquia()">Criar paróquia</button>
+    <div id="np_msg"></div>
+  </section>
+
+  <section>
+    <h2>Novo coordenador</h2>
+    <label>Paróquia *</label><select id="nc_paroquia"></select>
+    <div class="row">
+      <div><label>Nome completo *</label><input id="nc_nome" /></div>
+      <div><label>Nº cadastro</label><input id="nc_cadastro" placeholder="001" /></div>
+    </div>
+    <div class="row">
+      <div><label>E-mail *</label><input id="nc_email" type="email" /></div>
+      <div><label>Senha (vazio = gerar)</label><input id="nc_senha" /></div>
+    </div>
+    <button onclick="criarCoordenador()">Criar coordenador</button>
+    <div id="nc_msg"></div>
+  </section>
+
+  <section>
+    <h2>Tornar suporte (acesso a todas as paróquias)</h2>
+    <p class="muted">A pessoa precisa já ser coordenador de alguma paróquia. Depois disso, um seletor de paróquia aparece pra ela no cabeçalho do app.</p>
+    <label>E-mail do coordenador *</label><input id="sp_email" type="email" placeholder="almaishernandes@gmail.com" />
+    <button onclick="tornarSuporte()">Tornar suporte</button>
+    <div id="sp_msg"></div>
+  </section>
+
+  <section>
+    <h2>Resetar senha</h2>
+    <div class="row">
+      <div><label>E-mail do usuário *</label><input id="rs_email" type="email" /></div>
+      <div><label>Nova senha (vazio = gerar)</label><input id="rs_senha" /></div>
+    </div>
+    <button onclick="resetarSenha()">Definir nova senha</button>
+    <div id="rs_msg"></div>
+  </section>
+
+  <section>
+    <h2>Ver dados de uma paróquia</h2>
+    <label>Paróquia</label><select id="vd_paroquia" onchange="verDados()"></select>
+    <div id="vd_out" class="muted" style="margin-top:1rem">Selecione uma paróquia.</div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+async function call(method, path, body) {
+  const r = await fetch(path, { method, headers: { 'content-type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json();
+  if (!r.ok || j.erro) throw new Error(j.erro || 'erro');
+  return j;
+}
+function msg(el, text, ok) { const d = $(el); d.className = 'msg ' + (ok ? 'ok' : 'err'); d.textContent = text; }
+
+let PAROQUIAS = [];
+async function carregarParoquias() {
+  const { paroquias, counts } = await call('GET', '/api/paroquias');
+  PAROQUIAS = paroquias;
+  const tb = $('#tblParoquias tbody'); tb.innerHTML = '';
+  for (const p of paroquias) {
+    const c = counts[p.id] || {};
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.nome}</td><td>${p.cidade || ''}</td><td>${c.servidores ?? 0}</td><td>${c.comunidades ?? 0}</td>
+      <td>${p.ativa ? 'sim' : 'não'}</td>
+      <td>
+        <button class="sec" style="margin:0;padding:.3rem .6rem" onclick="toggleAtiva('${p.id}',${!p.ativa})">${p.ativa ? 'desativar' : 'ativar'}</button>
+        <button class="sec" style="margin:0;padding:.3rem .6rem;color:#991b1b" onclick="excluirParoquia('${p.id}','${p.nome.replace(/'/g, "\\'")}')">excluir</button>
+      </td>`;
+    tb.appendChild(tr);
+  }
+  for (const sel of ['#nc_paroquia', '#vd_paroquia']) {
+    $(sel).innerHTML = paroquias.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+  }
+}
+async function excluirParoquia(id, nome) {
+  if (!confirm(`Excluir a paróquia "${nome}"? Só funciona se ela não tiver servidores/comunidades.`)) return;
+  try { await call('DELETE', '/api/paroquias', { id }); carregarParoquias(); } catch (e) { alert(e.message); }
+}
+async function toggleAtiva(id, ativa) {
+  try { await call('PATCH', '/api/paroquias', { id, ativa }); carregarParoquias(); } catch (e) { alert(e.message); }
+}
+async function criarParoquia() {
+  try {
+    await call('POST', '/api/paroquias', { nome: $('#np_nome').value, cidade: $('#np_cidade').value, diocese: $('#np_diocese').value });
+    $('#np_nome').value = $('#np_cidade').value = $('#np_diocese').value = '';
+    msg('#np_msg', 'Paróquia criada.', true); carregarParoquias();
+  } catch (e) { msg('#np_msg', e.message, false); }
+}
+async function criarCoordenador() {
+  try {
+    const r = await call('POST', '/api/coordenador', {
+      paroquia_id: $('#nc_paroquia').value, full_name: $('#nc_nome').value,
+      numero_cadastro: $('#nc_cadastro').value, email: $('#nc_email').value, senha: $('#nc_senha').value,
+    });
+    msg('#nc_msg', `Coordenador criado!\nE-mail: ${r.email}\nSenha temporária: ${r.senha}\n\nRepasse e peça para trocar em "Esqueci minha senha".`, true);
+    $('#nc_nome').value = $('#nc_cadastro').value = $('#nc_email').value = $('#nc_senha').value = '';
+  } catch (e) { msg('#nc_msg', e.message, false); }
+}
+async function tornarSuporte() {
+  try {
+    await call('POST', '/api/suporte', { email: $('#sp_email').value });
+    msg('#sp_msg', 'Agora é suporte — já pode logar no app e trocar de paróquia no cabeçalho.', true);
+    $('#sp_email').value = '';
+  } catch (e) { msg('#sp_msg', e.message, false); }
+}
+async function resetarSenha() {
+  try {
+    const r = await call('POST', '/api/reset-senha', { email: $('#rs_email').value, senha: $('#rs_senha').value });
+    msg('#rs_msg', `Senha redefinida.\nE-mail: ${r.email}\nNova senha: ${r.senha}`, true);
+    $('#rs_senha').value = '';
+  } catch (e) { msg('#rs_msg', e.message, false); }
+}
+async function verDados() {
+  const pid = $('#vd_paroquia').value; if (!pid) return;
+  $('#vd_out').textContent = 'Carregando...';
+  try {
+    const d = await call('GET', '/api/dados?paroquia_id=' + pid);
+    $('#vd_out').className = '';
+    $('#vd_out').innerHTML = `
+      <p><b>Coordenadores:</b> ${d.coordenadores.map(c => `<span class="pill">${c.full_name} · ${c.email}</span>`).join('') || '—'}</p>
+      <p><b>Servidores (${d.servers.length}):</b> ${d.servers.map(s => `<span class="pill">${s.cadastro ? s.cadastro + ' ' : ''}${s.full_name || ''}</span>`).join('') || '—'}</p>
+      <p><b>Comunidades (${d.communities.length}):</b> ${d.communities.map(c => `<span class="pill">${c.name}</span>`).join('') || '—'}</p>
+      <p><b>Livro caixa:</b> ${d.lancamentos.length} lançamentos · saldo R$ ${d.saldo.toFixed(2)}</p>
+      <p><b>Formação:</b> ${d.formacao.length} itens &nbsp;·&nbsp; <b>Atas:</b> ${d.atas.length}</p>`;
+  } catch (e) { $('#vd_out').className = 'msg err'; $('#vd_out').textContent = e.message; }
+}
+carregarParoquias();
+</script>
+</body>
+</html>
