@@ -29,14 +29,8 @@ export function AuthProvider({ children }) {
     let mounted = true;
     let sessionChecked = false;
 
-    // Ao abrir o app pela primeira vez nesta aba/janela, força a tela de login
-    // mesmo que exista uma sessão salva no navegador. sessionStorage é limpo
-    // quando a aba/janela fecha, mas sobrevive a um reload (usado após o login).
-    const jaIniciouNestaAba = sessionStorage.getItem('zd_session_started');
-    if (!jaIniciouNestaAba) {
-      sessionStorage.setItem('zd_session_started', '1');
-      supabase.auth.signOut();
-    }
+    // A sessão salva já é descartada em supabaseClient.js ao abrir uma aba nova
+    // (antes de o client existir), então aqui não há mais nada a fazer.
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;

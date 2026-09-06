@@ -21,9 +21,17 @@ export function MinhasReunioesModule() {
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase.rpc('minhas_reunioes');
-    if (error) setErro(error.message);
-    else setReunioes(data || []);
+    // O "lock ... stole it" do supabase-auth é transitório (várias abas) —
+    // tenta de novo algumas vezes antes de mostrar erro.
+    let ultimoErro = null;
+    for (let i = 0; i < 3; i++) {
+      const { data, error } = await supabase.rpc('minhas_reunioes');
+      if (!error) { setReunioes(data || []); setErro(null); setLoading(false); return; }
+      ultimoErro = error;
+      if (!/lock|stole/i.test(error.message)) break;
+      await new Promise(r => setTimeout(r, 400));
+    }
+    setErro(ultimoErro?.message || 'Erro ao carregar');
     setLoading(false);
   }, []);
 
