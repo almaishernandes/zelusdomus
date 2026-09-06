@@ -73,6 +73,13 @@ function AppContent() {
     supabase.from('paroquias').select('id,nome').order('nome').then(({ data }) => setParoquiasSuporte(data || []));
   }, [ehSuporte]);
 
+  const ORACAO_CORES = ['#f8fafc', '#fca5a5', '#fcd34d', '#86efac', '#7dd3fc', '#c4b5fd', '#f9a8d4'];
+  const [oracaoCor, setOracaoCor] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setOracaoCor(i => (i + 1) % ORACAO_CORES.length), 15000);
+    return () => clearInterval(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // TODOS os Hooks AQUI, ANTES de qualquer if/return
   const [activeMenu, setActiveMenu] = useState('Coroinhas');
   // Ações extras que uma tela (ex: CadastroServidorForm) injeta na primeira
@@ -140,11 +147,11 @@ function AppContent() {
   if (authLoading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e293b', padding: '1.5rem' }}>
-        <div style={{ maxWidth: 360, textAlign: 'center', color: '#f1f5f9' }}>
-          <div style={{ width: 44, height: 44, margin: '0 auto 1.2rem', border: '3px solid rgba(241,245,249,0.25)', borderTopColor: '#f1f5f9', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
-          <p style={{ fontSize: '0.85rem', margin: '0 0 1rem', color: '#93c5fd' }}>Enquanto aguardamos, rezemos juntos:</p>
-          <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93c5fd', margin: '0 0 0.8rem' }}>Ave Maria</p>
-          <p style={{ fontSize: '0.95rem', lineHeight: 1.7, margin: 0, color: '#e2e8f0' }}>
+        <div style={{ maxWidth: 1100, textAlign: 'center', color: ORACAO_CORES[oracaoCor], transition: 'color 1.5s ease' }}>
+          <div style={{ width: 44, height: 44, margin: '0 auto 1.6rem', border: '3px solid rgba(241,245,249,0.25)', borderTopColor: ORACAO_CORES[oracaoCor], borderRadius: '50%', animation: 'spin 0.9s linear infinite', transition: 'border-top-color 1.5s ease' }} />
+          <p style={{ fontSize: 'clamp(1rem, 2.4vw, 1.6rem)', margin: '0 0 1.4rem' }}>Enquanto aguardamos, rezemos juntos:</p>
+          <p style={{ fontSize: 'clamp(1.6rem, 5vw, 3.4rem)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 1.2rem' }}>Ave Maria</p>
+          <p style={{ fontSize: 'clamp(1.4rem, 4.2vw, 2.8rem)', lineHeight: 1.6, margin: 0 }}>
             Cheia de graça, o Senhor é convosco.<br />
             Bendita sois vós entre as mulheres<br />
             e bendito é o fruto do vosso ventre, Jesus.<br /><br />
