@@ -29,8 +29,8 @@ export function AuthProvider({ children }) {
     let mounted = true;
     let sessionChecked = false;
 
-    // A sessão salva já é descartada em supabaseClient.js ao abrir uma aba nova
-    // (antes de o client existir), então aqui não há mais nada a fazer.
+    // A sessão fica em sessionStorage (ver supabaseClient.js): cada aba nova já
+    // começa deslogada e pede senha; um reload mantém o login. Nada a fazer aqui.
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
