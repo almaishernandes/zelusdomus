@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { useAuth } from './AuthContext';
-import { Plus, Trash2, Save, X, AlertCircle, Loader, Eye, MessageCircle, Printer, FileText, Bold, Underline, Italic } from 'lucide-react';
+import { Plus, Trash2, Save, X, AlertCircle, Loader, Eye, MessageCircle, Printer, FileText, Bold, Underline, Italic, Video, MapPin } from 'lucide-react';
 
 const loadHtml2pdf = () => import('html2pdf.js').then(m => m.default);
 
@@ -71,8 +71,18 @@ function ConteudoEditor({ value, onChange, autoFocus }) {
   );
 }
 
-export function AtaReuniaoModule({ setHeaderExtra }) {
+export function AtaReuniaoModule({ setHeaderExtra, servers = [] }) {
   const { user } = useAuth();
+  // Convidados (só para reunião online): cadastros marcados + status atual de cada um
+  const [convidados, setConvidados] = useState([]);            // ['001', '004', ...]
+  const [convidadosStatus, setConvidadosStatus] = useState({}); // { '001': 'aceito', ... }
+  const cadastrosDisponiveis = React.useMemo(() => {
+    const vistos = new Set();
+    return servers
+      .filter(s => s.cadastro && !vistos.has(s.cadastro) && vistos.add(s.cadastro))
+      .map(s => ({ cadastro: String(s.cadastro), nome: s.full_name || s.nome || `Cadastro ${s.cadastro}` }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [servers]);
   const [formacao, setFormacao] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -101,7 +111,7 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
   // modo: null | 'tema' | 'assunto' | 'conteudo' | 'editar'
   const [modo, setModo] = useState(null);
   const [editandoId, setEditandoId] = useState(null);
-  const [form, setForm] = useState({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
+  const [form, setForm] = useState({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', tipo: 'presencial', link_reuniao: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
 
   const CONVITE_PADRAO = 'Com muito carinho e dedicação convidamos você que é Servidor de Altar do Senhor a participar';
 
@@ -140,14 +150,23 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
   const abrirInserirTema = () => {
     setModo('tema');
     setEditandoId(null);
-    setForm({ tema: '', assunto: '', conteudo: '', fonte: CONVITE_PADRAO, local: '', data_reuniao: '', horario: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
+    setConvidados([]);
+    setConvidadosStatus({});
+    setForm({ tema: '', assunto: '', conteudo: '', fonte: CONVITE_PADRAO, local: '', data_reuniao: '', horario: '', tipo: 'presencial', link_reuniao: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
   };
 
-  const abrirEdicao = (item) => {
+  const abrirEdicao = async (item) => {
     setModo('editar');
     setEditandoId(item.id);
-    setForm({ tema: item.tema, assunto: item.assunto, conteudo: item.conteudo, fonte: item.fonte || CONVITE_PADRAO, local: item.local || '', data_reuniao: item.data_reuniao || '', horario: item.horario || '', anotacoes_decisoes: parseAnotacoes(item.anotacoes_decisoes) });
+    setForm({ tema: item.tema, assunto: item.assunto, conteudo: item.conteudo, fonte: item.fonte || CONVITE_PADRAO, local: item.local || '', data_reuniao: item.data_reuniao || '', horario: item.horario || '', tipo: item.tipo || 'presencial', link_reuniao: item.link_reuniao || '', anotacoes_decisoes: parseAnotacoes(item.anotacoes_decisoes) });
     setSelecionado({ tema: item.tema, assunto: item.assunto });
+    setConvidados([]);
+    setConvidadosStatus({});
+    const { data: convs } = await supabase.from('reuniao_convidados').select('convidado_cadastro, status').eq('reuniao_id', item.id);
+    if (convs) {
+      setConvidados(convs.map(c => c.convidado_cadastro));
+      setConvidadosStatus(Object.fromEntries(convs.map(c => [c.convidado_cadastro, c.status])));
+    }
   };
 
   const atualizarAnotacaoLinha = (idx, campo, valor) => {
@@ -169,7 +188,13 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
   const cancelarForm = () => {
     setModo(null);
     setEditandoId(null);
-    setForm({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
+    setConvidados([]);
+    setConvidadosStatus({});
+    setForm({ tema: '', assunto: '', conteudo: '', fonte: '', local: '', data_reuniao: '', horario: '', tipo: 'presencial', link_reuniao: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
+  };
+
+  const toggleConvidado = (cadastro) => {
+    setConvidados(cs => cs.includes(cadastro) ? cs.filter(c => c !== cadastro) : [...cs, cadastro]);
   };
 
   const handleSalvar = async () => {
@@ -183,16 +208,19 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
       const camposComuns = {
         tema: form.tema.trim(), assunto: form.assunto.trim(), conteudo: form.conteudo.trim(), fonte: form.fonte.trim(),
         local: form.local.trim(), data_reuniao: form.data_reuniao.trim(), horario: form.horario.trim(),
+        tipo: form.tipo, link_reuniao: form.tipo === 'online' ? form.link_reuniao.trim() : null,
         anotacoes_decisoes: JSON.stringify(form.anotacoes_decisoes.filter(l => l.tarefa || l.responsavel || l.prazo))
       };
+
+      let reuniaoId = editandoId;
 
       if (editandoId) {
         let payload = { ...camposComuns, updated_at: new Date() };
         let { data: linhasAlteradas, error: err } = await supabase.from('atas_reuniao').update(payload).eq('id', editandoId).select('id');
-        if (err && /anotacoes_decisoes/i.test(err.message)) {
-          // Coluna ainda não criada no banco (falta rodar setup-atas-reuniao-anotacoes.sql) —
+        if (err && /anotacoes_decisoes|tipo|link_reuniao/i.test(err.message)) {
+          // Coluna ainda não criada no banco (falta rodar a migração correspondente) —
           // salva o resto normalmente em vez de bloquear a gravação.
-          const { anotacoes_decisoes: _omit, ...resto } = payload;
+          const { anotacoes_decisoes: _o1, tipo: _o2, link_reuniao: _o3, ...resto } = payload;
           ({ data: linhasAlteradas, error: err } = await supabase.from('atas_reuniao').update(resto).eq('id', editandoId).select('id'));
         }
         if (err) throw err;
@@ -205,12 +233,28 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
       } else {
         const qtd = formacao.filter(i => i.tema === form.tema.trim()).length;
         let payload = { ...camposComuns, ordem: qtd, created_by: user.id };
-        let { error: err } = await supabase.from('atas_reuniao').insert(payload);
-        if (err && /anotacoes_decisoes/i.test(err.message)) {
-          const { anotacoes_decisoes: _omit, ...resto } = payload;
-          ({ error: err } = await supabase.from('atas_reuniao').insert(resto));
+        let { data: nova, error: err } = await supabase.from('atas_reuniao').insert(payload).select('id').single();
+        if (err && /anotacoes_decisoes|tipo|link_reuniao/i.test(err.message)) {
+          const { anotacoes_decisoes: _o1, tipo: _o2, link_reuniao: _o3, ...resto } = payload;
+          ({ data: nova, error: err } = await supabase.from('atas_reuniao').insert(resto).select('id').single());
         }
         if (err) throw err;
+        reuniaoId = nova?.id;
+      }
+
+      // Sincroniza convidados (só faz sentido na reunião online)
+      if (reuniaoId) {
+        const alvo = form.tipo === 'online' ? convidados : [];
+        const { data: atuais } = await supabase.from('reuniao_convidados').select('convidado_cadastro').eq('reuniao_id', reuniaoId);
+        const jaTem = new Set((atuais || []).map(c => c.convidado_cadastro));
+        const aRemover = [...jaTem].filter(c => !alvo.includes(c));
+        const aInserir = alvo.filter(c => !jaTem.has(c));
+        if (aRemover.length) {
+          await supabase.from('reuniao_convidados').delete().eq('reuniao_id', reuniaoId).in('convidado_cadastro', aRemover);
+        }
+        if (aInserir.length) {
+          await supabase.from('reuniao_convidados').insert(aInserir.map(c => ({ reuniao_id: reuniaoId, convidado_cadastro: c })));
+        }
       }
 
       setSelecionado({ tema: form.tema.trim(), assunto: form.assunto.trim() });
@@ -444,7 +488,11 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
                 <tr key={item.id}
                   onClick={() => abrirEdicao(item)}
                   style={{ background: bgLinha, cursor: 'pointer' }}>
-                  <td style={{ padding: '0.4rem 0.7rem', fontWeight: 700, color: '#1e293b' }}>{item.tema}</td>
+                  <td style={{ padding: '0.4rem 0.7rem', fontWeight: 700, color: '#1e293b' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                      {item.tipo === 'online' ? <Video size={13} /> : <MapPin size={13} />}{item.tema}
+                    </span>
+                  </td>
                   <td style={{ padding: '0.4rem 0.7rem', color: '#334155', textAlign: 'left' }}>{item.data_reuniao || '-'}</td>
                   <td style={{ padding: '0.4rem 0.7rem', color: '#334155', textAlign: 'left' }}>{item.horario || '-'}</td>
                   <td style={{ background: bgLinha, padding: 0 }}></td>
@@ -486,6 +534,66 @@ export function AtaReuniaoModule({ setHeaderExtra }) {
               </div>
             </div>
           </div>
+
+          {/* ---- Tipo da reunião ---- */}
+          <div style={{ marginBottom: '0.7rem' }}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem' }}>Tipo de reunião</label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {[['presencial', 'Presencial', MapPin], ['online', 'Online', Video]].map(([val, txt, Ico]) => (
+                <button key={val} type="button" onClick={() => setForm(f => ({ ...f, tipo: val }))}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.8rem', borderRadius: 5, cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem',
+                    border: form.tipo === val ? '2px solid #ca8a04' : '1px solid #cbd5e1',
+                    background: form.tipo === val ? '#fef9c3' : '#fff', color: '#1e293b' }}>
+                  <Ico size={14} /> {txt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {form.tipo === 'online' && (
+            <div style={{ marginBottom: '0.8rem', padding: '0.7rem', background: '#fff', border: '1px solid #cbd5e1', borderRadius: 6 }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Sala do Google Meet</label>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                <button type="button" onClick={() => window.open('https://meet.google.com/new', '_blank', 'noopener')}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#0ea5e9', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem' }}>
+                  <Video size={14} /> Criar sala no Meet
+                </button>
+                <input type="url" placeholder="Cole aqui: https://meet.google.com/xxx-xxxx-xxx"
+                  value={form.link_reuniao} onChange={e => setForm(f => ({ ...f, link_reuniao: e.target.value }))}
+                  style={{ ...inputStyle, flex: 1, minWidth: 220 }} />
+              </div>
+              <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '0 0 0.6rem' }}>
+                Abra o Meet, clique em "Nova reunião" → "Criar reunião para depois", copie o link e cole acima.
+              </p>
+
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.3rem' }}>
+                Convidar ({convidados.length} selecionado{convidados.length === 1 ? '' : 's'}) — só quem tem cadastro
+              </label>
+              <div style={{ maxHeight: 200, overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: 4 }}>
+                {cadastrosDisponiveis.length === 0 && (
+                  <p style={{ padding: '0.6rem', fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>Nenhum servidor com cadastro nesta paróquia.</p>
+                )}
+                {cadastrosDisponiveis.map(({ cadastro, nome }) => {
+                  const st = convidadosStatus[cadastro];
+                  return (
+                    <label key={cadastro} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.35rem 0.6rem', borderBottom: '1px solid #f1f5f9', cursor: 'pointer', fontSize: '0.83rem' }}>
+                      <input type="checkbox" checked={convidados.includes(cadastro)} onChange={() => toggleConvidado(cadastro)} />
+                      <span style={{ flex: 1 }}>{cadastro} — {nome}</span>
+                      {st && st !== 'pendente' && (
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: st === 'aceito' ? '#166534' : '#991b1b' }}>
+                          {st === 'aceito' ? 'aceitou' : 'recusou'}
+                        </span>
+                      )}
+                      {st === 'pendente' && <span style={{ fontSize: '0.7rem', color: '#854d0e' }}>pendente</span>}
+                    </label>
+                  );
+                })}
+              </div>
+              <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '0.5rem 0 0' }}>
+                Os convidados veem a reunião em "Minhas Reuniões". O link da sala só aparece para quem aceitar.
+              </p>
+            </div>
+          )}
 
           <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#475569', marginBottom: '0.2rem' }}>Convite de Participação</label>
           <div style={{ marginBottom: '0.5rem' }}>

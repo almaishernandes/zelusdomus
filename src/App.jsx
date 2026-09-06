@@ -9,6 +9,7 @@ import { AvisoMensagensNaoLidas, CaixaMensagensModule, EnviarMensagemModal } fro
 const FormacaoModule = React.lazy(() => import('./FormacaoModule').then(m => ({ default: m.FormacaoModule })));
 const FormacaoAdminModule = React.lazy(() => import('./FormacaoAdminModule').then(m => ({ default: m.FormacaoAdminModule })));
 const AtaReuniaoModule = React.lazy(() => import('./AtaReuniaoModule').then(m => ({ default: m.AtaReuniaoModule })));
+const MinhasReunioesModule = React.lazy(() => import('./MinhasReunioesModule').then(m => ({ default: m.MinhasReunioesModule })));
 const LivroCaixaModule = React.lazy(() => import('./LivroCaixaModule').then(m => ({ default: m.LivroCaixaModule })));
 const RelatoriosModule = React.lazy(() => import('./RelatoriosModule').then(m => ({ default: m.RelatoriosModule })));
 // html2pdf.js é pesado — carregado sob demanda apenas quando o usuário gera o PDF
@@ -59,7 +60,7 @@ const MENU_COLORS = {
   'Comunidades':            { bg: '#7c3aed', color: '#ffffff', spanColor: '#f5f3ff' },
   'Agenda e Calendário':    { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
   'Formação Cadastro':      { bg: '#0ea5e9', color: '#ffffff', spanColor: '#e0f2fe' },
-  'Ata de Reunião':         { bg: '#ca8a04', color: '#ffffff', spanColor: '#fef9c3' },
+  'Reunião da Equipe':      { bg: '#ca8a04', color: '#ffffff', spanColor: '#fef9c3' },
   'Livro Caixa':            { bg: '#16a34a', color: '#ffffff', spanColor: '#dcfce7' },
   'Relatórios':             { bg: '#0f766e', color: '#ffffff', spanColor: '#ccfbf1' },
   'Formação e Estudos':     { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
@@ -85,7 +86,7 @@ function AppContent() {
   // Ações extras que uma tela (ex: CadastroServidorForm) injeta na primeira
   // linha do cabeçalho, ao lado do usuário/Sair — evita uma segunda linha de botões.
   const [headerExtra, setHeaderExtra] = useState(null);
-  useEffect(() => { if (!['CadastroServidor', 'Livro Caixa', 'Relatórios', 'Ata de Reunião'].includes(activeMenu)) setHeaderExtra(null); }, [activeMenu]);
+  useEffect(() => { if (!['CadastroServidor', 'Livro Caixa', 'Relatórios', 'Reunião da Equipe'].includes(activeMenu)) setHeaderExtra(null); }, [activeMenu]);
   const [dbServers, setDbServers] = useState([]);
   const [dbCommunities, setDbCommunities] = useState([]);
   const [prevMenu, setPrevMenu] = useState('Coroinhas');
@@ -117,7 +118,7 @@ function AppContent() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const MENUS_PERMITIDOS_MOBILE = ['Agenda e Calendário', 'Formação e Estudos', 'Caixa de Mensagens'];
+  const MENUS_PERMITIDOS_MOBILE = ['Agenda e Calendário', 'Formação e Estudos', 'Minhas Reuniões', 'Caixa de Mensagens'];
 
   // Coroinha/Acólito (nível restrito) começam direto na Agenda e Calendário —
   // o activeMenu inicial ('Coroinhas') é uma tela de coordenador e não deve
@@ -220,7 +221,8 @@ function AppContent() {
     { name: 'Agenda e Calendário',    icon: CalendarDays },
     { name: 'Formação Cadastro',      icon: BookOpen },
     { name: 'Formação e Estudos',     icon: BookOpen },
-    { name: 'Ata de Reunião',         icon: FileText },
+    { name: 'Reunião da Equipe',      icon: FileText },
+    { name: 'Minhas Reuniões',        icon: CalendarDays },
     { name: 'Caixa de Mensagens',     icon: Mail },
     { name: 'Livro Caixa',            icon: Wallet },
     { name: 'Relatórios',             icon: ClipboardList }
@@ -228,6 +230,7 @@ function AppContent() {
   const menuOptionsRestrito = [
     { name: 'Agenda e Calendário',    icon: CalendarDays },
     { name: 'Formação e Estudos',     icon: BookOpen },
+    { name: 'Minhas Reuniões',        icon: CalendarDays },
     { name: 'Caixa de Mensagens',     icon: Mail }
   ];
 
@@ -235,7 +238,7 @@ function AppContent() {
   // numero_cadastro); coordenador não tem numero_cadastro próprio, então não
   // participa como destinatário — só envia, pelas telas de Cadastro.
   const menuOptions = ehCoordenador
-    ? menuOptionsCompleto.filter(m => m.name !== 'Caixa de Mensagens')
+    ? menuOptionsCompleto.filter(m => !['Caixa de Mensagens', 'Minhas Reuniões'].includes(m.name))
     : acessoAmplo
       ? menuOptionsCompleto.filter(m => !['Formação Cadastro', 'Livro Caixa'].includes(m.name))
       : menuOptionsRestrito;
@@ -275,8 +278,10 @@ function AppContent() {
           restrictCadastro={(!ehCoordenador && !acessoAmplo) ? perfil?.numero_cadastro : null} />;
       case 'Formação Cadastro':
         return <FormacaoAdminModule communities={dbCommunities} />;
-      case 'Ata de Reunião':
-        return <AtaReuniaoModule communities={dbCommunities} setHeaderExtra={setHeaderExtra} />;
+      case 'Reunião da Equipe':
+        return <AtaReuniaoModule communities={dbCommunities} servers={dbServers} setHeaderExtra={setHeaderExtra} />;
+      case 'Minhas Reuniões':
+        return <MinhasReunioesModule />;
       case 'Livro Caixa':
         return <LivroCaixaModule setHeaderExtra={setHeaderExtra} />;
       case 'Relatórios':
