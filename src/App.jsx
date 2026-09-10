@@ -10,6 +10,7 @@ const FormacaoModule = React.lazy(() => import('./FormacaoModule').then(m => ({ 
 const FormacaoAdminModule = React.lazy(() => import('./FormacaoAdminModule').then(m => ({ default: m.FormacaoAdminModule })));
 const AtaReuniaoModule = React.lazy(() => import('./AtaReuniaoModule').then(m => ({ default: m.AtaReuniaoModule })));
 const MinhasReunioesModule = React.lazy(() => import('./MinhasReunioesModule').then(m => ({ default: m.MinhasReunioesModule })));
+const ChamadaReuniao = React.lazy(() => import('./ChamadaReuniao').then(m => ({ default: m.ChamadaReuniao })));
 const LivroCaixaModule = React.lazy(() => import('./LivroCaixaModule').then(m => ({ default: m.LivroCaixaModule })));
 const RelatoriosModule = React.lazy(() => import('./RelatoriosModule').then(m => ({ default: m.RelatoriosModule })));
 // html2pdf.js é pesado — carregado sob demanda apenas quando o usuário gera o PDF
@@ -300,6 +301,7 @@ function AppContent() {
 
   return (
     <div className="app-container">
+      <React.Suspense fallback={null}><ChamadaReuniao /></React.Suspense>
       {!ehCoordenador && perfil?.numero_cadastro && (
         <AvisoMensagensNaoLidas numeroCadastro={perfil.numero_cadastro} onAbrirCaixa={() => setActiveMenu('Caixa de Mensagens')} />
       )}

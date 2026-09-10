@@ -197,6 +197,18 @@ export function AtaReuniaoModule({ setHeaderExtra, servers = [] }) {
     setConvidados(cs => cs.includes(cadastro) ? cs.filter(c => c !== cadastro) : [...cs, cadastro]);
   };
 
+  const [chamando, setChamando] = useState(false);
+  const [chamado, setChamado] = useState(false);
+  const chamarAgora = async () => {
+    setChamando(true);
+    const { error: err } = await supabase.from('atas_reuniao')
+      .update({ chamada_em: new Date().toISOString() }).eq('id', editandoId);
+    setChamando(false);
+    if (err) { setError(err.message); return; }
+    setChamado(true);
+    setTimeout(() => setChamado(false), 4000);
+  };
+
   const handleSalvar = async () => {
     if (!form.tema.trim() || !form.assunto.trim() || !stripHtml(form.conteudo)) {
       setError('Preencha tema, assunto e conteúdo');
@@ -592,6 +604,19 @@ export function AtaReuniaoModule({ setHeaderExtra, servers = [] }) {
               <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '0.5rem 0 0' }}>
                 Os convidados veem a reunião em "Minhas Reuniões". O link da sala só aparece para quem aceitar.
               </p>
+
+              {editandoId && (
+                <div style={{ marginTop: '0.7rem', paddingTop: '0.7rem', borderTop: '1px dashed #cbd5e1' }}>
+                  <button type="button" onClick={chamarAgora} disabled={chamando || !form.link_reuniao.trim() || convidados.length === 0}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: (chamando || !form.link_reuniao.trim() || convidados.length === 0) ? '#94a3b8' : '#16a34a', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: 5, cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>
+                    {chamando ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Video size={14} />}
+                    {chamado ? 'Chamada enviada!' : 'Chamar agora'}
+                  </button>
+                  <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '0.35rem 0 0' }}>
+                    Toca um alerta de "chamada" para os convidados que estiverem com o app aberto. Salve a reunião antes.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
