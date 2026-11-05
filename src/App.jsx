@@ -465,6 +465,7 @@ function AppContent() {
               <MobileMenuList
                 tab={mobileTabsDisponiveis.find(t => t.key === mobileTab)}
                 onSelect={(name) => { setActiveMenu(name); setMobileSubView('conteudo'); }}
+                menuOptionsByName={menuOptionsByName}
               />
             ) : (
               <>
@@ -549,19 +550,22 @@ function AppContent() {
 }
 
 // Tela de lista de seleção de uma aba do rodapé (padrão Agilis): toca na aba,
-// aparece a lista dos itens daquele grupo; toca no item, abre a tela.
-function MobileMenuList({ tab, onSelect }) {
+// aparece a lista dos itens daquele grupo; toca no item, abre a tela. Mesmo
+// visual colorido do menu lateral (ícone + fundo da cor do menu).
+function MobileMenuList({ tab, onSelect, menuOptionsByName }) {
   if (!tab) return null;
   return (
     <div className="mobile-menu-list">
       <h2 className="mobile-menu-list-title">{tab.label}</h2>
-      <ul className="mobile-menu-list-items">
+      <ul className="menu-list" style={{ padding: 0 }}>
         {tab.items.map(name => {
           const color = MENU_COLORS[name];
+          const Icon = menuOptionsByName?.[name]?.icon;
+          const customStyle = color ? { background: color.bg, color: color.color } : {};
           return (
-            <li key={name} className="mobile-menu-list-item" onClick={() => onSelect(name)}>
-              <span className="mobile-menu-list-item-dot" style={{ background: color ? color.bg : '#64748b' }} />
-              <span className="mobile-menu-list-item-label">{name}</span>
+            <li key={name} className="menu-item" onClick={() => onSelect(name)} style={customStyle}>
+              {Icon && <Icon size={20} />}
+              <span style={{ flex: 1 }}>{name}</span>
               <ChevronRight size={18} />
             </li>
           );
