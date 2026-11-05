@@ -223,7 +223,7 @@ export function LoginPage() {
                   onChange={(e) => setEmailReset(e.target.value)}
                   placeholder='seu@email.com'
                   required
-                  style={{ flex: 1, border: 'none', background: 'transparent', marginLeft: '0.6rem', fontSize: '0.95rem', outline: 'none' }}
+                  style={{ flex: 1, minWidth: 0, width: '100%', border: 'none', background: 'transparent', marginLeft: '0.6rem', fontSize: '0.95rem', outline: 'none' }}
                 />
               </div>
             </div>
@@ -282,7 +282,7 @@ export function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder='seu@email.com'
                 required
-                style={{ flex: 1, border: 'none', background: 'transparent', marginLeft: '0.8rem', fontSize: '0.95rem', outline: 'none' }}
+                style={{ flex: 1, minWidth: 0, width: '100%', border: 'none', background: 'transparent', marginLeft: '0.8rem', fontSize: '0.95rem', outline: 'none' }}
               />
             </div>
             {acessosRecentes.length > 0 && (
@@ -316,7 +316,7 @@ export function LoginPage() {
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder='••••••••'
                 required
-                style={{ flex: 1, border: 'none', background: 'transparent', marginLeft: '0.8rem', fontSize: '0.95rem', outline: 'none' }}
+                style={{ flex: 1, minWidth: 0, width: '100%', border: 'none', background: 'transparent', marginLeft: '0.8rem', fontSize: '0.95rem', outline: 'none' }}
               />
               <button
                 type='button'

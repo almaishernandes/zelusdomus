@@ -138,7 +138,7 @@ export function ResetPasswordPage() {
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
                 placeholder='••••••••'
-                style={{ flex: 1, border: 'none', background: 'transparent', marginLeft: '0.8rem', fontSize: '0.95rem', outline: 'none' }}
+                style={{ flex: 1, minWidth: 0, width: '100%', border: 'none', background: 'transparent', marginLeft: '0.8rem', fontSize: '0.95rem', outline: 'none' }}
               />
               <button
                 type='button'
@@ -165,7 +165,7 @@ export function ResetPasswordPage() {
                 value={confirmaSenha}
                 onChange={(e) => setConfirmaSenha(e.target.value)}
                 placeholder='••••••••'
-                style={{ flex: 1, border: 'none', background: 'transparent', marginLeft: '0.8rem', fontSize: '0.95rem', outline: 'none' }}
+                style={{ flex: 1, minWidth: 0, width: '100%', border: 'none', background: 'transparent', marginLeft: '0.8rem', fontSize: '0.95rem', outline: 'none' }}
               />
               <button
                 type='button'
