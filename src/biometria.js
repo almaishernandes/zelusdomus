@@ -11,12 +11,14 @@ import { supabase } from './supabaseClient';
 const CHAVE_CRED_ID = 'zd_bio_cred_id';
 const CHAVE_EMAIL = 'zd_bio_email';
 const CHAVE_SESSAO = 'zd_bio_sessao';
-const CHAVE_ULTIMO_USO = 'zd_bio_ultimo_uso';
+const CHAVE_DIA_SENHA = 'zd_bio_dia_senha';
 const CHAVE_OFERTA_VISTA = 'zd_bio_oferta_vista';
 
-// Depois desse tempo sem abrir o app, a biometria deixa de bastar e volta a
-// pedir senha — mesma lógica de "sessão expirada" de apps bancários.
-const VALIDADE_DIAS = 30;
+// Data de hoje no fuso do aparelho, como "AAAA-MM-DD".
+const diaDeHoje = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 const paraBase64Url = (buffer) => {
   const bytes = new Uint8Array(buffer);
@@ -50,14 +52,20 @@ export function temBiometriaAtiva() {
   }
 }
 
+// Só vale pelo dia em que a senha foi digitada: à meia-noite (fuso do
+// aparelho) a digital deixa de bastar e volta a pedir senha uma vez.
 export function biometriaExpirada() {
   try {
-    const ultimo = Number(localStorage.getItem(CHAVE_ULTIMO_USO) || 0);
-    if (!ultimo) return true;
-    return (Date.now() - ultimo) > VALIDADE_DIAS * 24 * 60 * 60 * 1000;
+    return localStorage.getItem(CHAVE_DIA_SENHA) !== diaDeHoje();
   } catch {
     return true;
   }
+}
+
+// Chamado depois de um login por senha bem-sucedido (com a biometria já
+// ativa neste aparelho) — "destrava" a digital pelo resto do dia de hoje.
+export function marcarLoginSenhaHoje() {
+  try { localStorage.setItem(CHAVE_DIA_SENHA, diaDeHoje()); } catch { /* ignora */ }
 }
 
 export function emailBiometria() {
@@ -74,7 +82,8 @@ export function marcarOfertaVista() {
 
 // Mantém a sessão salva sempre atualizada (o refresh token do Supabase é de
 // uso único — sem isso, a próxima tentativa de desbloqueio falharia porque o
-// token guardado já teria sido trocado por um novo nos bastidores).
+// token guardado já teria sido trocado por um novo nos bastidores). Isso NÃO
+// renova o dia liberado — só um login por senha faz isso (marcarLoginSenhaHoje).
 export function sincronizarSessaoBiometrica(session) {
   if (!temBiometriaAtiva() || !session?.access_token || !session?.refresh_token) return;
   try {
@@ -82,7 +91,6 @@ export function sincronizarSessaoBiometrica(session) {
       access_token: session.access_token,
       refresh_token: session.refresh_token
     }));
-    localStorage.setItem(CHAVE_ULTIMO_USO, String(Date.now()));
   } catch { /* ignora */ }
 }
 
@@ -112,7 +120,7 @@ export async function ativarBiometria(session, email) {
       access_token: session.access_token,
       refresh_token: session.refresh_token
     }));
-    localStorage.setItem(CHAVE_ULTIMO_USO, String(Date.now()));
+    marcarLoginSenhaHoje();
     marcarOfertaVista();
     return { sucesso: true };
   } catch (err) {
@@ -125,7 +133,7 @@ export function desativarBiometria() {
     localStorage.removeItem(CHAVE_CRED_ID);
     localStorage.removeItem(CHAVE_EMAIL);
     localStorage.removeItem(CHAVE_SESSAO);
-    localStorage.removeItem(CHAVE_ULTIMO_USO);
+    localStorage.removeItem(CHAVE_DIA_SENHA);
   } catch { /* ignora */ }
 }
 

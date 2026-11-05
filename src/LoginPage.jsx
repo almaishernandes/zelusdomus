@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabaseClient';
 import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff, Clock, Download, Share, Fingerprint } from 'lucide-react';
-import { temBiometriaAtiva, biometriaExpirada, emailBiometria, desativarBiometria, entrarComBiometria } from './biometria';
+import { temBiometriaAtiva, biometriaExpirada, emailBiometria, desativarBiometria, entrarComBiometria, marcarLoginSenhaHoje } from './biometria';
 
 // Banner de instalação do app: Android/Chrome mostra botão que instala
 // automaticamente; iPhone/Safari não permite instalação por código, então
@@ -119,6 +119,9 @@ export function LoginPage() {
     const resultado = await login(email, senha);
     if (resultado.sucesso) {
       salvarAcessoRecente(email);
+      // Libera a digital pelo resto do dia de hoje (se já estiver ativa
+      // neste aparelho) — à meia-noite volta a pedir a senha.
+      if (temBiometriaAtiva()) marcarLoginSenhaHoje();
       // Sem reload: login() já deixou usuário e perfil prontos em memória
       // (AuthContext), então o React troca de tela sozinho. Um reload aqui
       // jogava fora esse trabalho e refazia toda a checagem de sessão do zero.
