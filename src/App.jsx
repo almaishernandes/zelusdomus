@@ -302,14 +302,12 @@ function AppContent() {
           communities={dbCommunities}
           initialType={prevMenu}
           setHeaderExtra={setHeaderExtra}
-          isMobile={isMobile}
         />;
       case 'CadastroComunidade':
         return <CadastroComunidadeForm
           onBack={() => { setEditingCommunity(null); setActiveMenu(prevMenu); }}
           onSaved={() => { setEditingCommunity(null); fetchAll(); setActiveMenu(prevMenu); }}
           editData={editingCommunity}
-          isMobile={isMobile}
         />;
       case 'Coroinhas':
         return <ServidoresTable data={dbServers.filter(s => s.type === 'coroinha')} title="Coroinhas" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} isMobile={isMobile} onNew={() => { setPrevMenu('Coroinhas'); setActiveMenu('CadastroServidor'); }} />;
@@ -2155,25 +2153,43 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
           {listaOrdenada.length === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 0' }}>Nenhum {title.toLowerCase()} cadastrado.</p>
           )}
-          {listaOrdenada.map(item => (
-            <div key={item.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderLeft: `4px solid ${roleColor.bg}`, borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.7rem 0.9rem' }}>
-                <input type="checkbox" disabled={!item.cadastro} checked={item.cadastro ? selecionados.has(item.cadastro) : false} onChange={() => alternarSelecao(item.cadastro)} />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', flex: 'none', minWidth: '2.2rem' }}>{item.cadastro || '-'}</span>
-                <span onClick={() => setFichaItem(item)} style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem', flex: 1, cursor: 'pointer' }}>
-                  {item.full_name || item.nome}
-                </span>
-                <div style={{ display: 'flex', gap: '0.1rem', flex: 'none' }}>
-                  <button title="Editar" onClick={() => onEdit && onEdit(item)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Pencil size={16} /></button>
-                  <button title="Excluir" onClick={() => onDelete && onDelete(item.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', padding: '0.3rem' }}><Trash2 size={16} /></button>
-                  <button title="Visualizar ficha completa" onClick={() => setFichaItem(item)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '0.3rem' }}><ChevronRight size={16} /></button>
+          {listaOrdenada.map(item => {
+            const names = comunidadesDoItem(item);
+            return (
+              <div key={item.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderLeft: `4px solid ${roleColor.bg}`, borderRadius: 10, padding: '0.8rem 0.9rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" disabled={!item.cadastro} checked={item.cadastro ? selecionados.has(item.cadastro) : false} onChange={() => alternarSelecao(item.cadastro)} />
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>{item.full_name || item.nome}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cadastro Nº {item.cadastro || '-'}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.1rem', flex: 'none' }}>
+                    <button title="Visualizar ficha completa" onClick={() => setFichaItem(item)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Eye size={16} /></button>
+                    <button title="Editar" onClick={() => onEdit && onEdit(item)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Pencil size={16} /></button>
+                    <button title="Excluir" onClick={() => onDelete && onDelete(item.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', padding: '0.3rem' }}><Trash2 size={16} /></button>
+                  </div>
+                </div>
+                <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.82rem', color: '#475569' }}>
+                  <div><strong>Nascimento:</strong> {item.dob ? item.dob.slice(0, 10).split('-').reverse().join('/') : (item.nascimento || '-')}</div>
+                  <div><strong>Telefone:</strong> {isCoroinha ? (item.phone || item.telefone || '-') : <WhatsAppLink phone={item.phone || item.telefone} />}</div>
+                  <div><strong>Endereço:</strong> <AddressLink address={item.address || item.endereco} /></div>
+                  {names.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.2rem' }}>
+                      {names.map(n => {
+                        const c = getCommunityColor(n);
+                        return <span key={n} style={{ background: c.bg, color: c.color, border: `1px solid ${c.border}`, borderRadius: 4, padding: '0.1rem 0.45rem', fontSize: '0.75rem', fontWeight: 600 }}>{n}</span>;
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
       <table className="data-table">
@@ -2465,7 +2481,7 @@ function CadastroForm({ setActiveMenu }) {
     </div>
   );
 }
-function CadastroServidorForm({ onBack, onSaved, editData, communities = [], initialType = 'Coroinhas', setHeaderExtra, isMobile }) {
+function CadastroServidorForm({ onBack, onSaved, editData, communities = [], initialType = 'Coroinhas', setHeaderExtra }) {
   const isEdit = !!editData;
   const MENU_TO_TYPE = { 'Coroinhas': 'coroinha', 'Acolitos': 'acolito', 'Monitores': 'monitor', 'Cerimoniários': 'cerimoniario', 'Coordenadores': 'coordenador' };
   const TIPO_KEY = { 'Coroinha': 'coroinha', 'Acólito': 'acolito', 'Monitor': 'monitor', 'Cerimoniário': 'cerimoniario', 'Coordenador': 'coordenador' };
@@ -2940,7 +2956,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
 
         {/* Sacramentos+Investidura | Comunidade que Atua (2 colunas) — 3 colunas */}
         <div style={{ background: 'linear-gradient(to right, #f5f3ff, #ede9fe)', padding: '0.5rem 1rem', border: '1px solid var(--border)', borderTop: 'none', marginBottom: '0' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
 
             {/* Coluna 1: Sacramentos + Investidura */}
             <div>
@@ -3008,10 +3024,10 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
             </table>
             </div>
 
-            {/* Colunas 2 e 3: Comunidade que Atua dividida em duas colunas (no mobile, uma lista só) */}
+            {/* Colunas 2 e 3: Comunidade que Atua dividida em duas colunas */}
             {(() => {
-              const metade = isMobile ? communities.length : Math.ceil(communities.length / 2);
-              const colunas = isMobile ? [communities] : [communities.slice(0, metade), communities.slice(metade)];
+              const metade = Math.ceil(communities.length / 2);
+              const colunas = [communities.slice(0, metade), communities.slice(metade)];
               return colunas.map((lista, ci) => (
                 <table key={ci} className="form-table" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid #ddd6fe', width: '100%' }}>
                   <thead>
