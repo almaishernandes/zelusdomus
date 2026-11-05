@@ -464,12 +464,6 @@ function AppContent() {
                   const mostrarVoltar = tab && tab.items.length > 1;
                   return (mostrarVoltar || headerExtra || novoBtn) ? (
                     <div className="mobile-content-topbar">
-                      {mostrarVoltar && (
-                        <button className="mobile-voltar-btn" onClick={() => setMobileSubView('lista')}>
-                          <ArrowLeft size={18} /> Voltar
-                        </button>
-                      )}
-                      {headerExtra}
                       {novoBtn && (
                         <button
                           onClick={() => { setPrevMenu(activeMenu); setActiveMenu(novoBtn.target); }}
@@ -482,6 +476,12 @@ function AppContent() {
                           }}
                         >
                           <PlusCircle size={16} /> {novoBtn.label}
+                        </button>
+                      )}
+                      {headerExtra}
+                      {mostrarVoltar && (
+                        <button className="mobile-voltar-btn" onClick={() => setMobileSubView('lista')}>
+                          <ArrowLeft size={18} /> Voltar
                         </button>
                       )}
                     </div>
