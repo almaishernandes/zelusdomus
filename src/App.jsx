@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { supabase, supabaseAuthOnly } from './supabaseClient';
-import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Wallet, ClipboardList, Mail, Send, ArrowLeft, Fingerprint } from 'lucide-react';
+import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Wallet, ClipboardList, Mail, Send, ArrowLeft, Fingerprint, Menu } from 'lucide-react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { LoginPage } from './LoginPage';
 import { AvisoMensagensNaoLidas, CaixaMensagensModule, EnviarMensagemModal } from './MensagensModule';
@@ -107,6 +107,7 @@ function AppContent() {
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
   const [mobileTab, setMobileTab] = useState('agenda');
   const [mobileSubView, setMobileSubView] = useState('lista');
+  const [menuLateralAberto, setMenuLateralAberto] = useState(false);
 
   const fetchAll = React.useCallback(async () => {
     const [{ data: servers }, { data: communities }] = await Promise.all([
@@ -354,7 +355,13 @@ function AppContent() {
       {isMobile && <OfertaBiometria userEmail={user?.email} />}
       <header className="header">
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <h1 style={{ minWidth: '250px' }}>
+          <h1 style={{ minWidth: isMobile ? 0 : '250px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {isMobile && (
+              <button onClick={() => setMenuLateralAberto(true)} aria-label="Abrir menu"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1e293b', padding: '0.2rem', display: 'flex' }}>
+                <Menu size={24} />
+              </button>
+            )}
             <Users size={28} />
             ZelusDomus
           </h1>
@@ -404,6 +411,43 @@ function AppContent() {
           })()}
         </div>
       </header>
+
+      {isMobile && menuLateralAberto && (
+        <>
+          <div className="sidebar-overlay" onClick={() => setMenuLateralAberto(false)} />
+          <aside className="sidebar-lateral-mobile">
+            <div className="sidebar-lateral-mobile-header">
+              <span>Menu</span>
+              <button onClick={() => setMenuLateralAberto(false)} aria-label="Fechar menu" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={20} /></button>
+            </div>
+            {mobileTabsDisponiveis.map(tab => (
+              <div key={tab.key} className="sidebar-lateral-mobile-grupo">
+                <div className="sidebar-lateral-mobile-grupo-titulo"><tab.icon size={14} /> {tab.label}</div>
+                <ul className="menu-list" style={{ padding: 0 }}>
+                  {tab.items.map(name => {
+                    const Icon = menuOptionsByName[name]?.icon;
+                    const menuColor = MENU_COLORS[name];
+                    const isActive = activeMenu === name;
+                    const customStyle = menuColor ? {
+                      background: menuColor.bg, color: menuColor.color,
+                      opacity: isActive ? 1 : 0.7, fontWeight: isActive ? 700 : 500,
+                      borderLeft: isActive ? `4px solid ${menuColor.color}` : '4px solid transparent'
+                    } : {};
+                    return (
+                      <li key={name} className={`menu-item ${isActive && !menuColor ? 'active' : ''}`}
+                        onClick={() => { setActiveMenu(name); setMobileSubView('conteudo'); setMenuLateralAberto(false); }}
+                        style={customStyle}>
+                        {Icon && <Icon size={18} />}
+                        {name}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </aside>
+        </>
+      )}
 
       {isMobile ? (
         <>

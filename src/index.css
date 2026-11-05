@@ -298,6 +298,53 @@ body {
   background: rgba(255,255,255,0.9);
 }
 
+/* ---- Menu lateral (mobile), aberto pelo ícone ao lado do logo ---- */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.5);
+  z-index: 260;
+}
+
+.sidebar-lateral-mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 260px;
+  max-width: 82vw;
+  background: #f8fafc;
+  z-index: 270;
+  overflow-y: auto;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.25);
+}
+
+.sidebar-lateral-mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1e293b;
+  color: #fff;
+  font-weight: 700;
+  padding: 0.9rem 1rem;
+}
+
+.sidebar-lateral-mobile-grupo {
+  padding-top: 0.6rem;
+}
+
+.sidebar-lateral-mobile-grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 1rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
 /* ---- Barra de abas fixa no rodapé (mobile) — substitui a sidebar ---- */
 .bottom-tab-bar {
   display: none;
