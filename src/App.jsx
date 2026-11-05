@@ -853,7 +853,7 @@ function buildMassRows(ms) {
   return result;
 }
 
-function FichaCadastro({ item, communities = [], onClose }) {
+function FichaCadastro({ item, communities = [], onClose, isMobile }) {
   const [sacr, setSacr] = useState({});
   const [inv, setInv] = useState({});
   const [tipos, setTipos] = useState([item.type].filter(Boolean));
@@ -977,15 +977,25 @@ function FichaCadastro({ item, communities = [], onClose }) {
   const secTitle = (t) => <div style={{ fontWeight: 700, fontSize: '0.85rem', margin: '0.2rem 0 0.3rem', color: '#1e3a8a' }}>{t}</div>;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 100, overflow: 'auto', padding: '1.5rem' }} onClick={onClose}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 100, overflow: 'auto', padding: isMobile ? '0.6rem' : '1.5rem' }} onClick={onClose}>
       <style>{`@media print {
         body * { visibility: hidden !important; }
         #ficha-print, #ficha-print * { visibility: visible !important; }
         #ficha-print { position: absolute !important; left: 0; top: 0; width: 100% !important; margin: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
         .no-print { display: none !important; }
       }`}</style>
+      {isMobile && (
+        <MobileFichaView item={item} guardians={guardians} tipos={tipos} sacr={sacr} inv={inv}
+          atua={atua} part={part} communities={communities} fmtDate={fmtDate} nthSuf={nthSuf}
+          onClose={onClose} gerandoPdf={gerandoPdf}
+          gerarBaixarPdf={gerarBaixarPdf} enviarWhatsApp={enviarWhatsApp}
+          compartilharNativo={compartilharNativo} podeCompartilharArquivo={podeCompartilharArquivo} />
+      )}
+
       <div id="ficha-print" onClick={e => e.stopPropagation()}
-        style={{ background: '#fff', maxWidth: 820, margin: '0 auto', borderRadius: 8, boxShadow: '0 12px 40px rgba(0,0,0,0.35)', padding: '1.2rem 1.4rem', color: '#111' }}>
+        style={isMobile
+          ? { position: 'fixed', top: 0, left: '-9999px', width: '780px', background: '#fff', borderRadius: 8, padding: '1.2rem 1.4rem', color: '#111' }
+          : { background: '#fff', maxWidth: 820, margin: '0 auto', borderRadius: 8, boxShadow: '0 12px 40px rgba(0,0,0,0.35)', padding: '1.2rem 1.4rem', color: '#111' }}>
 
         <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.8rem' }}>
           <button onClick={gerarBaixarPdf} disabled={gerandoPdf} title="Gera o arquivo PDF da ficha e baixa no computador"
@@ -1158,6 +1168,154 @@ function FichaCadastro({ item, communities = [], onClose }) {
         </div>
         <div style={{ textAlign: 'right', fontSize: '0.72rem', color: '#64748b', marginTop: '0.6rem' }}>
           Emitido em {new Date().toLocaleDateString('pt-BR')}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Versão enxuta da ficha para a tela do celular: no máximo 3 colunas de
+// dados por linha (a maioria é 1 coluna, rótulo em cima do valor). O PDF
+// e o WhatsApp continuam saindo com a ficha completa de sempre — este
+// componente só cuida do que aparece na tela.
+function MobileFichaView({ item, guardians, tipos, sacr, inv, atua, part, communities, fmtDate, nthSuf, onClose, gerandoPdf, gerarBaixarPdf, enviarWhatsApp, compartilharNativo, podeCompartilharArquivo }) {
+  const secao = { marginBottom: '1rem' };
+  const tituloSecao = { fontWeight: 700, fontSize: '0.8rem', color: '#1e3a8a', textTransform: 'uppercase', letterSpacing: '0.03em', margin: '0 0 0.4rem' };
+  const campo = (label, valor) => (
+    <div style={{ marginBottom: '0.5rem' }}>
+      <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: '0.9rem', color: '#111' }}>{valor || '—'}</div>
+    </div>
+  );
+  const miniTh = { border: '1px solid #cbd5e1', background: '#eef2ff', padding: '0.3rem 0.4rem', fontSize: '0.72rem', fontWeight: 700, textAlign: 'left' };
+  const miniTd = { border: '1px solid #cbd5e1', padding: '0.3rem 0.4rem', fontSize: '0.78rem' };
+  const chk = (on) => <span style={{ fontSize: '0.95rem' }}>{on ? '☑' : '☐'}</span>;
+
+  return (
+    <div onClick={e => e.stopPropagation()}
+      style={{ background: '#fff', borderRadius: 8, boxShadow: '0 12px 40px rgba(0,0,0,0.35)', padding: '0.9rem', color: '#111' }}>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.8rem' }}>
+        <button onClick={gerarBaixarPdf} disabled={gerandoPdf}
+          style={{ flex: '1 1 45%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
+          <Download size={14} /> {gerandoPdf ? 'Gerando…' : 'Baixar PDF'}
+        </button>
+        <button onClick={enviarWhatsApp} disabled={gerandoPdf}
+          style={{ flex: '1 1 45%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: '#15803d', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
+          WhatsApp
+        </button>
+        {podeCompartilharArquivo && (
+          <button onClick={compartilharNativo} disabled={gerandoPdf}
+            style={{ flex: '1 1 45%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: '#0f766e', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
+            <Share2 size={14} /> Compartilhar
+          </button>
+        )}
+        <button onClick={onClose}
+          style={{ flex: '1 1 45%', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: 6, cursor: 'pointer', padding: '0.5rem', fontWeight: 600, fontSize: '0.8rem', color: '#334155' }}>
+          Fechar
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #1e3a8a', paddingBottom: '0.4rem', marginBottom: '0.8rem' }}>
+        <div>
+          <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1e3a8a' }}>Ficha de Cadastro</div>
+          <div style={{ fontSize: '0.72rem', color: '#475569' }}>ZelusDomus — Servidores do Altar</div>
+        </div>
+        <div style={{ border: '2px solid #1e3a8a', borderRadius: 6, padding: '0.2rem 0.6rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#475569' }}>CADASTRO</div>
+          <div style={{ fontSize: '1.05rem', fontWeight: 800 }}>{item.cadastro || ' '}</div>
+        </div>
+      </div>
+
+      <div style={secao}>
+        {campo('Nome', item.full_name || item.nome)}
+        {campo('Nascimento', fmtDate(item.dob) || item.nascimento)}
+        {campo('E-mail de acesso', item.email)}
+        {campo('WhatsApp', item.phone || item.telefone)}
+        {campo('Residência', item.address || item.endereco)}
+      </div>
+
+      <div style={secao}>
+        <div style={tituloSecao}>Responsáveis</div>
+        {[['Mãe', guardians.mae], ['Pai', guardians.pai], ['Outro', guardians.outro]].map(([t, g]) => (
+          (g?.nome || g?.phone) && (
+            <div key={t} style={{ marginBottom: '0.4rem' }}>
+              {campo(t, g?.nome)}
+              {campo(`WhatsApp (${t})`, g?.phone)}
+            </div>
+          )
+        ))}
+      </div>
+
+      <div style={secao}>
+        <div style={tituloSecao}>Função que exerce</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1rem' }}>
+          {Object.entries(TYPE_LABELS).map(([k, label]) => (
+            <span key={k} style={{ fontSize: '0.85rem' }}>{chk(tipos.includes(k))} {label}</span>
+          ))}
+        </div>
+      </div>
+
+      <div style={secao}>
+        <div style={tituloSecao}>Sacramentos</div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '0.7rem' }}><tbody>
+          <tr><td style={miniTh}>Sacramento</td><td style={{ ...miniTh, textAlign: 'center' }}>Rec.?</td><td style={miniTh}>Data</td></tr>
+          {SACR_PRINT.map(([k, label]) => (
+            <tr key={k}>
+              <td style={miniTd}>{label}</td>
+              <td style={{ ...miniTd, textAlign: 'center' }}>{chk(!!(sacr[k]?.received || sacr[k]?.date))}</td>
+              <td style={miniTd}>{fmtDate(sacr[k]?.date) || ' '}</td>
+            </tr>
+          ))}
+        </tbody></table>
+        <div style={tituloSecao}>Investidura</div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}><tbody>
+          <tr><td style={miniTh}>Investidura</td><td style={{ ...miniTh, textAlign: 'center' }}>Rec.?</td><td style={miniTh}>Data</td></tr>
+          {INV_PRINT.map(([k, label]) => (
+            <tr key={k}>
+              <td style={miniTd}>{label}</td>
+              <td style={{ ...miniTd, textAlign: 'center' }}>{chk(!!inv[k])}</td>
+              <td style={miniTd}>{fmtDate(inv[k]?.date) || ' '}</td>
+            </tr>
+          ))}
+        </tbody></table>
+      </div>
+
+      <div style={secao}>
+        <div style={tituloSecao}>Comunidade que Atua — dias e horários</div>
+        {atua.length === 0 ? (
+          <p style={{ fontSize: '0.8rem', color: '#64748b' }}>Nenhuma comunidade selecionada no cadastro.</p>
+        ) : atua.map(name => {
+          const comm = communities.find(c => c.name === name);
+          const all = buildMassRows(comm?.mass_schedules);
+          const keys = new Set(part[name] || []);
+          const rows = keys.size ? all.filter(r => keys.has(`${r.dow}|${r.time}|${r.nth}`)) : all;
+          return (
+            <div key={name} style={{ marginBottom: '0.6rem' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#1e3a8a', marginBottom: '0.3rem' }}>{name}</div>
+              {rows.length === 0 ? (
+                <p style={{ fontSize: '0.78rem', color: '#b45309' }}>Nenhum horário preenchido ainda.</p>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}><tbody>
+                  <tr><td style={miniTh}>Evento</td><td style={{ ...miniTh, textAlign: 'center' }}>Semana/Dia</td><td style={{ ...miniTh, textAlign: 'center' }}>Horário</td></tr>
+                  {rows.map((r, i) => (
+                    <tr key={i}>
+                      <td style={miniTd}>{r.eventName}</td>
+                      <td style={{ ...miniTd, textAlign: 'center' }}>{nthSuf(r.nth, r.dow)} {r.dow}</td>
+                      <td style={{ ...miniTd, textAlign: 'center' }}>{r.time}</td>
+                    </tr>
+                  ))}
+                </tbody></table>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={secao}>
+        <div style={tituloSecao}>Anotações</div>
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '0.5rem', fontSize: '0.82rem', whiteSpace: 'pre-wrap', minHeight: '2.4rem' }}>
+          {item.observations || '—'}
         </div>
       </div>
     </div>
@@ -2164,7 +2322,7 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
 
   return (
     <div className="grid-container" style={{ overflowX: isMobile ? 'visible' : 'auto' }}>
-      {fichaItem && <FichaCadastro item={fichaItem} communities={communities} onClose={() => setFichaItem(null)} />}
+      {fichaItem && <FichaCadastro item={fichaItem} communities={communities} onClose={() => setFichaItem(null)} isMobile={isMobile} />}
       {enviarMensagemAberto && (
         <EnviarMensagemModal cadastros={[...selecionados]} onClose={() => setEnviarMensagemAberto(false)}
           onEnviado={() => { setEnviarMensagemAberto(false); setSelecionados(new Set()); setAvisoEnviado(true); setTimeout(() => setAvisoEnviado(false), 3000); }} />
