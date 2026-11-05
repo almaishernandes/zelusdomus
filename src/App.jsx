@@ -2107,6 +2107,7 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
   const [selecionados, setSelecionados] = useState(new Set());
   const [enviarMensagemAberto, setEnviarMensagemAberto] = useState(false);
   const [avisoEnviado, setAvisoEnviado] = useState(false);
+  const [modoExibicao, setModoExibicao] = useState('card'); // 'card' | 'lista' (mobile)
 
   const cadastrosValidos = data.filter(item => item.cadastro).map(item => item.cadastro);
   const todosSelecionados = cadastrosValidos.length > 0 && cadastrosValidos.every(c => selecionados.has(c));
@@ -2153,7 +2154,31 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
         <div style={{ background: '#dcfce7', color: '#166534', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}>Mensagem enviada com sucesso.</div>
       )}
       {isMobile ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', padding: '0.8rem' }}>
+        <div>
+          <div style={{ display: 'flex', gap: '0.4rem', padding: '0.8rem 0.8rem 0' }}>
+            {[['card', 'Card'], ['lista', 'Lista']].map(([key, label]) => (
+              <button key={key} type="button" onClick={() => setModoExibicao(key)}
+                style={{ flex: 1, background: modoExibicao === key ? roleColor.bg : '#f1f5f9', color: modoExibicao === key ? roleColor.color : '#334155', border: 'none', borderRadius: 8, padding: '0.5rem', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {modoExibicao === 'lista' ? (
+            <div style={{ padding: '0.8rem' }}>
+              {listaOrdenada.length === 0 && (
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 0' }}>Nenhum {title.toLowerCase()} cadastrado.</p>
+              )}
+              {listaOrdenada.map(item => (
+                <div key={item.id} onClick={() => setFichaItem(item)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.65rem 0.4rem', borderBottom: '1px solid #e2e8f0', cursor: 'pointer' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', minWidth: '1.8rem' }}>{item.cadastro || '-'}</span>
+                  <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.9rem', flex: 1 }}>{item.full_name || item.nome}</span>
+                  <ChevronRight size={16} color="#94a3b8" />
+                </div>
+              ))}
+            </div>
+          ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', padding: '0.8rem' }}>
           {listaOrdenada.length === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 0' }}>Nenhum {title.toLowerCase()} cadastrado.</p>
           )}
@@ -2194,6 +2219,8 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
               </div>
             );
           })}
+        </div>
+          )}
         </div>
       ) : (
       <table className="data-table">
