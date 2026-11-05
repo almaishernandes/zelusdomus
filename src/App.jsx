@@ -4,7 +4,7 @@ import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, Use
 import { AuthProvider, useAuth } from './AuthContext';
 import { LoginPage } from './LoginPage';
 import { AvisoMensagensNaoLidas, CaixaMensagensModule, EnviarMensagemModal } from './MensagensModule';
-import { suportaBiometria, temBiometriaAtiva, jaOfereceuBiometria, marcarOfertaVista, ativarBiometria } from './biometria';
+import { suportaBiometria, temBiometriaAtiva, jaOfereceuBiometria, marcarOfertaVista, ativarBiometria, desativarBiometria } from './biometria';
 // Telas administrativas carregadas sob demanda: reduz o pacote inicial que o
 // celular precisa baixar antes de mostrar a tela de login.
 const FormacaoModule = React.lazy(() => import('./FormacaoModule').then(m => ({ default: m.FormacaoModule })));
@@ -108,6 +108,31 @@ function AppContent() {
   const [mobileTab, setMobileTab] = useState('agenda');
   const [mobileSubView, setMobileSubView] = useState('lista');
   const [menuLateralAberto, setMenuLateralAberto] = useState(false);
+  const [biometriaAtivaNesteAparelho, setBiometriaAtivaNesteAparelho] = useState(() => temBiometriaAtiva());
+
+  const handleAlternarBiometria = async () => {
+    if (biometriaAtivaNesteAparelho) {
+      if (!window.confirm('Desativar a entrada por impressão digital neste aparelho?')) return;
+      desativarBiometria();
+      setBiometriaAtivaNesteAparelho(false);
+      setMenuLateralAberto(false);
+      return;
+    }
+    const suportado = await suportaBiometria();
+    if (!suportado) {
+      window.alert('Este navegador/aparelho não suporta leitura de impressão digital (ou o app foi aberto dentro de outro app, como o WhatsApp — abra pelo navegador ou pelo app instalado).');
+      return;
+    }
+    const { data } = await supabase.auth.getSession();
+    const resultado = await ativarBiometria(data?.session, user?.email);
+    if (resultado.sucesso) {
+      setBiometriaAtivaNesteAparelho(true);
+      setMenuLateralAberto(false);
+      window.alert('Impressão digital ativada neste aparelho.');
+    } else {
+      window.alert(resultado.erro || 'Não foi possível ativar a impressão digital.');
+    }
+  };
 
   const fetchAll = React.useCallback(async () => {
     const [{ data: servers }, { data: communities }] = await Promise.all([
@@ -449,6 +474,9 @@ function AppContent() {
             ))}
             <div className="sidebar-lateral-mobile-grupo" style={{ marginTop: '0.4rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.4rem' }}>
               <ul className="menu-list" style={{ padding: 0 }}>
+                <li className="menu-item" onClick={handleAlternarBiometria}>
+                  <Fingerprint size={18} /> {biometriaAtivaNesteAparelho ? 'Desativar impressão digital' : 'Ativar impressão digital'}
+                </li>
                 <li className="menu-item" onClick={() => { setMenuLateralAberto(false); logout(); }} style={{ color: '#dc2626' }}>
                   <LogOut size={18} /> Sair
                 </li>
