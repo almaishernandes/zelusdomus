@@ -309,17 +309,17 @@ function AppContent() {
           editData={editingCommunity}
         />;
       case 'Coroinhas':
-        return <ServidoresTable data={dbServers.filter(s => s.type === 'coroinha')} title="Coroinhas" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} onNew={() => { setPrevMenu('Coroinhas'); setActiveMenu('CadastroServidor'); }} />;
+        return <ServidoresTable data={dbServers.filter(s => s.type === 'coroinha')} title="Coroinhas" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} isMobile={isMobile} onNew={() => { setPrevMenu('Coroinhas'); setActiveMenu('CadastroServidor'); }} />;
       case 'Acolitos':
-        return <ServidoresTable data={dbServers.filter(s => s.type === 'acolito')} title="Acólitos" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} onNew={() => { setPrevMenu('Acolitos'); setActiveMenu('CadastroServidor'); }} />;
+        return <ServidoresTable data={dbServers.filter(s => s.type === 'acolito')} title="Acólitos" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} isMobile={isMobile} onNew={() => { setPrevMenu('Acolitos'); setActiveMenu('CadastroServidor'); }} />;
       case 'Monitores':
-        return <ServidoresTable data={dbServers.filter(s => s.type === 'monitor')} title="Monitores" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} onNew={() => { setPrevMenu('Monitores'); setActiveMenu('CadastroServidor'); }} />;
+        return <ServidoresTable data={dbServers.filter(s => s.type === 'monitor')} title="Monitores" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} isMobile={isMobile} onNew={() => { setPrevMenu('Monitores'); setActiveMenu('CadastroServidor'); }} />;
       case 'Cerimoniários':
-        return <ServidoresTable data={dbServers.filter(s => s.type === 'cerimoniario')} title="Cerimoniários" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} onNew={() => { setPrevMenu('Cerimoniários'); setActiveMenu('CadastroServidor'); }} />;
+        return <ServidoresTable data={dbServers.filter(s => s.type === 'cerimoniario')} title="Cerimoniários" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} isMobile={isMobile} onNew={() => { setPrevMenu('Cerimoniários'); setActiveMenu('CadastroServidor'); }} />;
       case 'Coordenadores':
-        return <ServidoresTable data={dbServers.filter(s => s.type === 'coordenador')} title="Coordenadores" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} onNew={() => { setPrevMenu('Coordenadores'); setActiveMenu('CadastroServidor'); }} />;
+        return <ServidoresTable data={dbServers.filter(s => s.type === 'coordenador')} title="Coordenadores" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} isMobile={isMobile} onNew={() => { setPrevMenu('Coordenadores'); setActiveMenu('CadastroServidor'); }} />;
       case 'Comunidades':
-        return <ComunidadesTable data={dbCommunities} onDelete={handleDeleteCommunity} onEdit={handleEditCommunity} onNew={() => { setPrevMenu('Comunidades'); setActiveMenu('CadastroComunidade'); }} />;
+        return <ComunidadesTable data={dbCommunities} onDelete={handleDeleteCommunity} onEdit={handleEditCommunity} isMobile={isMobile} onNew={() => { setPrevMenu('Comunidades'); setActiveMenu('CadastroComunidade'); }} />;
       case 'Agenda e Calendário':
         return <AgendaModule servers={dbServers} communities={dbCommunities} isMobile={isMobile}
           restrictCadastro={(!ehCoordenador && !acessoAmplo) ? perfil?.numero_cadastro : null} />;
@@ -330,9 +330,9 @@ function AppContent() {
       case 'Minhas Reuniões':
         return <MinhasReunioesModule />;
       case 'Livro Caixa':
-        return <LivroCaixaModule setHeaderExtra={setHeaderExtra} />;
+        return <LivroCaixaModule setHeaderExtra={setHeaderExtra} isMobile={isMobile} />;
       case 'Relatórios':
-        return <RelatoriosModule servers={dbServers} communities={dbCommunities} setHeaderExtra={setHeaderExtra} />;
+        return <RelatoriosModule servers={dbServers} communities={dbCommunities} setHeaderExtra={setHeaderExtra} isMobile={isMobile} />;
       case 'Formação e Estudos':
         return <FormacaoModule isMobile={isMobile} />;
       case 'Caixa de Mensagens':
@@ -2042,7 +2042,7 @@ function AgendaModule({ servers, communities, isMobile, restrictCadastro }) {
   );
 }
 
-function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [] }) {
+function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [], isMobile }) {
   const isCoroinha = title === 'Coroinhas';
   const colCount = 8;
   const roleColor = ROLE_COLORS[title.slice(0,-1)] || ROLE_COLORS['Coroinha'];
@@ -2067,8 +2067,17 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
     setSelecionados(todosSelecionados ? new Set() : new Set(cadastrosValidos));
   };
 
+  const comunidadesDoItem = (item) => {
+    let names = [];
+    try { names = JSON.parse(item.community_atua || '[]'); } catch {}
+    if (!names.length && item.comunidadeAtua) names = [item.comunidadeAtua];
+    return names;
+  };
+
+  const listaOrdenada = [...data].sort((a, b) => (parseInt(a.cadastro) || 0) - (parseInt(b.cadastro) || 0));
+
   return (
-    <div className="grid-container" style={{ overflowX: 'auto' }}>
+    <div className="grid-container" style={{ overflowX: isMobile ? 'visible' : 'auto' }}>
       {fichaItem && <FichaCadastro item={fichaItem} communities={communities} onClose={() => setFichaItem(null)} />}
       {enviarMensagemAberto && (
         <EnviarMensagemModal cadastros={[...selecionados]} onClose={() => setEnviarMensagemAberto(false)}
@@ -2086,6 +2095,50 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
       {avisoEnviado && (
         <div style={{ background: '#dcfce7', color: '#166534', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}>Mensagem enviada com sucesso.</div>
       )}
+      {isMobile ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', padding: '0.8rem' }}>
+          {listaOrdenada.length === 0 && (
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 0' }}>Nenhum {title.toLowerCase()} cadastrado.</p>
+          )}
+          {listaOrdenada.map(item => {
+            const names = comunidadesDoItem(item);
+            return (
+              <div key={item.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderLeft: `4px solid ${roleColor.bg}`, borderRadius: 10, padding: '0.8rem 0.9rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="checkbox" disabled={!item.cadastro} checked={item.cadastro ? selecionados.has(item.cadastro) : false} onChange={() => alternarSelecao(item.cadastro)} />
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>{item.full_name || item.nome}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cadastro Nº {item.cadastro || '-'}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.1rem', flex: 'none' }}>
+                    <button title="Visualizar ficha completa" onClick={() => setFichaItem(item)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Eye size={16} /></button>
+                    <button title="Editar" onClick={() => onEdit && onEdit(item)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Pencil size={16} /></button>
+                    <button title="Excluir" onClick={() => onDelete && onDelete(item.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', padding: '0.3rem' }}><Trash2 size={16} /></button>
+                  </div>
+                </div>
+                <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.82rem', color: '#475569' }}>
+                  <div><strong>Nascimento:</strong> {item.dob ? item.dob.slice(0, 10).split('-').reverse().join('/') : (item.nascimento || '-')}</div>
+                  <div><strong>Telefone:</strong> {isCoroinha ? (item.phone || item.telefone || '-') : <WhatsAppLink phone={item.phone || item.telefone} />}</div>
+                  <div><strong>Endereço:</strong> <AddressLink address={item.address || item.endereco} /></div>
+                  {names.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.2rem' }}>
+                      {names.map(n => {
+                        const c = getCommunityColor(n);
+                        return <span key={n} style={{ background: c.bg, color: c.color, border: `1px solid ${c.border}`, borderRadius: 4, padding: '0.1rem 0.45rem', fontSize: '0.75rem', fontWeight: 600 }}>{n}</span>;
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
       <table className="data-table">
         <thead>
           <tr>
@@ -2157,11 +2210,12 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
           )}
         </tbody>
       </table>
+      )}
     </div>
   );
 }
 
-function ComunidadesTable({ data, onDelete, onEdit, onNew }) {
+function ComunidadesTable({ data, onDelete, onEdit, onNew, isMobile }) {
   const DIAS_KEYS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'];
 
   if (data.length === 0) {
@@ -2170,6 +2224,64 @@ function ComunidadesTable({ data, onDelete, onEdit, onNew }) {
         <Church size={48} color="var(--text-muted)" style={{ margin: '0 auto 1rem' }} />
         <h3>Nenhuma comunidade cadastrada.</h3>
         {onNew && <button onClick={onNew} className="btn-primary" style={{ marginTop: '1rem' }}><PlusCircle size={15} /> Cadastrar Nova Comunidade</button>}
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    const FREQ_ORDER = ['1ª', '2ª', '3ª', '4ª', '5ª'];
+    return (
+      <div className="grid-container" style={{ padding: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+        {data.map((item, itemIdx) => {
+          const corAccent = itemIdx % 2 === 0 ? '#3b82f6' : '#16a34a';
+          const schedules = item.mass_schedules || {};
+          const getHorarios = (ev) => schedules[ev]?.horarios || (typeof schedules[ev] === 'object' && !Array.isArray(schedules[ev]) ? schedules[ev] : {});
+          const EVENT_PRIORITY = { 'Missa': 0, 'Celebração': 1 };
+          const eventNames = Object.keys(schedules).sort((a, b) => {
+            const pa = EVENT_PRIORITY[a] ?? 2, pb = EVENT_PRIORITY[b] ?? 2;
+            if (pa !== pb) return pa - pb;
+            const earliest = (ev) => { const t = Object.values(getHorarios(ev)).filter(x => x && typeof x === 'string' && x !== '-'); return t.length ? t.sort()[0] : '99:99'; };
+            return earliest(a).localeCompare(earliest(b));
+          });
+          return (
+            <div key={item.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderLeft: `4px solid ${corAccent}`, borderRadius: 10, padding: '0.8rem 0.9rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>{item.name}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}><AddressLink address={item.address} /></div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.1rem', flex: 'none' }}>
+                  <button title="Editar" onClick={() => onEdit && onEdit(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Pencil size={16} /></button>
+                  <button title="Excluir" onClick={() => onDelete && onDelete(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', padding: '0.3rem' }}><Trash2 size={16} /></button>
+                </div>
+              </div>
+              {eventNames.length === 0 ? (
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Sem programação cadastrada</p>
+              ) : (
+                <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {eventNames.map(evNome => {
+                    const freq = (schedules[evNome]?.frequencia || []).slice().sort((a, b) => FREQ_ORDER.indexOf(a) - FREQ_ORDER.indexOf(b));
+                    const horarios = getHorarios(evNome);
+                    const dias = DIAS_KEYS.filter(d => horarios[d]);
+                    return (
+                      <div key={evNome} style={{ background: '#f8fafc', borderRadius: 8, padding: '0.5rem 0.6rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '0.82rem', color: '#1e293b' }}>
+                          {evNome}
+                          {freq.map(f => <span key={f} style={{ background: corAccent, color: '#fff', borderRadius: 4, padding: '0 0.35rem', fontSize: '0.7rem', fontWeight: 700 }}>{f}</span>)}
+                        </div>
+                        {dias.length === 0 ? (
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>-</div>
+                        ) : (
+                          <div style={{ fontSize: '0.78rem', color: '#475569' }}>{dias.map(d => `${d} ${horarios[d]}`).join(' • ')}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }

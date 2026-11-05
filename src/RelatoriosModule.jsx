@@ -57,15 +57,24 @@ const porCadastro = (a, b) => {
 const th = { textAlign: 'left', padding: '0.4rem 0.9rem', color: '#64748b', fontSize: '0.75rem' };
 const td = { padding: '0.35rem 0.9rem', color: '#64748b' };
 
-export function RelatoriosModule({ servers = [], communities = [], setHeaderExtra }) {
+export function RelatoriosModule({ servers = [], communities = [], setHeaderExtra, isMobile }) {
   const [visao, setVisao] = useState('porFuncao'); // 'porFuncao' | 'servidores' | 'aniversariantes'
   const [ordemServidores, setOrdemServidores] = useState('cadastro'); // 'cadastro' | 'nome'
   const secaoStyle = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden', marginBottom: '1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' };
   const tituloStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#1e293b', color: '#fff', fontWeight: 800, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.65rem 1rem' };
 
-  // Botões de relatório injetados na 1ª linha do cabeçalho do app, ao lado de Sair.
+  const OPCOES_VISAO = [
+    { key: 'aniversariantes', label: 'Aniversariantes', icon: Cake },
+    { key: 'servidores', label: 'Relação Servidores', icon: Users },
+    { key: 'porFuncao', label: 'Relação por Função', icon: ClipboardList },
+    { key: 'comunidades', label: 'Comunidades', icon: Church },
+  ];
+
+  // Desktop: botões de relatório injetados na 1ª linha do cabeçalho do app, ao
+  // lado de Sair. No mobile isso iria para dentro da barra de "Voltar" da
+  // aba de Relatórios e ficaria apertado — lá usamos abas próprias (abaixo).
   useEffect(() => {
-    if (!setHeaderExtra) return;
+    if (!setHeaderExtra || isMobile) return;
     const btn = (ativo) => ({
       display: 'flex', alignItems: 'center', gap: '0.3rem',
       background: ativo ? '#0f766e' : '#94a3b8', color: '#fff', border: 'none',
@@ -73,22 +82,39 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
     });
     setHeaderExtra(
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <button type="button" onClick={() => setVisao('aniversariantes')} style={btn(visao === 'aniversariantes')}>
-          <Cake size={14} /> Aniversariantes
-        </button>
-        <button type="button" onClick={() => setVisao('servidores')} style={btn(visao === 'servidores')}>
-          <Users size={14} /> Relação Servidores
-        </button>
-        <button type="button" onClick={() => setVisao('porFuncao')} style={btn(visao === 'porFuncao')}>
-          <ClipboardList size={14} /> Relação por Função
-        </button>
-        <button type="button" onClick={() => setVisao('comunidades')} style={btn(visao === 'comunidades')}>
-          <Church size={14} /> Comunidades
-        </button>
+        {OPCOES_VISAO.map(({ key, label, icon: Icon }) => (
+          <button key={key} type="button" onClick={() => setVisao(key)} style={btn(visao === key)}>
+            <Icon size={14} /> {label}
+          </button>
+        ))}
       </div>
     );
     return () => setHeaderExtra(null);
-  }, [setHeaderExtra, visao]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setHeaderExtra, visao, isMobile]);
+
+  const abasMobile = isMobile && (
+    <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', padding: '0.8rem 0.8rem 0' }}>
+      {OPCOES_VISAO.map(({ key, label, icon: Icon }) => (
+        <button key={key} type="button" onClick={() => setVisao(key)}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flex: 'none', background: visao === key ? '#0f766e' : '#f1f5f9', color: visao === key ? '#fff' : '#334155', border: 'none', borderRadius: 16, padding: '0.4rem 0.8rem', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}>
+          <Icon size={13} /> {label}
+        </button>
+      ))}
+    </div>
+  );
+
+  // Linhas de tabela viram cards empilhados no celular — mesmos dados, um
+  // card por pessoa/comunidade em vez de colunas que cortam na tela.
+  const CardLinha = ({ titulo, subtitulo, campos }) => (
+    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.7rem 0.9rem', marginBottom: '0.5rem' }}>
+      <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>{titulo}</div>
+      {subtitulo && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{subtitulo}</div>}
+      <div style={{ marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.8rem', color: '#475569' }}>
+        {campos.filter(([, v]) => v).map(([k, v]) => <div key={k}><strong>{k}:</strong> {v}</div>)}
+      </div>
+    </div>
+  );
 
   const listaPorTipo = (tipo) => servers
     .filter(s => s.type === tipo)
@@ -121,6 +147,15 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
   const tabelaAniversariantes = (mes, lista) => (
     <div key={mes} style={secaoStyle}>
       <div style={tituloStyle}><Cake size={15} /> {MESES[mes]} ({lista.length})</div>
+      {isMobile ? (
+        <div style={{ padding: '0.6rem' }}>
+          {lista.map(s => (
+            <CardLinha key={s.person_id || s.id} titulo={s.full_name} subtitulo={`Cadastro ${s.cadastro || '-'} — ${TYPE_LABEL[s.type] || s.type}`}
+              campos={[['Aniversário', `${fmtDataCurta(s.dob)} (${calcIdade(s.dob)} anos)`], ['WhatsApp', s.phone], ['E-mail', s.email], ['Comunidade', comunidadesAtua(s).join(', ')]]} />
+          ))}
+          {lista.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '0.9rem' }}>Nenhum aniversariante em {MESES[mes]}.</p>}
+        </div>
+      ) : (
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
         <thead>
           <tr>
@@ -152,23 +187,29 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
           )}
         </tbody>
       </table>
+      )}
     </div>
   );
 
   if (visao === 'aniversariantes') {
     return (
-      <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
-        {tabelaAniversariantes(mesAtual, aniversariantesDoMes(mesAtual))}
-        {tabelaAniversariantes(mesSeguinte, aniversariantesDoMes(mesSeguinte))}
+      <div className="grid-container" style={{ padding: isMobile ? '0 0 1rem' : '1rem 1.2rem 2rem' }}>
+        {abasMobile}
+        <div style={isMobile ? { padding: '0.8rem' } : undefined}>
+          {tabelaAniversariantes(mesAtual, aniversariantesDoMes(mesAtual))}
+          {tabelaAniversariantes(mesSeguinte, aniversariantesDoMes(mesSeguinte))}
+        </div>
       </div>
     );
   }
 
   if (visao === 'servidores') {
     return (
-      <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
+      <div className="grid-container" style={{ padding: isMobile ? '0 0 1rem' : '1rem 1.2rem 2rem' }}>
+        {abasMobile}
+        <div style={isMobile ? { padding: '0.8rem' } : undefined}>
         <div style={secaoStyle}>
-          <div style={{ ...tituloStyle, gap: '0.8rem' }}>
+          <div style={{ ...tituloStyle, gap: '0.8rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', gap: '0.3rem' }}>
               <button type="button" onClick={() => setOrdemServidores('cadastro')}
                 style={{ background: ordemServidores === 'cadastro' ? '#fff' : 'rgba(255,255,255,0.5)', color: '#000', border: 'none', borderRadius: 4, padding: '0.25rem 0.6rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}>
@@ -181,6 +222,15 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
             </div>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Users size={15} /> Relação de Servidores ({todosServidoresOrdenados.length})</span>
           </div>
+          {isMobile ? (
+            <div style={{ padding: '0.6rem' }}>
+              {todosServidoresOrdenados.map(s => (
+                <CardLinha key={s.id} titulo={s.full_name} subtitulo={`Cadastro ${s.cadastro || '-'} — ${TYPE_LABEL[s.type] || s.type}`}
+                  campos={[['WhatsApp', s.phone], ['E-mail', s.email], ['Comunidade', comunidadesAtua(s).join(', ')]]} />
+              ))}
+              {todosServidoresOrdenados.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '0.9rem' }}>Nenhum servidor cadastrado.</p>}
+            </div>
+          ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
               <tr>
@@ -208,6 +258,8 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
               )}
             </tbody>
           </table>
+          )}
+        </div>
         </div>
       </div>
     );
@@ -215,9 +267,19 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
 
   if (visao === 'comunidades') {
     return (
-      <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
+      <div className="grid-container" style={{ padding: isMobile ? '0 0 1rem' : '1rem 1.2rem 2rem' }}>
+        {abasMobile}
+        <div style={isMobile ? { padding: '0.8rem' } : undefined}>
         <div style={secaoStyle}>
           <div style={tituloStyle}><Church size={15} /> Comunidades ({communities.length})</div>
+          {isMobile ? (
+            <div style={{ padding: '0.6rem' }}>
+              {communities.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(c => (
+                <CardLinha key={c.id} titulo={c.name} campos={[['Horário de Missa', horariosMissa(c.mass_schedules)]]} />
+              ))}
+              {communities.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '0.9rem' }}>Nenhuma comunidade cadastrada.</p>}
+            </div>
+          ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
               <tr>
@@ -237,6 +299,8 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
               )}
             </tbody>
           </table>
+          )}
+        </div>
         </div>
       </div>
     );
@@ -248,12 +312,23 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
   const thFixo = (w) => ({ ...th, width: w });
 
   return (
-    <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem' }}>
+    <div className="grid-container" style={{ padding: isMobile ? '0 0 1rem' : '1rem 1.2rem 2rem' }}>
+      {abasMobile}
+      <div style={isMobile ? { padding: '0.8rem' } : undefined}>
       {TIPOS.map(({ key, label }) => {
         const lista = listaPorTipo(key);
         return (
           <div key={key} style={secaoStyle}>
             <div style={tituloStyle}><Users size={15} /> {label} ({lista.length})</div>
+            {isMobile ? (
+              <div style={{ padding: '0.6rem' }}>
+                {lista.map(s => (
+                  <CardLinha key={s.id} titulo={s.full_name} subtitulo={`Cadastro ${s.cadastro || '-'}`}
+                    campos={[['WhatsApp', s.phone], ['E-mail', s.email], ['Comunidade', comunidadesAtua(s).join(', ')]]} />
+                ))}
+                {lista.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '0.9rem' }}>Nenhum(a) {label.toLowerCase()} cadastrado(a).</p>}
+              </div>
+            ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', tableLayout: 'fixed' }}>
               <thead>
                 <tr>
@@ -279,9 +354,11 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
                 )}
               </tbody>
             </table>
+            )}
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
