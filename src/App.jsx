@@ -2313,61 +2313,7 @@ function ComunidadesTable({ data, onDelete, onEdit, onNew, isMobile }) {
   }
 
   if (isMobile) {
-    const FREQ_ORDER = ['1ª', '2ª', '3ª', '4ª', '5ª'];
-    return (
-      <div className="grid-container" style={{ padding: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-        {data.map((item, itemIdx) => {
-          const corAccent = itemIdx % 2 === 0 ? '#3b82f6' : '#16a34a';
-          const schedules = item.mass_schedules || {};
-          const getHorarios = (ev) => schedules[ev]?.horarios || (typeof schedules[ev] === 'object' && !Array.isArray(schedules[ev]) ? schedules[ev] : {});
-          const EVENT_PRIORITY = { 'Missa': 0, 'Celebração': 1 };
-          const eventNames = Object.keys(schedules).sort((a, b) => {
-            const pa = EVENT_PRIORITY[a] ?? 2, pb = EVENT_PRIORITY[b] ?? 2;
-            if (pa !== pb) return pa - pb;
-            const earliest = (ev) => { const t = Object.values(getHorarios(ev)).filter(x => x && typeof x === 'string' && x !== '-'); return t.length ? t.sort()[0] : '99:99'; };
-            return earliest(a).localeCompare(earliest(b));
-          });
-          return (
-            <div key={item.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderLeft: `4px solid ${corAccent}`, borderRadius: 10, padding: '0.8rem 0.9rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>{item.name}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}><AddressLink address={item.address} /></div>
-                </div>
-                <div style={{ display: 'flex', gap: '0.1rem', flex: 'none' }}>
-                  <button title="Editar" onClick={() => onEdit && onEdit(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Pencil size={16} /></button>
-                  <button title="Excluir" onClick={() => onDelete && onDelete(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', padding: '0.3rem' }}><Trash2 size={16} /></button>
-                </div>
-              </div>
-              {eventNames.length === 0 ? (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Sem programação cadastrada</p>
-              ) : (
-                <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  {eventNames.map(evNome => {
-                    const freq = (schedules[evNome]?.frequencia || []).slice().sort((a, b) => FREQ_ORDER.indexOf(a) - FREQ_ORDER.indexOf(b));
-                    const horarios = getHorarios(evNome);
-                    const dias = DIAS_KEYS.filter(d => horarios[d]);
-                    return (
-                      <div key={evNome} style={{ background: '#f8fafc', borderRadius: 8, padding: '0.5rem 0.6rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '0.82rem', color: '#1e293b' }}>
-                          {evNome}
-                          {freq.map(f => <span key={f} style={{ background: corAccent, color: '#fff', borderRadius: 4, padding: '0 0.35rem', fontSize: '0.7rem', fontWeight: 700 }}>{f}</span>)}
-                        </div>
-                        {dias.length === 0 ? (
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>-</div>
-                        ) : (
-                          <div style={{ fontSize: '0.78rem', color: '#475569' }}>{dias.map(d => `${d} ${horarios[d]}`).join(' • ')}</div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
+    return <ComunidadesTableMobile data={data} onDelete={onDelete} onEdit={onEdit} DIAS_KEYS={DIAS_KEYS} />;
   }
 
   return (
@@ -2485,6 +2431,100 @@ function ComunidadesTable({ data, onDelete, onEdit, onNew, isMobile }) {
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function ComunidadesTableMobile({ data, onDelete, onEdit, DIAS_KEYS }) {
+  const [modoExibicao, setModoExibicao] = useState('card'); // 'card' | 'lista'
+  const FREQ_ORDER = ['1ª', '2ª', '3ª', '4ª', '5ª'];
+  const [fichaAberta, setFichaAberta] = useState(null);
+
+  const listaOrdenada = [...data].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+  const renderCard = (item, itemIdx) => {
+    const corAccent = itemIdx % 2 === 0 ? '#3b82f6' : '#16a34a';
+    const schedules = item.mass_schedules || {};
+    const getHorarios = (ev) => schedules[ev]?.horarios || (typeof schedules[ev] === 'object' && !Array.isArray(schedules[ev]) ? schedules[ev] : {});
+    const EVENT_PRIORITY = { 'Missa': 0, 'Celebração': 1 };
+    const eventNames = Object.keys(schedules).sort((a, b) => {
+      const pa = EVENT_PRIORITY[a] ?? 2, pb = EVENT_PRIORITY[b] ?? 2;
+      if (pa !== pb) return pa - pb;
+      const earliest = (ev) => { const t = Object.values(getHorarios(ev)).filter(x => x && typeof x === 'string' && x !== '-'); return t.length ? t.sort()[0] : '99:99'; };
+      return earliest(a).localeCompare(earliest(b));
+    });
+    return (
+      <div key={item.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderLeft: `4px solid ${corAccent}`, borderRadius: 10, padding: '0.8rem 0.9rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div>
+            <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>{item.name}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}><AddressLink address={item.address} /></div>
+          </div>
+          <div style={{ display: 'flex', gap: '0.1rem', flex: 'none' }}>
+            <button title="Editar" onClick={() => onEdit && onEdit(item)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Pencil size={16} /></button>
+            <button title="Excluir" onClick={() => onDelete && onDelete(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#dc2626', padding: '0.3rem' }}><Trash2 size={16} /></button>
+          </div>
+        </div>
+        {eventNames.length === 0 ? (
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Sem programação cadastrada</p>
+        ) : (
+          <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {eventNames.map(evNome => {
+              const freq = (schedules[evNome]?.frequencia || []).slice().sort((a, b) => FREQ_ORDER.indexOf(a) - FREQ_ORDER.indexOf(b));
+              const horarios = getHorarios(evNome);
+              const dias = DIAS_KEYS.filter(d => horarios[d]);
+              return (
+                <div key={evNome} style={{ background: '#f8fafc', borderRadius: 8, padding: '0.5rem 0.6rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, fontSize: '0.82rem', color: '#1e293b' }}>
+                    {evNome}
+                    {freq.map(f => <span key={f} style={{ background: corAccent, color: '#fff', borderRadius: 4, padding: '0 0.35rem', fontSize: '0.7rem', fontWeight: 700 }}>{f}</span>)}
+                  </div>
+                  {dias.length === 0 ? (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>-</div>
+                  ) : (
+                    <div style={{ fontSize: '0.78rem', color: '#475569' }}>{dias.map(d => `${d} ${horarios[d]}`).join(' • ')}</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="grid-container">
+      {fichaAberta && (
+        <div onClick={() => setFichaAberta(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 420, maxHeight: '85vh', overflowY: 'auto' }}>
+            {renderCard(fichaAberta, listaOrdenada.indexOf(fichaAberta))}
+          </div>
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: '0.4rem', padding: '0.8rem 0.8rem 0' }}>
+        {[['card', 'Card'], ['lista', 'Lista']].map(([key, label]) => (
+          <button key={key} type="button" onClick={() => setModoExibicao(key)}
+            style={{ flex: 1, background: modoExibicao === key ? '#3b82f6' : '#f1f5f9', color: modoExibicao === key ? '#fff' : '#334155', border: 'none', borderRadius: 8, padding: '0.5rem', fontWeight: 700, fontSize: '0.82rem', cursor: 'pointer' }}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {modoExibicao === 'lista' ? (
+        <div style={{ padding: '0.8rem' }}>
+          {listaOrdenada.map(item => (
+            <div key={item.id} onClick={() => setFichaAberta(item)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.65rem 0.4rem', borderBottom: '1px solid #e2e8f0', cursor: 'pointer' }}>
+              <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.9rem', flex: 1 }}>{item.name}</span>
+              <ChevronRight size={16} color="#94a3b8" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ padding: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+          {listaOrdenada.map((item, idx) => renderCard(item, idx))}
+        </div>
+      )}
     </div>
   );
 }
