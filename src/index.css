@@ -298,13 +298,103 @@ body {
   background: rgba(255,255,255,0.9);
 }
 
+/* ---- Barra de abas fixa no rodapé (mobile) — substitui a sidebar ---- */
+.bottom-tab-bar {
+  display: none;
+}
+
+.bottom-tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.4rem 0 calc(0.3rem + env(safe-area-inset-bottom));
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.bottom-tab-item.active {
+  color: var(--primary, #14b8a6);
+}
+
+.mobile-content {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+
+.mobile-content-topbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.mobile-voltar-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.3rem 0;
+}
+
+.mobile-menu-list {
+  padding: 1rem;
+}
+
+.mobile-menu-list-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.mobile-menu-list-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.mobile-menu-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.mobile-menu-list-item-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mobile-menu-list-item-label {
+  flex: 1;
+}
+
 /* ---- Responsivo: celular / telas estreitas ---- */
 @media (max-width: 768px) {
-  .menu-toggle {
-    display: flex !important;
-    align-items: center;
-  }
-
   .header h1 {
     font-size: 1.05rem;
     min-width: 0 !important;
@@ -314,32 +404,16 @@ body {
     padding: 0.5rem 0.8rem;
   }
 
-  .app-layout {
-    height: calc(100vh - 60px);
-    position: relative;
-  }
-
-  .sidebar {
+  .bottom-tab-bar {
+    display: flex;
     position: fixed;
-    top: 0;
+    bottom: 0;
     left: 0;
-    height: 100vh;
-    width: 240px;
-    z-index: 200;
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    box-shadow: 2px 0 12px rgba(0,0,0,0.25);
-  }
-
-  .sidebar.sidebar-open {
-    transform: translateX(0);
-  }
-
-  .sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15,23,42,0.5);
-    z-index: 150;
+    right: 0;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    z-index: 250;
   }
 
   .main-content {

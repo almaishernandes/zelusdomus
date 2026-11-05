@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { supabase, supabaseAuthOnly } from './supabaseClient';
-import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Menu, Wallet, ClipboardList, Mail, Send } from 'lucide-react';
+import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Wallet, ClipboardList, Mail, Send, ArrowLeft } from 'lucide-react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { LoginPage } from './LoginPage';
 import { AvisoMensagensNaoLidas, CaixaMensagensModule, EnviarMensagemModal } from './MensagensModule';
@@ -67,6 +67,16 @@ const MENU_COLORS = {
   'Formação e Estudos':     { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
 };
 
+// Celular: a sidebar vira uma barra de abas fixa no rodapé (padrão Agilis).
+// Cada aba agrupa telas que hoje já existem na web — mesma permissão por
+// papel (menuOptions), só muda como se chega até elas.
+const MOBILE_TABS = [
+  { key: 'agenda',     label: 'Agenda',     icon: CalendarDays,   items: ['Agenda e Calendário', 'Minhas Reuniões', 'Caixa de Mensagens'] },
+  { key: 'cadastros',  label: 'Cadastros',  icon: Users,          items: ['Coroinhas', 'Acolitos', 'Monitores', 'Cerimoniários', 'Coordenadores', 'Comunidades'] },
+  { key: 'formacao',   label: 'Formação',   icon: BookOpen,       items: ['Formação Cadastro', 'Formação e Estudos'] },
+  { key: 'relatorios', label: 'Relatórios', icon: ClipboardList,  items: ['Reunião da Equipe', 'Livro Caixa', 'Relatórios'], coordenadorOnly: true },
+];
+
 function AppContent() {
   const { eAutenticado, ehCoordenador, ehServidor, perfil, paroquiaNome, ehSuporte, trocarParoquia, user, logout, loading: authLoading } = useAuth();
   const [paroquiasSuporte, setParoquiasSuporte] = useState([]);
@@ -94,7 +104,8 @@ function AppContent() {
   const [editingServer, setEditingServer] = useState(null);
   const [editingCommunity, setEditingCommunity] = useState(null);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
-  const [menuAberto, setMenuAberto] = useState(false);
+  const [mobileTab, setMobileTab] = useState('agenda');
+  const [mobileSubView, setMobileSubView] = useState('lista');
 
   const fetchAll = React.useCallback(async () => {
     const [{ data: servers }, { data: communities }] = await Promise.all([
@@ -138,6 +149,18 @@ function AppContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eAutenticado, authLoading, ehCoordenador, perfil, activeMenu]);
+
+  // Mantém a aba do rodapé (mobile) destacada mesmo quando a navegação até
+  // activeMenu vem de outro lugar (ex: botão "Cadastrar Novo X" no cabeçalho).
+  useEffect(() => {
+    const tab = MOBILE_TABS.find(t => t.items.includes(activeMenu))
+      || (['CadastroServidor'].includes(activeMenu) ? MOBILE_TABS.find(t => t.key === 'cadastros') : null)
+      || (activeMenu === 'CadastroComunidade' ? MOBILE_TABS.find(t => t.key === 'cadastros') : null);
+    if (tab) {
+      setMobileTab(tab.key);
+      setMobileSubView('conteudo');
+    }
+  }, [activeMenu]);
 
   console.log('[APP] Estado:', { eAutenticado, authLoading, perfil });
 
@@ -244,6 +267,28 @@ function AppContent() {
       ? menuOptionsCompleto.filter(m => !['Formação Cadastro', 'Livro Caixa'].includes(m.name))
       : menuOptionsRestrito;
 
+  // Abas do rodapé (mobile): mesmas permissões de menuOptions, só reorganizadas
+  // em grupos. Uma aba só aparece se o papel tiver acesso a pelo menos 1 item dela.
+  const menuOptionsByName = Object.fromEntries(menuOptions.map(m => [m.name, m]));
+  const mobileTabsDisponiveis = MOBILE_TABS
+    .filter(t => !t.coordenadorOnly || ehCoordenador)
+    .map(t => ({ ...t, items: t.items.filter(name => menuOptionsByName[name]) }))
+    .filter(t => t.items.length > 0);
+
+  const handleMobileTabClick = (tab) => {
+    if (mobileTab === tab.key && mobileSubView === 'conteudo' && tab.items.length > 1) {
+      setMobileSubView('lista');
+      return;
+    }
+    setMobileTab(tab.key);
+    if (tab.items.length === 1) {
+      setActiveMenu(tab.items[0]);
+      setMobileSubView('conteudo');
+    } else {
+      setMobileSubView('lista');
+    }
+  };
+
 
   const renderContent = () => {
     switch(activeMenu) {
@@ -307,11 +352,6 @@ function AppContent() {
       )}
       <header className="header">
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <button className="menu-toggle" onClick={() => setMenuAberto(m => !m)}
-            style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: '#1e293b', padding: '0.3rem' }}
-            aria-label="Abrir menu">
-            <Menu size={24} />
-          </button>
           <h1 style={{ minWidth: '250px' }}>
             <Users size={28} />
             ZelusDomus
@@ -334,12 +374,12 @@ function AppContent() {
                 : `👤 ${perfil.full_name} — ${(perfil.funcoes && perfil.funcoes.length) ? perfil.funcoes.map(t => TYPE_LABELS[t] || t).join(', ') : 'Servidor do Altar'}`}
               {user?.email ? ` — ${user.email}` : ''}
             </span>}
-            {headerExtra}
+            {!isMobile && headerExtra}
             <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#dc2626', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
               <LogOut size={16} /> Sair
             </button>
           </div>
-          {novoBtn && (() => {
+          {!isMobile && novoBtn && (() => {
             const btnBg = novoBtnColor ? novoBtnColor.bg : '#b34946';
             const btnColor = novoBtnColor ? novoBtnColor.color : '#ffffff';
             return (
@@ -363,48 +403,138 @@ function AppContent() {
         </div>
       </header>
 
-      <div className="app-layout">
-        {isMobile && menuAberto && (
-          <div className="sidebar-overlay" onClick={() => setMenuAberto(false)} />
-        )}
-        <aside className={`sidebar ${isMobile && menuAberto ? 'sidebar-open' : ''}`}>
-          <ul className="menu-list" style={{ padding: 0 }}>
-            {menuOptions.map(option => {
-              const Icon = option.icon;
-              const menuColor = MENU_COLORS[option.name];
-              const isActive = activeMenu === option.name;
+      {isMobile ? (
+        <>
+          <main className="main-content mobile-content">
+            {mobileSubView === 'lista' ? (
+              <MobileMenuList
+                tab={mobileTabsDisponiveis.find(t => t.key === mobileTab)}
+                onSelect={(name) => { setActiveMenu(name); setMobileSubView('conteudo'); }}
+              />
+            ) : (
+              <>
+                {(() => {
+                  const tab = mobileTabsDisponiveis.find(t => t.key === mobileTab);
+                  const mostrarVoltar = tab && tab.items.length > 1;
+                  return (mostrarVoltar || headerExtra || novoBtn) ? (
+                    <div className="mobile-content-topbar">
+                      {mostrarVoltar && (
+                        <button className="mobile-voltar-btn" onClick={() => setMobileSubView('lista')}>
+                          <ArrowLeft size={18} /> Voltar
+                        </button>
+                      )}
+                      {headerExtra}
+                      {novoBtn && (
+                        <button
+                          onClick={() => { setPrevMenu(activeMenu); setActiveMenu(novoBtn.target); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '0.4rem',
+                            background: (novoBtnColor || {}).bg || '#b34946',
+                            color: (novoBtnColor || {}).color || '#ffffff',
+                            border: 'none', fontWeight: 700, fontSize: '0.85rem',
+                            padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer'
+                          }}
+                        >
+                          <PlusCircle size={16} /> {novoBtn.label}
+                        </button>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
+                <React.Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Carregando...</div>}>
+                  {renderContent()}
+                </React.Suspense>
+              </>
+            )}
+          </main>
+          <BottomTabBar tabs={mobileTabsDisponiveis} activeKey={mobileTab} onSelect={handleMobileTabClick} />
+        </>
+      ) : (
+        <div className="app-layout">
+          <aside className="sidebar">
+            <ul className="menu-list" style={{ padding: 0 }}>
+              {menuOptions.map(option => {
+                const Icon = option.icon;
+                const menuColor = MENU_COLORS[option.name];
+                const isActive = activeMenu === option.name;
 
-              const customStyle = menuColor ? {
-                background: menuColor.bg,
-                color: menuColor.color,
-                opacity: isActive ? 1 : 0.7,
-                fontWeight: isActive ? 700 : 500,
-                borderLeft: isActive ? `4px solid ${menuColor.color}` : '4px solid transparent',
-                marginBottom: '1px'
-              } : {};
+                const customStyle = menuColor ? {
+                  background: menuColor.bg,
+                  color: menuColor.color,
+                  opacity: isActive ? 1 : 0.7,
+                  fontWeight: isActive ? 700 : 500,
+                  borderLeft: isActive ? `4px solid ${menuColor.color}` : '4px solid transparent',
+                  marginBottom: '1px'
+                } : {};
 
-              return (
-                <li
-                  key={option.name}
-                  className={`menu-item ${isActive && !menuColor ? 'active' : ''}`}
-                  onClick={() => { setActiveMenu(option.name); setMenuAberto(false); }}
-                  style={customStyle}
-                >
-                  <Icon size={20} />
-                  {option.name}
-                </li>
-              );
-            })}
-          </ul>
-        </aside>
+                return (
+                  <li
+                    key={option.name}
+                    className={`menu-item ${isActive && !menuColor ? 'active' : ''}`}
+                    onClick={() => setActiveMenu(option.name)}
+                    style={customStyle}
+                  >
+                    <Icon size={20} />
+                    {option.name}
+                  </li>
+                );
+              })}
+            </ul>
+          </aside>
 
-        <main className="main-content">
-          <React.Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Carregando...</div>}>
-            {renderContent()}
-          </React.Suspense>
-        </main>
-      </div>
+          <main className="main-content">
+            <React.Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Carregando...</div>}>
+              {renderContent()}
+            </React.Suspense>
+          </main>
+        </div>
+      )}
     </div>
+  );
+}
+
+// Tela de lista de seleção de uma aba do rodapé (padrão Agilis): toca na aba,
+// aparece a lista dos itens daquele grupo; toca no item, abre a tela.
+function MobileMenuList({ tab, onSelect }) {
+  if (!tab) return null;
+  return (
+    <div className="mobile-menu-list">
+      <h2 className="mobile-menu-list-title">{tab.label}</h2>
+      <ul className="mobile-menu-list-items">
+        {tab.items.map(name => {
+          const color = MENU_COLORS[name];
+          return (
+            <li key={name} className="mobile-menu-list-item" onClick={() => onSelect(name)}>
+              <span className="mobile-menu-list-item-dot" style={{ background: color ? color.bg : '#64748b' }} />
+              <span className="mobile-menu-list-item-label">{name}</span>
+              <ChevronRight size={18} />
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+// Barra de abas fixa no rodapé (mobile), substitui a sidebar/hamburger.
+function BottomTabBar({ tabs, activeKey, onSelect }) {
+  return (
+    <nav className="bottom-tab-bar">
+      {tabs.map(tab => {
+        const Icon = tab.icon;
+        const isActive = activeKey === tab.key;
+        return (
+          <button
+            key={tab.key}
+            className={`bottom-tab-item ${isActive ? 'active' : ''}`}
+            onClick={() => onSelect(tab)}
+          >
+            <Icon size={22} />
+            <span>{tab.label}</span>
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
