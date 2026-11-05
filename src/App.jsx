@@ -1118,6 +1118,8 @@ function AgendaServidor({ servers, communities, isMobile, restrictCadastro }) {
   const [id, setId] = useState('');
   const [gerandoPdf, setGerandoPdf] = useState(false);
   const [mostrarPreview, setMostrarPreview] = useState(false);
+  const [mesPreviewIdx, setMesPreviewIdx] = useState(0);
+  useEffect(() => { if (mostrarPreview) setMesPreviewIdx(0); }, [mostrarPreview]);
   // Servidor (não-coordenador) só pode ver a própria agenda — nada de escolher outro cadastro
   const servers2 = restrictCadastro ? servers.filter(s => s.cadastro === restrictCadastro) : servers;
   useEffect(() => {
@@ -1283,7 +1285,81 @@ function AgendaServidor({ servers, communities, isMobile, restrictCadastro }) {
               <button onClick={() => setMostrarPreview(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
             </div>
             <div style={{ padding: '1.2rem', overflowY: 'auto' }}>
-              <div id="agenda-print">
+              {isMobile && proximas.length > 0 && (() => {
+                // Versão mobile: mesmo calendário, um mês por vez com setas —
+                // o grid completo de 6 meses fica fora da tela (abaixo), só
+                // para gerar o PDF/WhatsApp com todos os meses.
+                const porData = {};
+                proximas.forEach(p => { const k = p.date.toDateString(); (porData[k] = porData[k] || []).push(p); });
+                const DIAS_CAB = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+                const meses = Array.from({ length: 6 }, (_, i) => {
+                  const d = new Date(hoje0.getFullYear(), hoje0.getMonth() + i, 1);
+                  return { y: d.getFullYear(), m: d.getMonth() };
+                });
+                const semanasDoMes = (y, m) => {
+                  const first = new Date(y, m, 1).getDay();
+                  const total = new Date(y, m + 1, 0).getDate();
+                  const semanas = []; let linha = Array(first).fill(null);
+                  for (let d = 1; d <= total; d++) {
+                    linha.push(d);
+                    if (linha.length === 7) { semanas.push(linha); linha = []; }
+                  }
+                  if (linha.length) semanas.push([...linha, ...Array(7 - linha.length).fill(null)]);
+                  return semanas;
+                };
+                const idx = Math.min(mesPreviewIdx, meses.length - 1);
+                const { y, m } = meses[idx];
+                return (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: 800, fontSize: '1rem', color: '#1e3a8a', marginBottom: '0.3rem' }}>
+                      Agenda de Participação — {nomeServ}{serv.cadastro ? ` (Cadastro Nº ${serv.cadastro})` : ''}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.6rem' }}>ZelusDomus • Servidores do Altar • Emitida em {new Date().toLocaleDateString('pt-BR')}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
+                      <button onClick={() => setMesPreviewIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
+                        style={{ background: '#1e3a8a', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.7rem', cursor: idx === 0 ? 'default' : 'pointer', fontWeight: 700, opacity: idx === 0 ? 0.4 : 1 }}>◀</button>
+                      <strong style={{ color: '#14532d' }}>{AG_MESES[m]} de {y}</strong>
+                      <button onClick={() => setMesPreviewIdx(i => Math.min(meses.length - 1, i + 1))} disabled={idx === meses.length - 1}
+                        style={{ background: '#1e3a8a', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.7rem', cursor: idx === meses.length - 1 ? 'default' : 'pointer', fontWeight: 700, opacity: idx === meses.length - 1 ? 0.4 : 1 }}>▶</button>
+                    </div>
+                    <table style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' }}>
+                      <thead><tr>
+                        {DIAS_CAB.map(d => (
+                          <th key={d} style={{ background: '#166534', color: '#fff', fontSize: '0.66rem', fontWeight: 700, padding: '0.2rem', border: '1px solid #14532d' }}>{d}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>
+                        {semanasDoMes(y, m).map((sem, si) => (
+                          <tr key={si}>
+                            {sem.map((d, di) => {
+                              if (d === null) return <td key={di} style={{ border: '1px solid #e2e8f0', background: '#f8fafc' }}>{' '}</td>;
+                              const date = new Date(y, m, d);
+                              const itens = (porData[date.toDateString()] || []).sort((a, b) => a.time.localeCompare(b.time));
+                              const ehHoje = date.getTime() === hoje0.getTime();
+                              return (
+                                <td key={di} style={{ border: '1px solid #e2e8f0', verticalAlign: 'top', height: '2.6rem', padding: '0.12rem',
+                                  background: ehHoje ? '#fef9c3' : itens.length ? '#dcfce7' : '#fff' }}>
+                                  <div style={{ display: 'flex', justifyContent: ehHoje ? 'space-between' : 'flex-end', alignItems: 'center', paddingRight: '0.15rem', paddingLeft: '0.15rem' }}>
+                                    {ehHoje && <span style={{ background: '#ca8a04', color: '#fff', borderRadius: 3, padding: '0 0.25rem', fontSize: '0.58rem', fontWeight: 800, letterSpacing: '0.03em' }}>HOJE</span>}
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#334155' }}>{d}</span>
+                                  </div>
+                                  {itens.map((p, i) => (
+                                    <div key={i} title={`${p.evento} — ${p.comunidade}`}
+                                      style={{ fontSize: '0.7rem', fontWeight: 800, color: '#14532d', textAlign: 'center', lineHeight: 1.25 }}>
+                                      {p.time}
+                                    </div>
+                                  ))}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+              <div id="agenda-print" style={isMobile ? { position: 'fixed', top: 0, left: '-9999px', width: '650px' } : undefined}>
       <div style={{ borderBottom: '2px solid #1e3a8a', paddingBottom: '0.3rem', marginBottom: '0.7rem' }}>
         <div style={{ fontWeight: 800, fontSize: '1rem', color: '#1e3a8a' }}>
           Agenda de Participação — {nomeServ}{serv.cadastro ? ` (Cadastro Nº ${serv.cadastro})` : ''}
