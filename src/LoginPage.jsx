@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabaseClient';
-import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff, Clock, Download, Share } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff, Clock, Download, Share, Fingerprint } from 'lucide-react';
+import { temBiometriaAtiva, biometriaExpirada, emailBiometria, desativarBiometria, entrarComBiometria } from './biometria';
 
 // Banner de instalação do app: Android/Chrome mostra botão que instala
 // automaticamente; iPhone/Safari não permite instalação por código, então
@@ -85,12 +86,33 @@ export function LoginPage() {
   const [email, setEmail] = useState(() => lerAcessosRecentes()[0] || '');
   const [senha, setSenha] = useState('');
   const [mostraSenha, setMostraSenha] = useState(false);
-  const [telaAtual, setTelaAtual] = useState('login'); // 'login' | 'reset'
+  const [telaAtual, setTelaAtual] = useState(() =>
+    (temBiometriaAtiva() && !biometriaExpirada()) ? 'biometria' : 'login'
+  ); // 'login' | 'reset' | 'biometria'
   const [emailReset, setEmailReset] = useState('');
   const [msgReset, setMsgReset] = useState('');
   const [loadingReset, setLoadingReset] = useState(false);
   const [mostraSenhaReset, setMostraSenhaReset] = useState(false);
   const [mostraConfirmaSenhaReset, setMostraConfirmaSenhaReset] = useState(false);
+  const [bioCarregando, setBioCarregando] = useState(false);
+  const [erroBio, setErroBio] = useState('');
+
+  const handleEntrarComDigital = async () => {
+    setErroBio('');
+    setBioCarregando(true);
+    const resultado = await entrarComBiometria();
+    setBioCarregando(false);
+    if (!resultado.sucesso) {
+      setErroBio(resultado.erro || 'Não foi possível confirmar a impressão digital.');
+      if (!temBiometriaAtiva()) setTelaAtual('login');
+    }
+    // Sucesso: AuthContext detecta a sessão liberada e troca de tela sozinho.
+  };
+
+  const handleRemoverBiometria = () => {
+    desativarBiometria();
+    setTelaAtual('login');
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -124,6 +146,55 @@ export function LoginPage() {
       setLoadingReset(false);
     }
   };
+
+  if (telaAtual === 'biometria') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '1rem' }}>
+        <div style={{ width: '100%', maxWidth: 400, padding: '2.5rem', background: '#fff', borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,0.3)', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '1.7rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Zelus Domus</h1>
+          <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '0.5rem 0 2rem' }}>{emailBiometria()}</p>
+
+          <button
+            onClick={handleEntrarComDigital}
+            disabled={bioCarregando}
+            style={{
+              width: 96, height: 96, borderRadius: '50%', border: 'none', margin: '0 auto 1.2rem',
+              background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: bioCarregando ? 'wait' : 'pointer', boxShadow: '0 8px 20px rgba(37,99,235,0.4)'
+            }}
+            aria-label="Entrar com impressão digital"
+          >
+            {bioCarregando ? <Loader size={36} style={{ animation: 'spin 1s linear infinite' }} /> : <Fingerprint size={44} />}
+          </button>
+          <p style={{ color: '#334155', fontWeight: 600, fontSize: '0.95rem', margin: '0 0 1.5rem' }}>
+            Toque no sensor para entrar
+          </p>
+
+          {erroBio && (
+            <div style={{ background: '#fee2e2', color: '#991b1b', padding: '0.8rem 1rem', borderRadius: 8, fontSize: '0.85rem', display: 'flex', gap: '0.6rem', alignItems: 'flex-start', textAlign: 'left', marginBottom: '1.2rem' }}>
+              <AlertCircle size={16} style={{ flex: 'none', marginTop: '0.1rem' }} />
+              <span>{erroBio}</span>
+            </div>
+          )}
+
+          <button
+            type='button'
+            onClick={() => setTelaAtual('login')}
+            style={{ background: 'transparent', color: '#2563eb', border: '1px solid #2563eb', padding: '0.65rem', borderRadius: 6, fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer', width: '100%', marginBottom: '0.6rem' }}
+          >
+            Entrar com a senha
+          </button>
+          <button
+            type='button'
+            onClick={handleRemoverBiometria}
+            style={{ background: 'transparent', color: '#94a3b8', border: 'none', padding: '0.4rem', fontSize: '0.78rem', cursor: 'pointer' }}
+          >
+            Esquecer este aparelho
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (telaAtual === 'reset') {
     return (
@@ -277,6 +348,16 @@ export function LoginPage() {
           >
             Esqueci minha senha
           </button>
+
+          {temBiometriaAtiva() && !biometriaExpirada() && (
+            <button
+              type='button'
+              onClick={() => setTelaAtual('biometria')}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: 'transparent', color: '#334155', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.6rem', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}
+            >
+              <Fingerprint size={16} /> Entrar com impressão digital
+            </button>
+          )}
         </form>
 
       </div>

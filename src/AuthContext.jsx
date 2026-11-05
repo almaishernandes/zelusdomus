@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
+import { sincronizarSessaoBiometrica } from './biometria';
 
 export const AuthContext = createContext();
 
@@ -39,6 +40,7 @@ export function AuthProvider({ children }) {
 
       if (session?.user) {
         setUser(session.user);
+        sincronizarSessaoBiometrica(session);
 
         // Eventos como TOKEN_REFRESHED (renovação silenciosa do token, disparada
         // periodicamente pelo Supabase) não devem re-disparar a busca de perfil

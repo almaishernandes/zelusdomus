@@ -1,9 +1,10 @@
 ﻿import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { supabase, supabaseAuthOnly } from './supabaseClient';
-import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Wallet, ClipboardList, Mail, Send, ArrowLeft } from 'lucide-react';
+import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Wallet, ClipboardList, Mail, Send, ArrowLeft, Fingerprint } from 'lucide-react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { LoginPage } from './LoginPage';
 import { AvisoMensagensNaoLidas, CaixaMensagensModule, EnviarMensagemModal } from './MensagensModule';
+import { suportaBiometria, temBiometriaAtiva, jaOfereceuBiometria, marcarOfertaVista, ativarBiometria } from './biometria';
 // Telas administrativas carregadas sob demanda: reduz o pacote inicial que o
 // celular precisa baixar antes de mostrar a tela de login.
 const FormacaoModule = React.lazy(() => import('./FormacaoModule').then(m => ({ default: m.FormacaoModule })));
@@ -350,6 +351,7 @@ function AppContent() {
       {!ehCoordenador && perfil?.numero_cadastro && (
         <AvisoMensagensNaoLidas numeroCadastro={perfil.numero_cadastro} onAbrirCaixa={() => setActiveMenu('Caixa de Mensagens')} />
       )}
+      {isMobile && <OfertaBiometria userEmail={user?.email} />}
       <header className="header">
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
           <h1 style={{ minWidth: '250px' }}>
@@ -512,6 +514,65 @@ function MobileMenuList({ tab, onSelect }) {
           );
         })}
       </ul>
+    </div>
+  );
+}
+
+// Banner único (por aparelho) oferecendo ativar a entrada por impressão
+// digital — aparece uma vez depois do login, se o celular tiver leitor
+// biométrico e a digital ainda não tiver sido cadastrada neste app.
+function OfertaBiometria({ userEmail }) {
+  const [visivel, setVisivel] = useState(false);
+  const [ativando, setAtivando] = useState(false);
+  const [erro, setErro] = useState('');
+
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      if (temBiometriaAtiva() || jaOfereceuBiometria()) return;
+      const suportado = await suportaBiometria();
+      if (!cancelado && suportado) setVisivel(true);
+    })();
+    return () => { cancelado = true; };
+  }, []);
+
+  if (!visivel) return null;
+
+  const dispensar = () => { marcarOfertaVista(); setVisivel(false); };
+
+  const ativar = async () => {
+    setErro('');
+    setAtivando(true);
+    const { data } = await supabase.auth.getSession();
+    const resultado = await ativarBiometria(data?.session, userEmail);
+    setAtivando(false);
+    if (resultado.sucesso) {
+      setVisivel(false);
+    } else {
+      setErro(resultado.erro || 'Não foi possível ativar agora.');
+    }
+  };
+
+  return (
+    <div style={{ position: 'fixed', left: '4%', right: '4%', bottom: 'calc(72px + env(safe-area-inset-bottom))', zIndex: 900, background: '#1e293b', color: '#fff', borderRadius: 12, padding: '0.9rem 1rem', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.7rem' }}>
+        <Fingerprint size={24} style={{ flex: 'none', marginTop: '0.1rem' }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: '0.88rem' }}>Entrar com impressão digital?</div>
+          <div style={{ fontSize: '0.78rem', color: '#cbd5e1', marginTop: '0.2rem' }}>Ative neste aparelho para não digitar a senha nas próximas vezes.</div>
+          {erro && <div style={{ fontSize: '0.75rem', color: '#fca5a5', marginTop: '0.4rem' }}>{erro}</div>}
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.7rem' }}>
+            <button onClick={ativar} disabled={ativando}
+              style={{ background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.9rem', fontWeight: 700, fontSize: '0.8rem', cursor: ativando ? 'wait' : 'pointer' }}>
+              {ativando ? 'Ativando…' : 'Ativar'}
+            </button>
+            <button onClick={dispensar}
+              style={{ background: 'transparent', color: '#cbd5e1', border: '1px solid #475569', borderRadius: 6, padding: '0.4rem 0.9rem', fontWeight: 600, fontSize: '0.8rem', cursor: 'pointer' }}>
+              Agora não
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
