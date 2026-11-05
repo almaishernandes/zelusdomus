@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Church, Cake, ClipboardList } from 'lucide-react';
+import { Users, Church, Cake, ClipboardList, ChevronDown, ChevronRight } from 'lucide-react';
 
 const TIPOS = [
   { key: 'coroinha', label: 'Coroinhas' },
@@ -104,17 +104,31 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
     </div>
   );
 
-  // Linhas de tabela viram cards empilhados no celular — mesmos dados, um
-  // card por pessoa/comunidade em vez de colunas que cortam na tela.
-  const CardLinha = ({ titulo, subtitulo, campos }) => (
-    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.7rem 0.9rem', marginBottom: '0.5rem' }}>
-      <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem' }}>{titulo}</div>
-      {subtitulo && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{subtitulo}</div>}
-      <div style={{ marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.8rem', color: '#475569' }}>
-        {campos.filter(([, v]) => v).map(([k, v]) => <div key={k}><strong>{k}:</strong> {v}</div>)}
+  // Linhas de tabela viram cards no celular, mas em modo "rascunho": fechado,
+  // só mostra cadastro + nome; toca para abrir e ver o resto dos dados.
+  const CardLinha = ({ cadastro, titulo, subtitulo, campos }) => {
+    const [aberto, setAberto] = useState(false);
+    return (
+      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, marginBottom: '0.5rem', overflow: 'hidden' }}>
+        <div onClick={() => setAberto(a => !a)}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 0.9rem', cursor: 'pointer' }}>
+          {cadastro !== undefined && (
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', flex: 'none', minWidth: '2.2rem' }}>{cadastro || '-'}</span>
+          )}
+          <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.88rem', flex: 1 }}>{titulo}</span>
+          {aberto ? <ChevronDown size={16} color="#94a3b8" /> : <ChevronRight size={16} color="#94a3b8" />}
+        </div>
+        {aberto && (
+          <div style={{ padding: '0 0.9rem 0.8rem' }}>
+            {subtitulo && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>{subtitulo}</div>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', fontSize: '0.8rem', color: '#475569' }}>
+              {campos.filter(([, v]) => v).map(([k, v]) => <div key={k}><strong>{k}:</strong> {v}</div>)}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const listaPorTipo = (tipo) => servers
     .filter(s => s.type === tipo)
@@ -150,7 +164,7 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
       {isMobile ? (
         <div style={{ padding: '0.6rem' }}>
           {lista.map(s => (
-            <CardLinha key={s.person_id || s.id} titulo={s.full_name} subtitulo={`Cadastro ${s.cadastro || '-'} — ${TYPE_LABEL[s.type] || s.type}`}
+            <CardLinha key={s.person_id || s.id} cadastro={s.cadastro} titulo={s.full_name} subtitulo={TYPE_LABEL[s.type] || s.type}
               campos={[['Aniversário', `${fmtDataCurta(s.dob)} (${calcIdade(s.dob)} anos)`], ['WhatsApp', s.phone], ['E-mail', s.email], ['Comunidade', comunidadesAtua(s).join(', ')]]} />
           ))}
           {lista.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '0.9rem' }}>Nenhum aniversariante em {MESES[mes]}.</p>}
@@ -225,7 +239,7 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
           {isMobile ? (
             <div style={{ padding: '0.6rem' }}>
               {todosServidoresOrdenados.map(s => (
-                <CardLinha key={s.id} titulo={s.full_name} subtitulo={`Cadastro ${s.cadastro || '-'} — ${TYPE_LABEL[s.type] || s.type}`}
+                <CardLinha key={s.id} cadastro={s.cadastro} titulo={s.full_name} subtitulo={TYPE_LABEL[s.type] || s.type}
                   campos={[['WhatsApp', s.phone], ['E-mail', s.email], ['Comunidade', comunidadesAtua(s).join(', ')]]} />
               ))}
               {todosServidoresOrdenados.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '0.9rem' }}>Nenhum servidor cadastrado.</p>}
@@ -323,7 +337,7 @@ export function RelatoriosModule({ servers = [], communities = [], setHeaderExtr
             {isMobile ? (
               <div style={{ padding: '0.6rem' }}>
                 {lista.map(s => (
-                  <CardLinha key={s.id} titulo={s.full_name} subtitulo={`Cadastro ${s.cadastro || '-'}`}
+                  <CardLinha key={s.id} cadastro={s.cadastro} titulo={s.full_name}
                     campos={[['WhatsApp', s.phone], ['E-mail', s.email], ['Comunidade', comunidadesAtua(s).join(', ')]]} />
                 ))}
                 {lista.length === 0 && <p style={{ textAlign: 'center', color: '#94a3b8', padding: '0.9rem' }}>Nenhum(a) {label.toLowerCase()} cadastrado(a).</p>}
