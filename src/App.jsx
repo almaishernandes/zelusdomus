@@ -384,9 +384,11 @@ function AppContent() {
               {user?.email ? ` — ${user.email}` : ''}
             </span>}
             {!isMobile && headerExtra}
-            <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#dc2626', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
-              <LogOut size={16} /> Sair
-            </button>
+            {!isMobile && (
+              <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#dc2626', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
+                <LogOut size={16} /> Sair
+              </button>
+            )}
           </div>
           {!isMobile && novoBtn && (() => {
             const btnBg = novoBtnColor ? novoBtnColor.bg : '#b34946';
@@ -445,6 +447,13 @@ function AppContent() {
                 </ul>
               </div>
             ))}
+            <div className="sidebar-lateral-mobile-grupo" style={{ marginTop: '0.4rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.4rem' }}>
+              <ul className="menu-list" style={{ padding: 0 }}>
+                <li className="menu-item" onClick={() => { setMenuLateralAberto(false); logout(); }} style={{ color: '#dc2626' }}>
+                  <LogOut size={18} /> Sair
+                </li>
+              </ul>
+            </div>
           </aside>
         </>
       )}
