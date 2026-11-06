@@ -95,6 +95,17 @@ function AppContent() {
     return () => clearInterval(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // A tela da Ave Maria fica no ar pelo menos 30s a cada login, mesmo que o
+  // perfil carregue bem mais rápido que isso — tempo para a oração, não só
+  // um "loading" que pisca na tela.
+  const [oracaoLiberada, setOracaoLiberada] = useState(false);
+  useEffect(() => {
+    if (!eAutenticado) { setOracaoLiberada(false); return; }
+    setOracaoLiberada(false);
+    const t = setTimeout(() => setOracaoLiberada(true), 30000);
+    return () => clearTimeout(t);
+  }, [eAutenticado]);
+
   // TODOS os Hooks AQUI, ANTES de qualquer if/return
   const [activeMenu, setActiveMenu] = useState('Coroinhas');
   // Ações extras que uma tela (ex: CadastroServidorForm) injeta na primeira
@@ -198,7 +209,7 @@ function AppContent() {
     return <LoginPage />;
   }
 
-  if (authLoading) {
+  if (authLoading || !oracaoLiberada) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e293b', padding: '1.5rem' }}>
         <div style={{ maxWidth: 1100, textAlign: 'center', color: ORACAO_CORES[oracaoCor], transition: 'color 1.5s ease' }}>
