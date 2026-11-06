@@ -80,6 +80,17 @@ const MOBILE_TABS = [
   { key: 'relatorios', label: 'Relatórios', icon: ClipboardList,  items: ['Reunião da Equipe', 'Livro Caixa', 'Relatórios'], coordenadorOnly: true },
 ];
 
+const ORACOES = [
+  {
+    titulo: 'Ave Maria',
+    palavras: 'Ave Maria, cheia de graça, o Senhor é convosco. Bendita sois vós entre as mulheres e bendito é o fruto do vosso ventre, Jesus. Santa Maria, Mãe de Deus, rogai por nós, pecadores, agora e na hora da nossa morte. Amém.'.split(' '),
+  },
+  {
+    titulo: 'Santo Anjo do Senhor',
+    palavras: 'Santo Anjo do Senhor, meu zeloso guardador, se a ti me confiou a piedade divina, sempre me rege, me guarda, me governa e me ilumina. Amém.'.split(' '),
+  },
+];
+
 function AppContent() {
   const { eAutenticado, ehCoordenador, ehServidor, perfil, paroquiaNome, ehSuporte, trocarParoquia, user, logout, loading: authLoading } = useAuth();
   const [paroquiasSuporte, setParoquiasSuporte] = useState([]);
@@ -104,6 +115,15 @@ function AppContent() {
     setOracaoLiberada(false);
     const t = setTimeout(() => setOracaoLiberada(true), 30000);
     return () => clearTimeout(t);
+  }, [eAutenticado]);
+
+  // Duas orações, 15s cada, com a leitura "karaokê" (palavra por palavra) dentro dos 30s.
+  const [oracaoMs, setOracaoMs] = useState(0);
+  useEffect(() => {
+    if (!eAutenticado) { setOracaoMs(0); return; }
+    const inicio = Date.now();
+    const i = setInterval(() => setOracaoMs(Date.now() - inicio), 100);
+    return () => clearInterval(i);
   }, [eAutenticado]);
 
   // TODOS os Hooks AQUI, ANTES de qualquer if/return
@@ -210,20 +230,31 @@ function AppContent() {
   }
 
   if (authLoading || !oracaoLiberada) {
+    const indiceOracao = oracaoMs < 15000 ? 0 : 1;
+    const oracaoAtual = ORACOES[indiceOracao];
+    const msNaOracao = oracaoMs % 15000;
+    const fracao = Math.min(msNaOracao / 15000, 1);
+    const palavrasLidas = Math.floor(fracao * oracaoAtual.palavras.length);
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e293b', padding: '1.5rem' }}>
         <div style={{ maxWidth: 1100, textAlign: 'center', color: ORACAO_CORES[oracaoCor], transition: 'color 1.5s ease' }}>
           <div style={{ width: 44, height: 44, margin: '0 auto 1.6rem', border: '3px solid rgba(241,245,249,0.25)', borderTopColor: ORACAO_CORES[oracaoCor], borderRadius: '50%', animation: 'spin 0.9s linear infinite', transition: 'border-top-color 1.5s ease' }} />
           <p style={{ fontSize: 'clamp(1rem, 2.4vw, 1.6rem)', margin: '0 0 1.4rem' }}>Enquanto aguardamos, rezemos juntos:</p>
-          <p style={{ fontSize: 'clamp(1.6rem, 5vw, 3.4rem)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 1.2rem' }}>Ave Maria</p>
+          <p style={{ fontSize: 'clamp(1.6rem, 5vw, 3.4rem)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 1.2rem' }}>{oracaoAtual.titulo}</p>
           <p style={{ fontSize: 'clamp(1.4rem, 4.2vw, 2.8rem)', lineHeight: 1.6, margin: 0 }}>
-            Cheia de graça, o Senhor é convosco.<br />
-            Bendita sois vós entre as mulheres<br />
-            e bendito é o fruto do vosso ventre, Jesus.<br /><br />
-            Santa Maria, Mãe de Deus,<br />
-            rogai por nós, pecadores,<br />
-            agora e na hora da nossa morte.<br />
-            Amém.
+            {oracaoAtual.palavras.map((palavra, i) => (
+              <span
+                key={i}
+                style={{
+                  fontWeight: i < palavrasLidas ? 700 : 400,
+                  fontStyle: i === palavrasLidas ? 'italic' : 'normal',
+                  opacity: i <= palavrasLidas ? 1 : 0.45,
+                  transition: 'opacity 0.2s ease, font-weight 0.2s ease',
+                }}
+              >
+                {palavra}{' '}
+              </span>
+            ))}
           </p>
         </div>
       </div>
