@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { supabase, supabaseAuthOnly } from './supabaseClient';
-import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Wallet, ClipboardList, Mail, Send, ArrowLeft, Fingerprint, Menu } from 'lucide-react';
+import { Plus, Search, Users, MapPin, CalendarDays, BookOpen, Clock, Church, UserCheck, Shield, UserPlus, Pencil, Trash2, PlusCircle, Eye, Printer, X, Download, Share2, HelpCircle, RotateCcw, ChevronRight, ChevronLeft, Sparkles, LogOut, FileText, Wallet, ClipboardList, Mail, Send, ArrowLeft, Fingerprint, Menu, Settings } from 'lucide-react';
 import { AuthProvider, useAuth } from './AuthContext';
 import { LoginPage } from './LoginPage';
 import { AvisoMensagensNaoLidas, CaixaMensagensModule, EnviarMensagemModal } from './MensagensModule';
@@ -14,6 +14,7 @@ const MinhasReunioesModule = React.lazy(() => import('./MinhasReunioesModule').t
 const ChamadaReuniao = React.lazy(() => import('./ChamadaReuniao').then(m => ({ default: m.ChamadaReuniao })));
 const LivroCaixaModule = React.lazy(() => import('./LivroCaixaModule').then(m => ({ default: m.LivroCaixaModule })));
 const RelatoriosModule = React.lazy(() => import('./RelatoriosModule').then(m => ({ default: m.RelatoriosModule })));
+const AdminModule = React.lazy(() => import('./AdminModule').then(m => ({ default: m.AdminModule })));
 // html2pdf.js é pesado — carregado sob demanda apenas quando o usuário gera o PDF
 const loadHtml2pdf = () => import('html2pdf.js').then(m => m.default);
 import './index.css';
@@ -368,6 +369,8 @@ function AppContent() {
         return <FormacaoModule isMobile={isMobile} />;
       case 'Caixa de Mensagens':
         return <CaixaMensagensModule numeroCadastro={perfil?.numero_cadastro} />;
+      case 'Admin':
+        return ehSuporte ? <AdminModule /> : null;
       default:
         return null;
     }
@@ -396,6 +399,12 @@ function AppContent() {
             ZelusDomus
           </h1>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            {ehSuporte && (
+              <button onClick={() => { setActiveMenu('Admin'); setMobileSubView('conteudo'); }} title="Administração"
+                style={{ background: activeMenu === 'Admin' ? '#1e293b' : 'none', border: 'none', cursor: 'pointer', color: activeMenu === 'Admin' ? '#fff' : '#1e293b', padding: '0.35rem', borderRadius: 6, display: 'flex' }}>
+                <Settings size={20} />
+              </button>
+            )}
             {ehSuporte ? (
               <select
                 value={perfil?.paroquia_ativa_id || ''}
@@ -479,6 +488,11 @@ function AppContent() {
             ))}
             <div className="sidebar-lateral-mobile-grupo" style={{ marginTop: '0.4rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.4rem' }}>
               <ul className="menu-list" style={{ padding: 0 }}>
+                {ehSuporte && (
+                  <li className="menu-item" onClick={() => { setActiveMenu('Admin'); setMobileSubView('conteudo'); setMenuLateralAberto(false); }}>
+                    <Settings size={18} /> Administração
+                  </li>
+                )}
                 <li className="menu-item" onClick={handleAlternarBiometria}>
                   <Fingerprint size={18} /> {biometriaAtivaNesteAparelho ? 'Desativar impressão digital' : 'Ativar impressão digital'}
                 </li>
