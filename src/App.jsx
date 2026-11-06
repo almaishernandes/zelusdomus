@@ -1196,10 +1196,6 @@ function MobileFichaView({ item, guardians, tipos, sacr, inv, atua, part, commun
       style={{ background: '#fff', borderRadius: 8, boxShadow: '0 12px 40px rgba(0,0,0,0.35)', padding: '0.9rem', color: '#111' }}>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.8rem' }}>
-        <button onClick={gerarBaixarPdf} disabled={gerandoPdf}
-          style={{ flex: '1 1 45%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
-          <Download size={14} /> {gerandoPdf ? 'Gerando…' : 'Baixar PDF'}
-        </button>
         <button onClick={enviarWhatsApp} disabled={gerandoPdf}
           style={{ flex: '1 1 45%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: '#15803d', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem', fontWeight: 600, fontSize: '0.8rem' }}>
           WhatsApp
@@ -1753,10 +1749,12 @@ function AgendaServidor({ servers, communities, isMobile, restrictCadastro }) {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', padding: '0.9rem 1.2rem', borderTop: '1px solid #e2e8f0' }}>
-              <button onClick={gerarPdfAgenda} disabled={gerandoPdf}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem' }}>
-                <Download size={15} /> {gerandoPdf ? 'Gerando…' : 'Baixar PDF'}
-              </button>
+              {!isMobile && (
+                <button onClick={gerarPdfAgenda} disabled={gerandoPdf}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem' }}>
+                  <Download size={15} /> {gerandoPdf ? 'Gerando…' : 'Baixar PDF'}
+                </button>
+              )}
               <button onClick={enviarPdfWhatsApp} disabled={gerandoPdf}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem' }}>
                 <Share2 size={15} /> Enviar por WhatsApp
@@ -1999,10 +1997,12 @@ function AgendaComunidade({ servers, communities, isMobile }) {
       </div>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', padding: '0.9rem 1.2rem', borderTop: '1px solid #e2e8f0' }}>
-              <button onClick={gerarPdfComunidade} disabled={gerandoPdf}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem' }}>
-                <Download size={15} /> {gerandoPdf ? 'Gerando…' : 'Baixar PDF'}
-              </button>
+              {!isMobile && (
+                <button onClick={gerarPdfComunidade} disabled={gerandoPdf}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem' }}>
+                  <Download size={15} /> {gerandoPdf ? 'Gerando…' : 'Baixar PDF'}
+                </button>
+              )}
               <button onClick={enviarPdfComunidadeWhatsApp} disabled={gerandoPdf}
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 6, cursor: gerandoPdf ? 'wait' : 'pointer', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.85rem' }}>
                 <Share2 size={15} /> Enviar por WhatsApp

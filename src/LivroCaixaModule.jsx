@@ -21,7 +21,7 @@ const formatarValorDigitado = (raw) => {
   return num ? num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
 };
 
-export function LivroCaixaModule({ setHeaderExtra }) {
+export function LivroCaixaModule({ setHeaderExtra, isMobile }) {
   const { user } = useAuth();
   const [lancamentos, setLancamentos] = useState([]);
   const [centros, setCentros] = useState([]);
@@ -254,6 +254,15 @@ export function LivroCaixaModule({ setHeaderExtra }) {
     }
   };
 
+  const extratoPdfOptions = () => ({
+    margin: [8, 8],
+    filename: `Extrato-Livro-Caixa-${new Date().toISOString().slice(0, 10)}.pdf`,
+    image: { type: 'jpeg', quality: 0.95 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  });
+
   // Gera o PDF a partir do conteúdo já visível no modal (html2canvas precisa
   // que o elemento esteja realmente renderizado na tela para capturar algo —
   // um container escondido fora da tela ou atrás de outros elementos sai em
@@ -263,18 +272,35 @@ export function LivroCaixaModule({ setHeaderExtra }) {
     setGerandoExtratoPdf(true);
     try {
       const html2pdf = await loadHtml2pdf();
-      const blob = await html2pdf().set({
-        margin: [8, 8],
-        filename: `Extrato-Livro-Caixa-${new Date().toISOString().slice(0, 10)}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      }).from(extratoPrintRef.current).outputPdf('blob');
+      const blob = await html2pdf().set(extratoPdfOptions()).from(extratoPrintRef.current).outputPdf('blob');
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
     } catch (err) {
       setError('Não foi possível gerar o PDF do extrato.');
+    } finally {
+      setGerandoExtratoPdf(false);
+    }
+  };
+
+  const podeCompartilharArquivo = typeof navigator !== 'undefined' && !!navigator.canShare
+    && navigator.canShare({ files: [new File([new Blob()], 'f.pdf', { type: 'application/pdf' })] });
+
+  const enviarExtratoWhatsApp = async () => {
+    if (!extratoPrintRef.current) return;
+    setGerandoExtratoPdf(true);
+    try {
+      const html2pdf = await loadHtml2pdf();
+      const msg = 'Segue o Extrato do Livro Caixa — ZelusDomus.';
+      if (podeCompartilharArquivo) {
+        const blob = await html2pdf().set(extratoPdfOptions()).from(extratoPrintRef.current).outputPdf('blob');
+        const file = new File([blob], extratoPdfOptions().filename, { type: 'application/pdf' });
+        await navigator.share({ files: [file], title: 'Extrato Livro Caixa', text: msg });
+      } else {
+        await html2pdf().set(extratoPdfOptions()).from(extratoPrintRef.current).save();
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+    } catch (err) {
+      if (err?.name !== 'AbortError') setError('Não foi possível enviar o extrato pelo WhatsApp.');
     } finally {
       setGerandoExtratoPdf(false);
     }
@@ -549,9 +575,15 @@ export function LivroCaixaModule({ setHeaderExtra }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.9rem 1.2rem', background: '#1e293b' }}>
               <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Extrato — Livro Caixa</span>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={imprimirExtrato} disabled={gerandoExtratoPdf}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#7c3aed', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>
-                  {gerandoExtratoPdf ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <FileText size={14} />} Baixar PDF
+                {!isMobile && (
+                  <button onClick={imprimirExtrato} disabled={gerandoExtratoPdf}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#7c3aed', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>
+                    {gerandoExtratoPdf ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <FileText size={14} />} Baixar PDF
+                  </button>
+                )}
+                <button onClick={enviarExtratoWhatsApp} disabled={gerandoExtratoPdf}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#16a34a', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem' }}>
+                  {gerandoExtratoPdf ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <FileText size={14} />} WhatsApp
                 </button>
                 <button onClick={() => setExtratoPdfAberto(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex' }}><X size={18} /></button>
               </div>
