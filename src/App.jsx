@@ -60,7 +60,8 @@ const MENU_COLORS = {
   'Cerimoniários':          ROLE_COLORS['Cerimoniário'],
   'Coordenadores':          ROLE_COLORS['Coordenador'],
   'Comunidades':            { bg: '#7c3aed', color: '#ffffff', spanColor: '#f5f3ff' },
-  'Agenda e Calendário':    { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
+  'Agenda':                 { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
+  'Calendário':             { bg: '#eef2ff', color: '#1e293b', spanColor: '#eef2ff' },
   'Formação Cadastro':      { bg: '#0ea5e9', color: '#ffffff', spanColor: '#e0f2fe' },
   'Reunião da Equipe':      { bg: '#ca8a04', color: '#ffffff', spanColor: '#fef9c3' },
   'Livro Caixa':            { bg: '#16a34a', color: '#ffffff', spanColor: '#dcfce7' },
@@ -72,7 +73,7 @@ const MENU_COLORS = {
 // Cada aba agrupa telas que hoje já existem na web — mesma permissão por
 // papel (menuOptions), só muda como se chega até elas.
 const MOBILE_TABS = [
-  { key: 'agenda',     label: 'Agenda',     icon: CalendarDays,   items: ['Agenda e Calendário', 'Minhas Reuniões', 'Caixa de Mensagens'] },
+  { key: 'agenda',     label: 'Agenda',     icon: CalendarDays,   items: ['Agenda', 'Calendário', 'Minhas Reuniões', 'Caixa de Mensagens'] },
   { key: 'cadastros',  label: 'Cadastros',  icon: Users,          items: ['Coroinhas', 'Acolitos', 'Monitores', 'Cerimoniários', 'Coordenadores', 'Comunidades'] },
   { key: 'formacao',   label: 'Formação',   icon: BookOpen,       items: ['Formação Cadastro', 'Formação e Estudos'] },
   { key: 'relatorios', label: 'Relatórios', icon: ClipboardList,  items: ['Reunião da Equipe', 'Livro Caixa', 'Relatórios'], coordenadorOnly: true },
@@ -148,7 +149,7 @@ function AppContent() {
   // (crítico em conexões móveis mais lentas).
   useEffect(() => { if (eAutenticado) fetchAll(); }, [eAutenticado, fetchAll]);
 
-  // Celular: acesso restrito a Agenda e Calendário / Formação e Estudos,
+  // Celular: acesso restrito a Agenda / Calendário / Formação e Estudos,
   // mesmo para coordenadores (o acesso completo é sempre pelo desktop).
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)');
@@ -157,11 +158,11 @@ function AppContent() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const MENUS_PERMITIDOS_MOBILE = ['Agenda e Calendário', 'Formação e Estudos', 'Minhas Reuniões', 'Caixa de Mensagens'];
+  const MENUS_PERMITIDOS_MOBILE = ['Agenda', 'Calendário', 'Formação e Estudos', 'Minhas Reuniões', 'Caixa de Mensagens'];
 
-  // Coroinha/Acólito (nível restrito) começam direto na Agenda e Calendário —
+  // Coroinha/Acólito (nível restrito) começam direto na Agenda —
   // o activeMenu inicial ('Coroinhas') é uma tela de coordenador e não deve
-  // "vazar" para quem só tem acesso aos 2 menus liberados.
+  // "vazar" para quem só tem acesso aos menus liberados.
   useEffect(() => {
     if (!eAutenticado || authLoading) return;
     const NIVEL_AMPLO_CHECK = ['monitor', 'cerimoniario'];
@@ -172,7 +173,7 @@ function AppContent() {
         ? !['Formação Cadastro', 'Livro Caixa'].includes(activeMenu)
         : MENUS_PERMITIDOS_MOBILE.includes(activeMenu);
     if (!permitido && !['CadastroServidor', 'CadastroComunidade'].includes(activeMenu)) {
-      setActiveMenu('Agenda e Calendário');
+      setActiveMenu('Agenda');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eAutenticado, authLoading, ehCoordenador, perfil, activeMenu]);
@@ -269,7 +270,8 @@ function AppContent() {
     { name: 'Cerimoniários',          icon: Users },
     { name: 'Coordenadores',          icon: Shield },
     { name: 'Comunidades',            icon: Church },
-    { name: 'Agenda e Calendário',    icon: CalendarDays },
+    { name: 'Agenda',                 icon: CalendarDays },
+    { name: 'Calendário',             icon: CalendarDays },
     { name: 'Formação Cadastro',      icon: BookOpen },
     { name: 'Formação e Estudos',     icon: BookOpen },
     { name: 'Reunião da Equipe',      icon: FileText },
@@ -279,7 +281,8 @@ function AppContent() {
     { name: 'Relatórios',             icon: ClipboardList }
   ];
   const menuOptionsRestrito = [
-    { name: 'Agenda e Calendário',    icon: CalendarDays },
+    { name: 'Agenda',                 icon: CalendarDays },
+    { name: 'Calendário',             icon: CalendarDays },
     { name: 'Formação e Estudos',     icon: BookOpen },
     { name: 'Minhas Reuniões',        icon: CalendarDays },
     { name: 'Caixa de Mensagens',     icon: Mail }
@@ -346,9 +349,11 @@ function AppContent() {
         return <ServidoresTable data={dbServers.filter(s => s.type === 'coordenador')} title="Coordenadores" onDelete={handleDeleteServer} onEdit={handleEditServer} communities={dbCommunities} isMobile={isMobile} onNew={() => { setPrevMenu('Coordenadores'); setActiveMenu('CadastroServidor'); }} />;
       case 'Comunidades':
         return <ComunidadesTable data={dbCommunities} onDelete={handleDeleteCommunity} onEdit={handleEditCommunity} isMobile={isMobile} onNew={() => { setPrevMenu('Comunidades'); setActiveMenu('CadastroComunidade'); }} />;
-      case 'Agenda e Calendário':
+      case 'Agenda':
         return <AgendaModule servers={dbServers} communities={dbCommunities} isMobile={isMobile}
           restrictCadastro={(!ehCoordenador && !acessoAmplo) ? perfil?.numero_cadastro : null} />;
+      case 'Calendário':
+        return <CalendarioModule servers={dbServers} communities={dbCommunities} isMobile={isMobile} />;
       case 'Formação Cadastro':
         return <FormacaoAdminModule communities={dbCommunities} />;
       case 'Reunião da Equipe':
@@ -2276,7 +2281,17 @@ function AgendaModule({ servers, communities, isMobile, restrictCadastro }) {
         <div style={tituloStyle}><Church size={15} /> Agenda da Comunidade</div>
         <div style={corpoStyle}><AgendaComunidade servers={servers} communities={communities} isMobile={true} /></div>
       </div>
+    </div>
+  );
+}
 
+function CalendarioModule({ servers, communities }) {
+  const secaoStyle = { background: '#fff', border: '1px solid #e2e8f0', borderRadius: 10, overflow: 'hidden', marginBottom: '1.2rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' };
+  const tituloStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#1e293b', color: '#fff', fontWeight: 800, fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.04em', padding: '0.65rem 1rem' };
+  const corpoStyle = { padding: '0.9rem' };
+
+  return (
+    <div className="grid-container" style={{ padding: '1rem 1.2rem 2rem', display: 'flex', flexDirection: 'column', maxHeight: 'none', overflow: 'visible' }}>
       <div style={secaoStyle}>
         <div style={tituloStyle}><CalendarDays size={15} /> Calendário Anual</div>
         <div style={corpoStyle}><CalendarioAnual servers={servers} communities={communities} isMobile={true} /></div>
