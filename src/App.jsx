@@ -61,13 +61,13 @@ const MENU_COLORS = {
   'Cerimoniários':          ROLE_COLORS['Cerimoniário'],
   'Coordenadores':          ROLE_COLORS['Coordenador'],
   'Comunidades':            { bg: '#7c3aed', color: '#ffffff', spanColor: '#f5f3ff' },
-  'Agenda':                 { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
-  'Calendário':             { bg: '#eef2ff', color: '#1e293b', spanColor: '#eef2ff' },
+  'Agenda':                 { bg: '#2563eb', color: '#ffffff', spanColor: '#dbeafe' },
+  'Calendário':             { bg: '#4f46e5', color: '#ffffff', spanColor: '#e0e7ff' },
   'Formação Cadastro':      { bg: '#0ea5e9', color: '#ffffff', spanColor: '#e0f2fe' },
   'Reunião da Equipe':      { bg: '#ca8a04', color: '#ffffff', spanColor: '#fef9c3' },
   'Livro Caixa':            { bg: '#16a34a', color: '#ffffff', spanColor: '#dcfce7' },
   'Relatórios':             { bg: '#0f766e', color: '#ffffff', spanColor: '#ccfbf1' },
-  'Formação e Estudos':     { bg: '#ffffff', color: '#1e293b', spanColor: '#f1f5f9' },
+  'Formação e Estudos':     { bg: '#0891b2', color: '#ffffff', spanColor: '#cffafe' },
 };
 
 // Celular: a sidebar vira uma barra de abas fixa no rodapé (padrão Agilis).
