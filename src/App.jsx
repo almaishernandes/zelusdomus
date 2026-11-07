@@ -228,13 +228,9 @@ function AppContent() {
   // "vazar" para quem só tem acesso aos menus liberados.
   useEffect(() => {
     if (!eAutenticado || authLoading) return;
-    const NIVEL_AMPLO_CHECK = ['monitor', 'cerimoniario'];
-    const amplo = (perfil?.funcoes || []).some(f => NIVEL_AMPLO_CHECK.includes(f));
     const permitido = ehCoordenador
       ? true
-      : amplo
-        ? !['Formação Cadastro', 'Livro Caixa'].includes(activeMenu)
-        : MENUS_PERMITIDOS_MOBILE.includes(activeMenu);
+      : MENUS_PERMITIDOS_MOBILE.includes(activeMenu);
     if (!permitido && !['CadastroServidor', 'CadastroComunidade'].includes(activeMenu)) {
       setActiveMenu('Agenda');
     }
@@ -342,11 +338,6 @@ function AppContent() {
   };
 
 
-  // Monitor/Cerimoniário (e Coordenador) têm acesso amplo; Coroinha/Acólito
-  // continuam restritos só a Agenda e Formação e Estudos.
-  const NIVEL_AMPLO = ['monitor', 'cerimoniario', 'coordenador'];
-  const acessoAmplo = ehCoordenador || (perfil?.funcoes || []).some(f => NIVEL_AMPLO.includes(f));
-
   const menuOptionsCompleto = [
     { name: 'Coroinhas',              icon: Users },
     { name: 'Acolitos',               icon: Shield },
@@ -377,9 +368,7 @@ function AppContent() {
   // participa como destinatário — só envia, pelas telas de Cadastro.
   const menuOptions = ehCoordenador
     ? menuOptionsCompleto.filter(m => !['Caixa de Mensagens', 'Reuniões'].includes(m.name))
-    : acessoAmplo
-      ? menuOptionsCompleto.filter(m => !['Formação Cadastro', 'Livro Caixa'].includes(m.name))
-      : menuOptionsRestrito;
+    : menuOptionsRestrito;
 
   // Abas do rodapé (mobile): mesmas permissões de menuOptions, só reorganizadas
   // em grupos. Uma aba só aparece se o papel tiver acesso a pelo menos 1 item dela.
@@ -436,7 +425,7 @@ function AppContent() {
         return <ComunidadesTable data={dbCommunities} onDelete={handleDeleteCommunity} onEdit={handleEditCommunity} isMobile={isMobile} onNew={() => { setPrevMenu('Comunidades'); setActiveMenu('CadastroComunidade'); }} />;
       case 'Agenda':
         return <AgendaModule servers={dbServers} communities={dbCommunities} isMobile={isMobile}
-          restrictCadastro={(!ehCoordenador && !acessoAmplo) ? perfil?.numero_cadastro : null} />;
+          restrictCadastro={!ehCoordenador ? perfil?.numero_cadastro : null} />;
       case 'Calendário':
         return <CalendarioModule servers={dbServers} communities={dbCommunities} isMobile={isMobile} />;
       case 'Formação Cadastro':
