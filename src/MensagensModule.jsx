@@ -56,7 +56,10 @@ export function CaixaMensagensModule({ numeroCadastro }) {
     }
   };
 
-  useEffect(() => { if (numeroCadastro) carregar(); }, [numeroCadastro]);
+  useEffect(() => {
+    if (numeroCadastro) carregar();
+    else setLoading(false);
+  }, [numeroCadastro]);
 
   const abrirMensagem = async (msg) => {
     setExpandidaId(prev => prev === msg.id ? null : msg.id);
