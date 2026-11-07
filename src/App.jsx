@@ -69,6 +69,8 @@ const MENU_COLORS = {
   'Livro Caixa':            { bg: '#16a34a', color: '#ffffff', spanColor: '#dcfce7' },
   'Relatórios':             { bg: '#0f766e', color: '#ffffff', spanColor: '#ccfbf1' },
   'Formação e Estudos':     { bg: '#0891b2', color: '#ffffff', spanColor: '#cffafe' },
+  'Reuniões':               { bg: '#9333ea', color: '#ffffff', spanColor: '#f3e8ff' },
+  'Mensagens':              { bg: '#db2777', color: '#ffffff', spanColor: '#fce7f3' },
   'Ajuda':                  { bg: '#d4af37', color: '#1e293b', spanColor: '#fef3c7' },
 };
 
