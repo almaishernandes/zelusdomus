@@ -2468,11 +2468,14 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
                 <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1.5rem 0' }}>Nenhum {title.toLowerCase()} cadastrado.</p>
               )}
               {listaOrdenada.map(item => (
-                <div key={item.id} onClick={() => setFichaItem(item)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.65rem 0.4rem', borderBottom: '1px solid #e2e8f0', cursor: 'pointer' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', minWidth: '1.8rem' }}>{item.cadastro || '-'}</span>
-                  <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.9rem', flex: 1 }}>{item.full_name || item.nome}</span>
-                  <ChevronRight size={16} color="#94a3b8" />
+                <div key={item.id}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: '0.65rem 0.4rem', borderBottom: '1px solid #e2e8f0' }}>
+                  <input type="checkbox" disabled={!item.cadastro} checked={item.cadastro ? selecionados.has(item.cadastro) : false} onChange={() => alternarSelecao(item.cadastro)} />
+                  <div onClick={() => setFichaItem(item)} style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', flex: 1, cursor: 'pointer' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', minWidth: '1.8rem' }}>{item.cadastro || '-'}</span>
+                    <span style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.9rem', flex: 1 }}>{item.full_name || item.nome}</span>
+                    <ChevronRight size={16} color="#94a3b8" />
+                  </div>
                 </div>
               ))}
             </div>
@@ -2486,16 +2489,11 @@ function ServidoresTable({ data, title, onDelete, onEdit, onNew, communities = [
             return (
               <div key={item.id} style={{ background: '#fff', border: '1px solid #e2e8f0', borderLeft: `4px solid ${roleColor.bg}`, borderRadius: 10, padding: '0.8rem 0.9rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <input type="checkbox" disabled={!item.cadastro} checked={item.cadastro ? selecionados.has(item.cadastro) : false} onChange={() => alternarSelecao(item.cadastro)} />
-                    <div>
-                      <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>{item.full_name || item.nome}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cadastro Nº {item.cadastro || '-'}</div>
-                    </div>
+                  <div onClick={() => setFichaItem(item)} style={{ cursor: 'pointer' }}>
+                    <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem' }}>{item.full_name || item.nome}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cadastro Nº {item.cadastro || '-'}</div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.1rem', flex: 'none' }}>
-                    <button title="Visualizar ficha completa" onClick={() => setFichaItem(item)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Eye size={16} /></button>
                     <button title="Editar" onClick={() => onEdit && onEdit(item)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2563eb', padding: '0.3rem' }}><Pencil size={16} /></button>
                     <button title="Excluir" onClick={() => onDelete && onDelete(item.id)}
