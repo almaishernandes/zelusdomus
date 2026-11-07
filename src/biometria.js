@@ -128,6 +128,40 @@ export async function ativarBiometria(session, email) {
   }
 }
 
+const CHAVE_DIA_SESSAO = 'zd_dia_sessao';
+const CHAVE_DIA_SESSAO_DIA = 'zd_dia_sessao_dia';
+
+// Para aparelhos SEM leitor de digital: evita pedir senha de novo em cada
+// aba/acesso no mesmo dia. Guardada após qualquer login por senha; só vale
+// até trocar o dia (ou até "Sair", que a apaga).
+export function salvarSessaoDoDia(session) {
+  if (!session?.access_token || !session?.refresh_token) return;
+  try {
+    localStorage.setItem(CHAVE_DIA_SESSAO, JSON.stringify({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token
+    }));
+    localStorage.setItem(CHAVE_DIA_SESSAO_DIA, diaDeHoje());
+  } catch { /* ignora */ }
+}
+
+export function sessaoDoDiaSalva() {
+  try {
+    if (localStorage.getItem(CHAVE_DIA_SESSAO_DIA) !== diaDeHoje()) return null;
+    const salva = localStorage.getItem(CHAVE_DIA_SESSAO);
+    return salva ? JSON.parse(salva) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function limparSessaoDoDia() {
+  try {
+    localStorage.removeItem(CHAVE_DIA_SESSAO);
+    localStorage.removeItem(CHAVE_DIA_SESSAO_DIA);
+  } catch { /* ignora */ }
+}
+
 export function desativarBiometria() {
   try {
     localStorage.removeItem(CHAVE_CRED_ID);

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
-import { sincronizarSessaoBiometrica } from './biometria';
+import { sincronizarSessaoBiometrica, temBiometriaAtiva, salvarSessaoDoDia, sessaoDoDiaSalva, limparSessaoDoDia } from './biometria';
 
 export const AuthContext = createContext();
 
@@ -41,6 +41,7 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         setUser(session.user);
         sincronizarSessaoBiometrica(session);
+        salvarSessaoDoDia(session);
 
         // Eventos como TOKEN_REFRESHED (renovação silenciosa do token, disparada
         // periodicamente pelo Supabase) não devem re-disparar a busca de perfil
@@ -84,6 +85,19 @@ export function AuthProvider({ children }) {
         console.log('[AUTH] Marcando como carregado');
       }
     });
+
+    // Aparelhos SEM leitor de digital: se não há sessão nesta aba mas existe
+    // uma sessão salva ainda válida para hoje, restaura sem pedir senha de
+    // novo — só volta a pedir ao virar o dia ou depois de um "Sair" explícito.
+    // Aparelhos com a digital ativa seguem exigindo o toque no sensor (fluxo
+    // já existente em LoginPage), por isso ficam de fora aqui.
+    (async () => {
+      if (temBiometriaAtiva()) return;
+      const { data } = await supabase.auth.getSession();
+      if (data.session) return;
+      const salva = sessaoDoDiaSalva();
+      if (salva) await supabase.auth.setSession(salva);
+    })();
 
     return () => {
       mounted = false;
@@ -199,6 +213,7 @@ export function AuthProvider({ children }) {
   // e a próxima tentativa de entrar com a digital cairia de volta na senha).
   const logout = async () => {
     await supabase.auth.signOut({ scope: 'local' });
+    limparSessaoDoDia();
     setUser(null);
     setPerfil(null);
   };
