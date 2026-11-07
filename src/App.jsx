@@ -372,6 +372,7 @@ function AppContent() {
           communities={dbCommunities}
           initialType={prevMenu}
           setHeaderExtra={setHeaderExtra}
+          isMobile={isMobile}
         />;
       case 'CadastroComunidade':
         return <CadastroComunidadeForm
@@ -2808,7 +2809,7 @@ function CadastroForm({ setActiveMenu }) {
     </div>
   );
 }
-function CadastroServidorForm({ onBack, onSaved, editData, communities = [], initialType = 'Coroinhas', setHeaderExtra }) {
+function CadastroServidorForm({ onBack, onSaved, editData, communities = [], initialType = 'Coroinhas', setHeaderExtra, isMobile }) {
   const isEdit = !!editData;
   const MENU_TO_TYPE = { 'Coroinhas': 'coroinha', 'Acolitos': 'acolito', 'Monitores': 'monitor', 'Cerimoniários': 'cerimoniario', 'Coordenadores': 'coordenador' };
   const TIPO_KEY = { 'Coroinha': 'coroinha', 'Acólito': 'acolito', 'Monitor': 'monitor', 'Cerimoniário': 'cerimoniario', 'Coordenador': 'coordenador' };
@@ -3263,17 +3264,17 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
 
         {/* Rows 3-5: Responsáveis (apenas para Coroinha, Acólito e Cerimoniário) */}
         {!['monitor', 'coordenador'].includes(tipoInicial) && [
-          { label: 'Responsável (Mãe):', nomeKey: 'guardian_mae', phoneKey: 'guardian_mae_phone' },
-          { label: 'Responsável (Pai):', nomeKey: 'guardian_pai', phoneKey: 'guardian_pai_phone' },
-          { label: 'Responsável (Outro):', nomeKey: 'guardian_outro', phoneKey: 'guardian_outro_phone' },
+          { label: isMobile ? 'Mãe:' : 'Responsável (Mãe):', nomeKey: 'guardian_mae', phoneKey: 'guardian_mae_phone' },
+          { label: isMobile ? 'Pai:' : 'Responsável (Pai):', nomeKey: 'guardian_pai', phoneKey: 'guardian_pai_phone' },
+          { label: isMobile ? 'Outro:' : 'Responsável (Outro):', nomeKey: 'guardian_outro', phoneKey: 'guardian_outro_phone' },
         ].map(({ label, nomeKey, phoneKey }) => (
           <div key={nomeKey} style={{ background: 'linear-gradient(to right, #fffbeb, #fef3c7)', padding: '0.4rem 1rem', border: '1px solid var(--border)', borderTop: 'none', marginBottom: '0' }}>
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <div className="form-group-inline" style={{ flex: '3' }}>
+              <div className="form-group-inline" style={{ flex: '3', minWidth: isMobile ? '100%' : undefined }}>
                 <label style={{ color: '#78350f', whiteSpace: 'nowrap' }}>{label}</label>
                 <input type="text" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} value={form[nomeKey]} onChange={e => setF(nomeKey, e.target.value)} />
               </div>
-              <div className="form-group-inline" style={{ flex: '1.5' }}>
+              <div className="form-group-inline" style={{ flex: '1.5', minWidth: isMobile ? '100%' : undefined }}>
                 <label style={{ color: '#78350f' }}>WhatsApp:</label>
                 <input type="text" className="form-input" style={{ background: 'rgba(255,255,255,0.8)' }} placeholder="(11) 99999-9999" value={form[phoneKey]} onChange={e => { handlePhoneMask(e); setF(phoneKey, e.target.value); }} />
               </div>
@@ -3283,7 +3284,7 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
 
         {/* Sacramentos+Investidura | Comunidade que Atua (2 colunas) — 3 colunas */}
         <div style={{ background: 'linear-gradient(to right, #f5f3ff, #ede9fe)', padding: '0.5rem 1rem', border: '1px solid var(--border)', borderTop: 'none', marginBottom: '0' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.5rem', alignItems: 'start' }}>
 
             {/* Coluna 1: Sacramentos + Investidura */}
             <div>
@@ -3353,8 +3354,9 @@ function CadastroServidorForm({ onBack, onSaved, editData, communities = [], ini
 
             {/* Colunas 2 e 3: Comunidade que Atua dividida em duas colunas */}
             {(() => {
-              const metade = Math.ceil(communities.length / 2);
-              const colunas = [communities.slice(0, metade), communities.slice(metade)];
+              const colunas = isMobile
+                ? [communities]
+                : [communities.slice(0, Math.ceil(communities.length / 2)), communities.slice(Math.ceil(communities.length / 2))];
               return colunas.map((lista, ci) => (
                 <table key={ci} className="form-table" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid #ddd6fe', width: '100%' }}>
                   <thead>
