@@ -107,7 +107,15 @@ const ORACOES = [
   {
     titulo: 'Santo Anjo do Senhor',
     ...tokenizarOracao(
-      'Santo Anjo do Senhor, meu zeloso guardador, se a ti me confiou a piedade divina, sempre me rege, me guarda, me governa e me ilumina. Amém.'
+      'Santo Anjo do Senhor\n' +
+      'Meu zeloso guardador\n' +
+      'se a ti me confiou\n' +
+      'a piedade divina\n' +
+      'sempre me rege\n' +
+      'sempre me guarde\n' +
+      'sempre me governe\n' +
+      'e sempre me ilumine\n' +
+      'AMÉM.'
     ),
   },
 ];
