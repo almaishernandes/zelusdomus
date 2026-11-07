@@ -240,7 +240,6 @@ function AppContent() {
         <div style={{ maxWidth: 1100, textAlign: 'center', color: ORACAO_CORES[oracaoCor], transition: 'color 1.5s ease' }}>
           <div style={{ width: 44, height: 44, margin: '0 auto 1.6rem', border: '3px solid rgba(241,245,249,0.25)', borderTopColor: ORACAO_CORES[oracaoCor], borderRadius: '50%', animation: 'spin 0.9s linear infinite', transition: 'border-top-color 1.5s ease' }} />
           <p style={{ fontSize: 'clamp(1rem, 2.4vw, 1.6rem)', margin: '0 0 1.4rem' }}>Enquanto aguardamos, rezemos juntos:</p>
-          <p style={{ fontSize: 'clamp(1.6rem, 5vw, 3.4rem)', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 1.2rem' }}>{oracaoAtual.titulo}</p>
           <p style={{ fontSize: 'clamp(1.4rem, 4.2vw, 2.8rem)', lineHeight: 1.6, margin: 0 }}>
             {oracaoAtual.palavras.map((palavra, i) => (
               <span
