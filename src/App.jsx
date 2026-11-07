@@ -80,14 +80,35 @@ const MOBILE_TABS = [
   { key: 'relatorios', label: 'Relatórios', icon: ClipboardList,  items: ['Reunião da Equipe', 'Livro Caixa', 'Relatórios'], coordenadorOnly: true },
 ];
 
+function tokenizarOracao(texto) {
+  const linhas = texto.split('\n').map(linha => linha.split(' ').filter(Boolean));
+  const palavras = linhas.flat();
+  return { linhas, palavras };
+}
+
 const ORACOES = [
   {
     titulo: 'Ave Maria',
-    palavras: 'Ave Maria, cheia de graça, o Senhor é convosco. Bendita sois vós entre as mulheres e bendito é o fruto do vosso ventre, Jesus. Santa Maria, Mãe de Deus, rogai por nós, pecadores, agora e na hora da nossa morte. Amém.'.split(' '),
+    ...tokenizarOracao(
+      'Ave Maria, cheia de graça\n' +
+      'o Senhor é convosco\n' +
+      'Bendita sois vós\n' +
+      'entre as mulheres\n' +
+      'Bendito é o fruto\n' +
+      'do vosso ventre, JESUS.\n' +
+      '\n' +
+      'Santa Maria, Mãe de Deus\n' +
+      'Rogai por nós pecadores\n' +
+      'agora e na hora\n' +
+      'da nossa morte,\n' +
+      'AMÉM.'
+    ),
   },
   {
     titulo: 'Santo Anjo do Senhor',
-    palavras: 'Santo Anjo do Senhor, meu zeloso guardador, se a ti me confiou a piedade divina, sempre me rege, me guarda, me governa e me ilumina. Amém.'.split(' '),
+    ...tokenizarOracao(
+      'Santo Anjo do Senhor, meu zeloso guardador, se a ti me confiou a piedade divina, sempre me rege, me guarda, me governa e me ilumina. Amém.'
+    ),
   },
 ];
 
@@ -241,19 +262,31 @@ function AppContent() {
           <div style={{ width: 44, height: 44, margin: '0 auto 1.6rem', border: '3px solid rgba(241,245,249,0.25)', borderTopColor: ORACAO_CORES[oracaoCor], borderRadius: '50%', animation: 'spin 0.9s linear infinite', transition: 'border-top-color 1.5s ease' }} />
           <p style={{ fontSize: 'clamp(1rem, 2.4vw, 1.6rem)', margin: '0 0 1.4rem' }}>Enquanto aguardamos, rezemos juntos:</p>
           <p style={{ fontSize: 'clamp(1.4rem, 4.2vw, 2.8rem)', lineHeight: 1.6, margin: 0 }}>
-            {oracaoAtual.palavras.map((palavra, i) => (
-              <span
-                key={i}
-                style={{
-                  fontWeight: i < palavrasLidas ? 700 : 400,
-                  fontStyle: i === palavrasLidas ? 'italic' : 'normal',
-                  opacity: i <= palavrasLidas ? 1 : 0.45,
-                  transition: 'opacity 0.2s ease, font-weight 0.2s ease',
-                }}
-              >
-                {palavra}{' '}
-              </span>
-            ))}
+            {(() => {
+              let i = -1;
+              return oracaoAtual.linhas.map((linha, li) => (
+                <React.Fragment key={li}>
+                  {linha.length === 0 ? <br /> : linha.map((palavra, wi) => {
+                    i++;
+                    const idx = i;
+                    return (
+                      <span
+                        key={wi}
+                        style={{
+                          fontWeight: idx < palavrasLidas ? 700 : 400,
+                          fontStyle: idx === palavrasLidas ? 'italic' : 'normal',
+                          opacity: idx <= palavrasLidas ? 1 : 0.45,
+                          transition: 'opacity 0.2s ease, font-weight 0.2s ease',
+                        }}
+                      >
+                        {palavra}{' '}
+                      </span>
+                    );
+                  })}
+                  {li < oracaoAtual.linhas.length - 1 && <br />}
+                </React.Fragment>
+              ));
+            })()}
           </p>
         </div>
       </div>
