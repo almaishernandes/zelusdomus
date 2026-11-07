@@ -15,6 +15,7 @@ const ChamadaReuniao = React.lazy(() => import('./ChamadaReuniao').then(m => ({ 
 const LivroCaixaModule = React.lazy(() => import('./LivroCaixaModule').then(m => ({ default: m.LivroCaixaModule })));
 const RelatoriosModule = React.lazy(() => import('./RelatoriosModule').then(m => ({ default: m.RelatoriosModule })));
 const AdminModule = React.lazy(() => import('./AdminModule').then(m => ({ default: m.AdminModule })));
+const AjudaModule = React.lazy(() => import('./AjudaModule').then(m => ({ default: m.AjudaModule })));
 // html2pdf.js é pesado — carregado sob demanda apenas quando o usuário gera o PDF
 const loadHtml2pdf = () => import('html2pdf.js').then(m => m.default);
 import './index.css';
@@ -221,7 +222,7 @@ function AppContent() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const MENUS_PERMITIDOS_MOBILE = ['Agenda', 'Calendário', 'Formação e Estudos', 'Reuniões', 'Caixa de Mensagens'];
+  const MENUS_PERMITIDOS_MOBILE = ['Agenda', 'Calendário', 'Formação e Estudos', 'Reuniões', 'Caixa de Mensagens', 'Ajuda'];
 
   // Coroinha/Acólito (nível restrito) começam direto na Agenda —
   // o activeMenu inicial ('Coroinhas') é uma tela de coordenador e não deve
@@ -444,6 +445,8 @@ function AppContent() {
         return <CaixaMensagensModule numeroCadastro={perfil?.numero_cadastro} />;
       case 'Admin':
         return ehSuporte ? <AdminModule /> : null;
+      case 'Ajuda':
+        return <AjudaModule ehCoordenador={ehCoordenador} menuOptions={menuOptions} />;
       default:
         return null;
     }
@@ -566,6 +569,9 @@ function AppContent() {
                     <Settings size={18} /> Administração
                   </li>
                 )}
+                <li className="menu-item" onClick={() => { setActiveMenu('Ajuda'); setMobileSubView('conteudo'); setMenuLateralAberto(false); }}>
+                  <HelpCircle size={18} /> Ajuda
+                </li>
                 <li className="menu-item" onClick={handleAlternarBiometria}>
                   <Fingerprint size={18} /> {biometriaAtivaNesteAparelho ? 'Desativar impressão digital' : 'Ativar impressão digital'}
                 </li>
@@ -655,6 +661,12 @@ function AppContent() {
                   </li>
                 );
               })}
+              <li className={`menu-item ${activeMenu === 'Ajuda' ? 'active' : ''}`}
+                onClick={() => setActiveMenu('Ajuda')}
+                style={{ borderTop: '1px solid #e2e8f0', marginTop: '0.4rem' }}>
+                <HelpCircle size={20} />
+                Ajuda
+              </li>
             </ul>
           </aside>
 
