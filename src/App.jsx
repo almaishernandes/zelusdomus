@@ -76,9 +76,10 @@ const MENU_COLORS = {
 // Cada aba agrupa telas que hoje já existem na web — mesma permissão por
 // papel (menuOptions), só muda como se chega até elas.
 const MOBILE_TABS = [
-  { key: 'agenda',     label: 'Agenda',     icon: CalendarDays,   items: ['Agenda', 'Calendário', 'Reuniões', 'Mensagens'] },
+  { key: 'agenda',     label: 'Agenda',     icon: CalendarDays,   items: ['Agenda', 'Calendário', 'Reuniões'] },
+  { key: 'mensagens',  label: 'Mensagem',   icon: Mail,           items: ['Mensagens'] },
   { key: 'cadastros',  label: 'Cadastros',  icon: Users,          items: ['Coroinhas', 'Acolitos', 'Monitores', 'Cerimoniários', 'Coordenadores', 'Comunidades'] },
-  { key: 'formacao',   label: 'Formação',   icon: BookOpen,       items: ['Formação Cadastro', 'Formação e Estudos', 'Mensagens'] },
+  { key: 'formacao',   label: 'Formação',   icon: BookOpen,       items: ['Formação Cadastro', 'Formação e Estudos'] },
   { key: 'relatorios', label: 'Relatórios', icon: ClipboardList,  items: ['Reunião da Equipe', 'Livro Caixa', 'Relatórios'], coordenadorOnly: true },
 ];
 
