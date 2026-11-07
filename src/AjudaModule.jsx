@@ -125,6 +125,18 @@ const FAQ_SECOES = [
 
 const corTitulo = { background: '#1e293b', color: '#fff' };
 
+// Uma cor de fundo diferente por assunto, para as respostas ficarem fáceis
+// de distinguir visualmente de uma seção para outra.
+const PALETA_SECOES = [
+  { titulo: '#dbeafe', titCor: '#1e3a8a', resposta: '#eff6ff' },
+  { titulo: '#dcfce7', titCor: '#14532d', resposta: '#f0fdf4' },
+  { titulo: '#fef3c7', titCor: '#78350f', resposta: '#fffbeb' },
+  { titulo: '#ede9fe', titCor: '#4c1d95', resposta: '#f5f3ff' },
+  { titulo: '#fce7f3', titCor: '#831843', resposta: '#fdf2f8' },
+  { titulo: '#cffafe', titCor: '#164e63', resposta: '#ecfeff' },
+  { titulo: '#ffe4e6', titCor: '#881337', resposta: '#fff1f2' },
+];
+
 export function AjudaModule({ ehCoordenador, menuOptions = [] }) {
   const [busca, setBusca] = useState('');
 
@@ -162,21 +174,24 @@ export function AjudaModule({ ehCoordenador, menuOptions = [] }) {
       )}
 
       <div style={{ padding: '1rem 1.2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {secoes.map(s => (
-          <div key={s.name} style={{ border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
-            <div style={{ background: '#f1f5f9', padding: '0.5rem 0.9rem', fontWeight: 700, fontSize: '0.88rem', color: '#1e293b' }}>
-              {s.titulo}
+        {secoes.map((s, si) => {
+          const cor = PALETA_SECOES[si % PALETA_SECOES.length];
+          return (
+            <div key={s.name} style={{ border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ background: cor.titulo, padding: '0.5rem 0.9rem', fontWeight: 700, fontSize: '0.88rem', color: cor.titCor }}>
+                {s.titulo}
+              </div>
+              {s.perguntas.map((q, i) => (
+                <details key={i} style={{ borderTop: '1px solid #e2e8f0', background: cor.resposta }}>
+                  <summary style={{ padding: '0.65rem 0.9rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', color: cor.titCor }}>
+                    {q.p}
+                  </summary>
+                  <p style={{ margin: 0, padding: '0 0.9rem 0.8rem', fontSize: '0.85rem', color: '#475569', lineHeight: 1.5 }}>{q.r}</p>
+                </details>
+              ))}
             </div>
-            {s.perguntas.map((q, i) => (
-              <details key={i} style={{ borderTop: '1px solid #e2e8f0' }}>
-                <summary style={{ padding: '0.65rem 0.9rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', color: '#334155' }}>
-                  {q.p}
-                </summary>
-                <p style={{ margin: 0, padding: '0 0.9rem 0.8rem', fontSize: '0.85rem', color: '#475569', lineHeight: 1.5 }}>{q.r}</p>
-              </details>
-            ))}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

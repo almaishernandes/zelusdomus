@@ -69,6 +69,7 @@ const MENU_COLORS = {
   'Livro Caixa':            { bg: '#16a34a', color: '#ffffff', spanColor: '#dcfce7' },
   'Relatórios':             { bg: '#0f766e', color: '#ffffff', spanColor: '#ccfbf1' },
   'Formação e Estudos':     { bg: '#0891b2', color: '#ffffff', spanColor: '#cffafe' },
+  'Ajuda':                  { bg: '#d4af37', color: '#1e293b', spanColor: '#fef3c7' },
 };
 
 // Celular: a sidebar vira uma barra de abas fixa no rodapé (padrão Agilis).
@@ -569,7 +570,8 @@ function AppContent() {
                     <Settings size={18} /> Administração
                   </li>
                 )}
-                <li className="menu-item" onClick={() => { setActiveMenu('Ajuda'); setMobileSubView('conteudo'); setMenuLateralAberto(false); }}>
+                <li className="menu-item" onClick={() => { setActiveMenu('Ajuda'); setMobileSubView('conteudo'); setMenuLateralAberto(false); }}
+                  style={{ background: MENU_COLORS['Ajuda'].bg, color: MENU_COLORS['Ajuda'].color }}>
                   <HelpCircle size={18} /> Ajuda
                 </li>
                 <li className="menu-item" onClick={handleAlternarBiometria}>
@@ -661,9 +663,14 @@ function AppContent() {
                   </li>
                 );
               })}
-              <li className={`menu-item ${activeMenu === 'Ajuda' ? 'active' : ''}`}
+              <li className={`menu-item ${activeMenu === 'Ajuda' ? '' : ''}`}
                 onClick={() => setActiveMenu('Ajuda')}
-                style={{ borderTop: '1px solid #e2e8f0', marginTop: '0.4rem' }}>
+                style={{
+                  borderTop: '1px solid #e2e8f0', marginTop: '0.4rem',
+                  background: MENU_COLORS['Ajuda'].bg, color: MENU_COLORS['Ajuda'].color,
+                  opacity: activeMenu === 'Ajuda' ? 1 : 0.7, fontWeight: activeMenu === 'Ajuda' ? 700 : 500,
+                  borderLeft: activeMenu === 'Ajuda' ? `4px solid ${MENU_COLORS['Ajuda'].color}` : '4px solid transparent'
+                }}>
                 <HelpCircle size={20} />
                 Ajuda
               </li>
