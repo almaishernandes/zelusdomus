@@ -193,9 +193,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Logout
+  // Logout. Usa scope 'local': só encerra a sessão deste aparelho/aba, sem
+  // revogar o refresh token no servidor — assim a digital continua liberando
+  // a sessão salva pelo resto do dia (signOut padrão invalidaria esse token
+  // e a próxima tentativa de entrar com a digital cairia de volta na senha).
   const logout = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
     setUser(null);
     setPerfil(null);
   };
