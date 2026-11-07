@@ -46,11 +46,14 @@ export function CaixaMensagensModule({ numeroCadastro }) {
 
   const carregar = async () => {
     setLoading(true);
-    const { data } = await supabase.from('mensagens').select('*')
-      .eq('destinatario_cadastro', numeroCadastro)
-      .order('created_at', { ascending: false });
-    setMensagens(data || []);
-    setLoading(false);
+    try {
+      const { data } = await supabase.from('mensagens').select('*')
+        .eq('destinatario_cadastro', numeroCadastro)
+        .order('created_at', { ascending: false });
+      setMensagens(data || []);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { if (numeroCadastro) carregar(); }, [numeroCadastro]);
@@ -71,7 +74,7 @@ export function CaixaMensagensModule({ numeroCadastro }) {
         <Mail size={16} /> Caixa de Mensagens
       </div>
       {mensagens.length === 0 && (
-        <div style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>Nenhuma mensagem recebida.</div>
+        <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Você não tem nenhuma mensagem.</div>
       )}
       {mensagens.map((m, i) => (
         <div key={m.id} onClick={() => abrirMensagem(m)}

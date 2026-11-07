@@ -74,7 +74,7 @@ const MENU_COLORS = {
 // Cada aba agrupa telas que hoje já existem na web — mesma permissão por
 // papel (menuOptions), só muda como se chega até elas.
 const MOBILE_TABS = [
-  { key: 'agenda',     label: 'Agenda',     icon: CalendarDays,   items: ['Agenda', 'Calendário', 'Minhas Reuniões', 'Caixa de Mensagens'] },
+  { key: 'agenda',     label: 'Agenda',     icon: CalendarDays,   items: ['Agenda', 'Calendário', 'Reuniões', 'Caixa de Mensagens'] },
   { key: 'cadastros',  label: 'Cadastros',  icon: Users,          items: ['Coroinhas', 'Acolitos', 'Monitores', 'Cerimoniários', 'Coordenadores', 'Comunidades'] },
   { key: 'formacao',   label: 'Formação',   icon: BookOpen,       items: ['Formação Cadastro', 'Formação e Estudos'] },
   { key: 'relatorios', label: 'Relatórios', icon: ClipboardList,  items: ['Reunião da Equipe', 'Livro Caixa', 'Relatórios'], coordenadorOnly: true },
@@ -221,7 +221,7 @@ function AppContent() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  const MENUS_PERMITIDOS_MOBILE = ['Agenda', 'Calendário', 'Formação e Estudos', 'Minhas Reuniões', 'Caixa de Mensagens'];
+  const MENUS_PERMITIDOS_MOBILE = ['Agenda', 'Calendário', 'Formação e Estudos', 'Reuniões', 'Caixa de Mensagens'];
 
   // Coroinha/Acólito (nível restrito) começam direto na Agenda —
   // o activeMenu inicial ('Coroinhas') é uma tela de coordenador e não deve
@@ -359,7 +359,7 @@ function AppContent() {
     { name: 'Formação Cadastro',      icon: BookOpen },
     { name: 'Formação e Estudos',     icon: BookOpen },
     { name: 'Reunião da Equipe',      icon: FileText },
-    { name: 'Minhas Reuniões',        icon: CalendarDays },
+    { name: 'Reuniões',        icon: CalendarDays },
     { name: 'Caixa de Mensagens',     icon: Mail },
     { name: 'Livro Caixa',            icon: Wallet },
     { name: 'Relatórios',             icon: ClipboardList }
@@ -368,7 +368,7 @@ function AppContent() {
     { name: 'Agenda',                 icon: CalendarDays },
     { name: 'Calendário',             icon: CalendarDays },
     { name: 'Formação e Estudos',     icon: BookOpen },
-    { name: 'Minhas Reuniões',        icon: CalendarDays },
+    { name: 'Reuniões',        icon: CalendarDays },
     { name: 'Caixa de Mensagens',     icon: Mail }
   ];
 
@@ -376,7 +376,7 @@ function AppContent() {
   // numero_cadastro); coordenador não tem numero_cadastro próprio, então não
   // participa como destinatário — só envia, pelas telas de Cadastro.
   const menuOptions = ehCoordenador
-    ? menuOptionsCompleto.filter(m => !['Caixa de Mensagens', 'Minhas Reuniões'].includes(m.name))
+    ? menuOptionsCompleto.filter(m => !['Caixa de Mensagens', 'Reuniões'].includes(m.name))
     : acessoAmplo
       ? menuOptionsCompleto.filter(m => !['Formação Cadastro', 'Livro Caixa'].includes(m.name))
       : menuOptionsRestrito;
@@ -443,7 +443,7 @@ function AppContent() {
         return <FormacaoAdminModule communities={dbCommunities} />;
       case 'Reunião da Equipe':
         return <AtaReuniaoModule communities={dbCommunities} servers={dbServers} setHeaderExtra={setHeaderExtra} />;
-      case 'Minhas Reuniões':
+      case 'Reuniões':
         return <MinhasReunioesModule />;
       case 'Livro Caixa':
         return <LivroCaixaModule setHeaderExtra={setHeaderExtra} isMobile={isMobile} />;
