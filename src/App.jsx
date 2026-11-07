@@ -490,7 +490,7 @@ function AppContent() {
             ) : paroquiaNome && (
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>⛪ {paroquiaNome}</span>
             )}
-            {perfil && <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
+            {perfil && <span style={{ fontSize: isMobile ? '0.78rem' : '0.85rem', color: '#64748b', width: isMobile ? '100%' : 'auto', order: isMobile ? 3 : 0 }}>
               {ehCoordenador
                 ? `👤 ${perfil.full_name} — Coordenador`
                 : `👤 ${perfil.full_name} — ${(perfil.funcoes && perfil.funcoes.length) ? perfil.funcoes.map(t => TYPE_LABELS[t] || t).join(', ') : 'Servidor do Altar'}`}
