@@ -301,12 +301,12 @@ function AppContent() {
   }
 
   const MENU_NOVO = {
-    'Coroinhas':     { label: 'Cadastrar Novo Coroinha',     target: 'CadastroServidor' },
-    'Acolitos':      { label: 'Cadastrar Novo Acólito',      target: 'CadastroServidor' },
-    'Monitores':     { label: 'Cadastrar Novo Monitor',      target: 'CadastroServidor' },
-    'Cerimoniários': { label: 'Cadastrar Novo Cerimoniário', target: 'CadastroServidor' },
-    'Coordenadores': { label: 'Cadastrar Novo Coordenador',  target: 'CadastroServidor' },
-    'Comunidades':   { label: 'Cadastrar Nova Comunidade',   target: 'CadastroComunidade' },
+    'Coroinhas':     { label: 'Novo Coroinha',     target: 'CadastroServidor' },
+    'Acolitos':      { label: 'Novo Acólito',      target: 'CadastroServidor' },
+    'Monitores':     { label: 'Novo Monitor',      target: 'CadastroServidor' },
+    'Cerimoniários': { label: 'Novo Cerimoniário', target: 'CadastroServidor' },
+    'Coordenadores': { label: 'Novo Coordenador',  target: 'CadastroServidor' },
+    'Comunidades':   { label: 'Nova Comunidade',   target: 'CadastroComunidade' },
   };
 
   const handleDeleteServer = async (id) => {
