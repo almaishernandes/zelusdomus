@@ -136,32 +136,25 @@ function AppContent() {
     return () => clearInterval(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // A tela de oração fica no ar pelo tempo das duas orações (15s + 10s) a
-  // cada login, mesmo que o perfil carregue bem mais rápido que isso.
-  const DURACAO_TOTAL_ORACOES = ORACOES.reduce((soma, o) => soma + o.duracaoMs, 0);
+  // Uma oração por login (não as duas seguidas), alternando a cada login:
+  // se desta vez foi a Ave Maria (15s), o próximo login mostra o Santo Anjo
+  // do Senhor (10s), e vice-versa. A tela fica no ar pelo tempo da oração
+  // sorteada, mesmo que o perfil carregue bem mais rápido que isso.
   const [oracaoLiberada, setOracaoLiberada] = useState(false);
-  useEffect(() => {
-    if (!eAutenticado) { setOracaoLiberada(false); return; }
-    setOracaoLiberada(false);
-    const t = setTimeout(() => setOracaoLiberada(true), DURACAO_TOTAL_ORACOES);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eAutenticado]);
-
-  // Duas orações, com a leitura "karaokê" (palavra por palavra). A ordem
-  // alterna a cada login: se desta vez começou pela Ave Maria, o próximo
-  // login começa pelo Santo Anjo do Senhor, e vice-versa.
   const [oracaoMs, setOracaoMs] = useState(0);
-  const [ordemOracoes, setOrdemOracoes] = useState(0);
+  const [indiceOracaoDoLogin, setIndiceOracaoDoLogin] = useState(1); // sem valor salvo ainda: 1º login = Santo Anjo do Senhor
   useEffect(() => {
-    if (!eAutenticado) { setOracaoMs(0); return; }
-    let ultima = 1; // sem valor salvo ainda: primeiro login começa pelo Santo Anjo do Senhor
+    if (!eAutenticado) { setOracaoMs(0); setOracaoLiberada(false); return; }
+    let ultima = 1;
     try { const salva = localStorage.getItem('zd_oracao_ultima'); if (salva !== null) ultima = Number(salva); } catch { /* ignora */ }
-    setOrdemOracoes(ultima);
+    setIndiceOracaoDoLogin(ultima);
     try { localStorage.setItem('zd_oracao_ultima', String(1 - ultima)); } catch { /* ignora */ }
+
+    setOracaoLiberada(false);
     const inicio = Date.now();
     const i = setInterval(() => setOracaoMs(Date.now() - inicio), 100);
-    return () => clearInterval(i);
+    const t = setTimeout(() => setOracaoLiberada(true), ORACOES[ultima].duracaoMs);
+    return () => { clearInterval(i); clearTimeout(t); };
   }, [eAutenticado]);
 
   // TODOS os Hooks AQUI, ANTES de qualquer if/return
@@ -264,11 +257,8 @@ function AppContent() {
   }
 
   if (authLoading || !oracaoLiberada) {
-    const ordem = ordemOracoes === 0 ? ORACOES : [ORACOES[1], ORACOES[0]];
-    const naPrimeira = oracaoMs < ordem[0].duracaoMs;
-    const oracaoAtual = naPrimeira ? ordem[0] : ordem[1];
-    const msNaOracao = naPrimeira ? oracaoMs : oracaoMs - ordem[0].duracaoMs;
-    const fracao = Math.min(msNaOracao / oracaoAtual.duracaoMs, 1);
+    const oracaoAtual = ORACOES[indiceOracaoDoLogin];
+    const fracao = Math.min(oracaoMs / oracaoAtual.duracaoMs, 1);
     const palavrasLidas = Math.floor(fracao * oracaoAtual.palavras.length);
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e293b', padding: '1.5rem' }}>
