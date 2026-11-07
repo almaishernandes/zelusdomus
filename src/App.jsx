@@ -500,11 +500,6 @@ function AppContent() {
               {user?.email ? ` — ${user.email}` : ''}
             </span>}
             {!isMobile && headerExtra}
-            {!isMobile && (
-              <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: '#dc2626', border: 'none', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: 4, cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
-                <LogOut size={16} /> Sair
-              </button>
-            )}
           </div>
           {!isMobile && novoBtn && (() => {
             const btnBg = novoBtnColor ? novoBtnColor.bg : '#b34946';
@@ -673,6 +668,11 @@ function AppContent() {
                 }}>
                 <HelpCircle size={20} />
                 Ajuda
+              </li>
+              <li className="menu-item" onClick={logout}
+                style={{ background: '#dc2626', color: '#fff' }}>
+                <LogOut size={20} />
+                Sair
               </li>
             </ul>
           </aside>
