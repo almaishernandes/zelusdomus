@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabaseClient';
-import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff, Clock, Download, Share, Fingerprint } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Loader, Eye, EyeOff, Clock, Download, Share, Fingerprint, ArrowLeft } from 'lucide-react';
 import { temBiometriaAtiva, biometriaExpirada, emailBiometria, desativarBiometria, entrarComBiometria, marcarLoginSenhaHoje } from './biometria';
 
 // Banner de instalação do app: Android/Chrome mostra botão que instala
@@ -246,9 +246,9 @@ export function LoginPage() {
             <button
               type='button'
               onClick={() => setTelaAtual('login')}
-              style={{ background: 'transparent', color: '#2563eb', border: '1px solid #2563eb', padding: '0.65rem', borderRadius: 6, fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', padding: '0.65rem', borderRadius: 6, fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer' }}
             >
-              Voltar ao Login
+              <ArrowLeft size={16} /> Voltar ao Login
             </button>
           </form>
         </div>

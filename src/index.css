@@ -388,13 +388,14 @@ body {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  background: none;
+  background: #2563eb;
   border: none;
-  color: #1e293b;
+  color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-  padding: 0.3rem 0;
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
 }
 
 .mobile-menu-list {

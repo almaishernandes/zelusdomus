@@ -1592,7 +1592,7 @@ function AgendaServidor({ servers, communities, isMobile, restrictCadastro }) {
             </button>
             {!restrictCadastro && (
               <button onClick={() => setId('')} title="Limpar seleção e ver o próximo servidor"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0.4rem 0.9rem', fontWeight: 600, fontSize: '0.85rem' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0.4rem 0.9rem', fontWeight: 600, fontSize: '0.85rem' }}>
                 <ChevronLeft size={16} /> Voltar
               </button>
             )}
@@ -1935,7 +1935,7 @@ function AgendaComunidade({ servers, communities, isMobile }) {
               <Eye size={15} /> Visualizar
             </button>
             <button onClick={() => setCid('')} title="Limpar seleção e ver a próxima comunidade"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#64748b', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0.4rem 0.9rem', fontWeight: 600, fontSize: '0.85rem' }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', padding: '0.4rem 0.9rem', fontWeight: 600, fontSize: '0.85rem' }}>
               <ChevronLeft size={16} /> Voltar
             </button>
           </>
