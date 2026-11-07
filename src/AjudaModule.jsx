@@ -98,8 +98,8 @@ const FAQ_SECOES = [
     ],
   },
   {
-    name: 'Caixa de Mensagens',
-    titulo: 'Caixa de Mensagens',
+    name: 'Mensagens',
+    titulo: 'Mensagens',
     perguntas: [
       { p: 'Quem me envia mensagens?', r: 'A coordenação, pelas telas de cadastro (Coroinhas, Acólitos etc.), selecionando um ou mais servidores na Lista e tocando em "Enviar Mensagem".' },
       { p: 'Como sei que tem mensagem nova?', r: 'Um aviso aparece no topo da tela ao entrar, se houver mensagem não lida. A bolinha azul na caixa também indica mensagem não lida.' },

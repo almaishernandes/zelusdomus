@@ -37,7 +37,7 @@ export function AvisoMensagensNaoLidas({ numeroCadastro, onAbrirCaixa }) {
   );
 }
 
-// Caixa de Mensagens do servidor: lista tudo que já recebeu, marca como lida
+// Mensagens do servidor: lista tudo que já recebeu, marca como lida
 // ao abrir uma mensagem ainda não lida.
 export function CaixaMensagensModule({ numeroCadastro }) {
   const [mensagens, setMensagens] = useState([]);
@@ -71,7 +71,7 @@ export function CaixaMensagensModule({ numeroCadastro }) {
   return (
     <div className="grid-container" style={{ padding: 0 }}>
       <div style={{ background: '#1e293b', color: '#fff', padding: '0.6rem 0.9rem', fontWeight: 700, fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-        <Mail size={16} /> Caixa de Mensagens
+        <Mail size={16} /> Mensagens
       </div>
       {mensagens.length === 0 && (
         <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>Você não tem nenhuma mensagem.</div>
