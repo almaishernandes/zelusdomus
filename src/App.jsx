@@ -78,7 +78,7 @@ const MENU_COLORS = {
 const MOBILE_TABS = [
   { key: 'agenda',     label: 'Agenda',     icon: CalendarDays,   items: ['Agenda', 'Calendário', 'Reuniões', 'Mensagens'] },
   { key: 'cadastros',  label: 'Cadastros',  icon: Users,          items: ['Coroinhas', 'Acolitos', 'Monitores', 'Cerimoniários', 'Coordenadores', 'Comunidades'] },
-  { key: 'formacao',   label: 'Formação',   icon: BookOpen,       items: ['Formação Cadastro', 'Formação e Estudos'] },
+  { key: 'formacao',   label: 'Formação',   icon: BookOpen,       items: ['Formação Cadastro', 'Formação e Estudos', 'Mensagens'] },
   { key: 'relatorios', label: 'Relatórios', icon: ClipboardList,  items: ['Reunião da Equipe', 'Livro Caixa', 'Relatórios'], coordenadorOnly: true },
 ];
 
