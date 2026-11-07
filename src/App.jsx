@@ -89,6 +89,7 @@ function tokenizarOracao(texto) {
 const ORACOES = [
   {
     titulo: 'Ave Maria',
+    duracaoMs: 20000,
     ...tokenizarOracao(
       'Ave Maria, cheia de graça\n' +
       'o Senhor é convosco\n' +
@@ -106,6 +107,7 @@ const ORACOES = [
   },
   {
     titulo: 'Santo Anjo do Senhor',
+    duracaoMs: 10000,
     ...tokenizarOracao(
       'Santo Anjo do Senhor\n' +
       'Meu zeloso guardador\n' +
@@ -259,10 +261,10 @@ function AppContent() {
   }
 
   if (authLoading || !oracaoLiberada) {
-    const indiceOracao = oracaoMs < 15000 ? 0 : 1;
+    const indiceOracao = oracaoMs < ORACOES[0].duracaoMs ? 0 : 1;
     const oracaoAtual = ORACOES[indiceOracao];
-    const msNaOracao = oracaoMs % 15000;
-    const fracao = Math.min(msNaOracao / 15000, 1);
+    const msNaOracao = indiceOracao === 0 ? oracaoMs : oracaoMs - ORACOES[0].duracaoMs;
+    const fracao = Math.min(msNaOracao / oracaoAtual.duracaoMs, 1);
     const palavrasLidas = Math.floor(fracao * oracaoAtual.palavras.length);
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e293b', padding: '1.5rem' }}>
