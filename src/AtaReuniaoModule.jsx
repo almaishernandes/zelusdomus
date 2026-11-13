@@ -150,6 +150,7 @@ export function AtaReuniaoModule({ setHeaderExtra, servers = [] }) {
   const abrirInserirTema = () => {
     setModo('tema');
     setEditandoId(null);
+    setError(null);
     setConvidados([]);
     setConvidadosStatus({});
     setForm({ tema: '', assunto: '', conteudo: '', fonte: CONVITE_PADRAO, local: '', data_reuniao: '', horario: '', tipo: 'presencial', link_reuniao: '', anotacoes_decisoes: [{ tarefa: '', responsavel: '', prazo: '' }] });
@@ -158,6 +159,7 @@ export function AtaReuniaoModule({ setHeaderExtra, servers = [] }) {
   const abrirEdicao = async (item) => {
     setModo('editar');
     setEditandoId(item.id);
+    setError(null);
     setForm({ tema: item.tema, assunto: item.assunto, conteudo: item.conteudo, fonte: item.fonte || CONVITE_PADRAO, local: item.local || '', data_reuniao: item.data_reuniao || '', horario: item.horario || '', tipo: item.tipo || 'presencial', link_reuniao: item.link_reuniao || '', anotacoes_decisoes: parseAnotacoes(item.anotacoes_decisoes) });
     setSelecionado({ tema: item.tema, assunto: item.assunto });
     setConvidados([]);
@@ -210,6 +212,7 @@ export function AtaReuniaoModule({ setHeaderExtra, servers = [] }) {
   };
 
   const handleSalvar = async () => {
+    setError(null);
     if (!form.tema.trim() || !form.assunto.trim() || !stripHtml(form.conteudo)) {
       setError('Preencha tema, assunto e conteúdo');
       return;
